@@ -1,0 +1,2 @@
+steps:
+- files: minimal.pks

@@ -1,0 +1,43 @@
+{
+  "name": "pk-template",
+  "version": "0.0.1",
+  "description": "pubg kubernetes yaml template engine",
+  "main": "lib/index.js",
+  "scripts": {
+    "start": "node ./cmd.js",
+    "watch": "nodemon cmd.js -- ./examples/simple-pkt/pkt.pks https://raw.githubusercontent.com/dirty49374/devtools/master/devtools.yaml",
+    "test": "mocha"
+  },
+  "bin": {
+    "pkt": "./cmd.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dirty49374/pk-template.git"
+  },
+  "keywords": [
+    "pk-template",
+    "pkt",
+    "k8s",
+    "yaml",
+    "template",
+    "kubernetes"
+  ],
+  "author": "dirty49374@gmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dirty49374/pk-template/issues"
+  },
+  "homepage": "https://github.com/dirty49374/pk-template#readme",
+  "dependencies": {
+    "glob": "^7.1.3",
+    "yargs": "^12.0.5",
+    "js-yaml": "^3.12.0",
+    "commander": "^2.19.0",
+    "handlebars": "^4.0.12",
+    "sync-request": "^6.0.0"
+  },
+  "devDependencies": {
+    "mocha": "^5.2.0"
+  }
+}
