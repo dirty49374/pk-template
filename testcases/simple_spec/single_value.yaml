@@ -1,1 +1,1 @@
-val1: {{ val1 }}
+val1: <<<= values.presets[values.preset].val1 >>>

@@ -45,7 +45,6 @@ function setup() {
     const values = args.values;
     const options = {
         verbose: !!args.options.v,
-        preset: args.options.p || null,
         stdin: !!args.options.i
     };
     const files = args.files.map(expandGlobs)

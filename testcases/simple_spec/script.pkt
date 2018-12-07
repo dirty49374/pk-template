@@ -4,5 +4,5 @@ values:
   val3: true
 
 steps:
-- script: |
+- script.js: |
     objects.push({ val1: values.val1 })

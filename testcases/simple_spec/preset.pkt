@@ -1,0 +1,12 @@
+values:
+  preset: none
+  presets:
+    none:
+      val1: 123
+    dev:
+      val1: 100
+    prod:
+      val1: 200
+
+steps:
+- files: single_value.yaml

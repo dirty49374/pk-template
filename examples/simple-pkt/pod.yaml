@@ -1,8 +1,8 @@
 apiVersion: apps/v1
 kind: Pod
 metadata:
-  name: {{ name }}
+  name: <<<= values.name >>>
 spec:
   containers:
-  - name: {{ name }}
-    image: {{ image }}
+  - name: <<<= values.name >>>
+    image: <<<= values.image >>>

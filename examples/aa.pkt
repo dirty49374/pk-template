@@ -1,0 +1,24 @@
+values:
+  region: us
+  aws:
+    us:
+      region: us-east-1
+    eu:
+      region: eu-east-1 <1>
+
+steps:
+- if: values.region == 'us'
+  script.coffee: |
+    values.test =
+      aa: 'AA'
+      cc: 'CC'
+    values.command = """
+                     #!/bin/bash
+
+                     if [ -e "~/test.bash" ]; then
+                       . ~/test.bash
+                     fi
+                     """
+    objects.push { command: values.command }
+  script.js: |
+    objects.push( { command: 'hello' })

@@ -6,21 +6,13 @@ values:
   name: hello
   tag: none
 
-presets:
-  prod:
-    name: prod
-    tag: 1.0.0-release
-  dev:
-    name: dev
-    tag: 1.0.0-develop
-
 steps:
 - name: create namespace
   files: namespace.yaml
 - name: create additional pods
   values:
     tag: aaa
-  script: |
+  script.js: |
     const services = [ 'server1', 'server2' ];
     services.forEach(app => {
       expand('pod.yaml', {
@@ -29,7 +21,7 @@ steps:
       });
     });
 - name: update namespaces
-  script: |
+  script.js: |
     objects
       .filter(o => !o.metadata.namespace)
       .forEach(o => o.metadata.namespace = values.name);

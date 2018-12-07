@@ -6,4 +6,4 @@ metadata:
     app: test
 spec:
   containers:
-  - image: {{ image }}
+  - image: <<<= values.image >>>

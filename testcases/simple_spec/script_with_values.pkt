@@ -6,5 +6,5 @@ values:
 steps:
 - values:
     val1: 888
-  script: |
+  script.js: |
     objects.push({ val1: values.val1 })
