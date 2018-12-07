@@ -1,0 +1,9 @@
+values:
+  val1: 10
+  val2: 20
+
+steps:
+- template: |
+    val1: <<<= values.val1 >>>
+    val2: <<<= values.val2 >>>
+    val3: <<<= values.val3 >>>

@@ -147,11 +147,51 @@ describe('expand', () => {
                 expandFiles(
                     [ 'testcases/simple_spec/multi_depth_no_preset.pkt' ],
                     {},
-                    'dev'
                 ),
                 'val1: 123\n'
             );
         });
     });
 
+    describe('template inside spec', () => {
+        it('can expand template inside spec', () => {
+            assert.equal(
+                expandFiles(
+                    [ 'testcases/simple_spec/template.pkt' ],
+                    {},
+                ),
+                'hello: world\n'
+            );
+        });
+
+        it('can expand multiple templates inside spec', () => {
+            assert.equal(
+                expandFiles(
+                    [ 'testcases/simple_spec/dual_template.pkt' ],
+                    {},
+                ),
+                'hello: world\n---\nworld: hello\n'
+            );
+        });
+
+        it('template inside spec can expand values', () => {
+            assert.equal(
+                expandFiles(
+                    [ 'testcases/simple_spec/template_with_value.pkt' ],
+                ),
+                'val1: 10\nval2: 20\nval3: null\n'
+            );
+        });
+
+        it('template inside spec can expand values from outside', () => {
+            assert.equal(
+                expandFiles(
+                    [ 'testcases/simple_spec/template_with_value.pkt' ],
+                    { val1: 1, val2: 2, val3: 3 }
+                ),
+                'val1: 1\nval2: 2\nval3: 3\n'
+            );
+        });
+
+    });
 });

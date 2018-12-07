@@ -1,0 +1,50 @@
+values:
+  port: 0
+  image: alpine:latest
+  service: ClusterIP
+
+steps:
+- spec:
+    values:
+      name.coffee: |
+        return values.name if values.name 
+        list = values.image.split(':')[0].split('/')
+        return list[list.length - 1]
+    steps:
+    - template: |
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: <<<= values.name >>>
+          labels:
+            app: <<<= values.name >>>
+        spec:
+          selector:
+            matchLabels:
+              app: <<<= values.name >>>
+          template:
+            metadata:
+              labels:
+                app: <<<= values.name >>>
+            spec:
+              containers:
+              - name: <<<= values.name >>>
+                image: <<<= values.image >>>
+                <<<_ if (values.port) { >>>
+                ports:
+                - containerPort: <<<= values.port >>>
+                <<<_ } >>>
+    - if.js: values.port
+      template: |
+        kind: Service
+        apiVersion: v1
+        metadata:
+          name: <<<= values.name >>>
+          labels:
+            app: <<<= values.name >>>
+        spec:
+          type: <<<= values.service || 'ClusterIP' >>>
+          selector:
+            app: <<<= values.name >>>
+          ports:
+          - port: <<<= values.port >>>
