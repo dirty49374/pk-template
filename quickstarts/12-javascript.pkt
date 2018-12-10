@@ -1,0 +1,5 @@
+routine:
+- include: 00-hello-yaml.yaml
+- include: 00-hello-yaml.yaml
+- script: |
+    js> $.objects.forEach((o, i) => o.hello = `${o.hello}-${i}`)

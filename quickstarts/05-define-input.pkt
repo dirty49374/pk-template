@@ -1,0 +1,7 @@
+input: # assign --> input
+  greet: hi
+  name: pkt
+
+routine:
+- template: |
+    <<<= $.values.greet || 'hello' >>>: <<<= name >>>

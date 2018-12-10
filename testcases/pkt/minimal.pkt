@@ -1,0 +1,7 @@
+input:
+  val1: 123
+  val2: abc
+  val3: true
+
+routine:
+- include: ../yaml/three_values.yaml

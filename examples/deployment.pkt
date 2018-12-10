@@ -1,50 +1,37 @@
-values:
+input:
   port: 0
+  label: app
+  name: null
   image: alpine:latest
-  service: ClusterIP
+  kind: Deployment
 
-steps:
-- spec:
-    values:
-      name.coffee: |
-        return values.name if values.name 
-        list = values.image.split(':')[0].split('/')
-        return list[list.length - 1]
-    steps:
-    - template: |
-        apiVersion: apps/v1
-        kind: Deployment
+assign:
+  name$: |
+    name if name
+    path = image.split(':')[0].split('/')
+    path[path.length - 1]
+
+routine:
+- template: |
+    apiVersion: apps/v1
+    kind: <<<= kind >>>
+    metadata:
+      name: <<<= name >>>
+      labels:
+        <<<= label >>>: <<<= name >>>
+    spec:
+      selector:
+        matchLabels:
+          <<<= label >>>: <<<= name >>>
+      template:
         metadata:
-          name: <<<= values.name >>>
           labels:
-            app: <<<= values.name >>>
+            <<<= label >>>: <<<= name >>>
         spec:
-          selector:
-            matchLabels:
-              app: <<<= values.name >>>
-          template:
-            metadata:
-              labels:
-                app: <<<= values.name >>>
-            spec:
-              containers:
-              - name: <<<= values.name >>>
-                image: <<<= values.image >>>
-                <<<_ if (values.port) { >>>
-                ports:
-                - containerPort: <<<= values.port >>>
-                <<<_ } >>>
-    - if.js: values.port
-      template: |
-        kind: Service
-        apiVersion: v1
-        metadata:
-          name: <<<= values.name >>>
-          labels:
-            app: <<<= values.name >>>
-        spec:
-          type: <<<= values.service || 'ClusterIP' >>>
-          selector:
-            app: <<<= values.name >>>
-          ports:
-          - port: <<<= values.port >>>
+          containers:
+          - name: <<<= name >>>
+            image: <<<= image >>>
+            <<<_ if (port) { >>>
+            ports:
+            - containerPort: <<<= port >>>
+            <<<_ } >>>

@@ -1,0 +1,10 @@
+input:
+  greet: hello
+
+routine:
+- assign:
+    name: john
+- include: 02-interpolation.yaml
+- assign:
+    name: jane
+- include: 02-interpolation.yaml

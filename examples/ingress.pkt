@@ -1,0 +1,25 @@
+input:
+  label: app
+  name: noname
+  host: null
+  port: 0
+  path: /
+
+routine:
+- template: |
+    apiVersion: extensions/v1beta1
+    kind: Ingress
+    metadata:
+      name: <<<= name >>>
+      labels:
+        <<<= label >>>: <<<= name >>>
+      annotations: {}
+    spec:
+      rules:
+        - host: <<<= host >>>
+          http:
+            paths:
+              - path: <<<= path >>>
+                backend:
+                  serviceName: <<<= name >>>
+                  servicePort: <<<= port >>>

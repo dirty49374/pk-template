@@ -1,0 +1,12 @@
+routine:
+- assign:
+    name: world
+- template: |
+    hello: <<<= name >>>
+- routine:
+  - assign:
+      name: universe     # name = 'universe' only inside current scope
+  - template: |
+      hello1: <<<= name >>>
+- template: |
+    hello: <<<= name >>>

@@ -1,29 +1,36 @@
 const assert = require('assert');
-const { expand } = require('../lib');
+const { exec } = require('../src');
 
-const expandFiles = (files, values) => expand([], values || {}, files, { verbose: false });
+const testExec = (files, values) => exec([], values || {}, files);
 
 describe('expand', () => {
     describe('yaml', () => {
         it('single yaml file without values', () => {
-            const yaml = expandFiles(
-                [ 'testcases/simple/real.yaml' ],
+            const yaml = testExec(
+                [ 'testcases/yaml/real.yaml' ],
                 {}
             );
             assert.equal('name: value\n', yaml);
         });
-        it('single yaml file with single values', () => {
-            const yaml = expandFiles(
-                [ 'testcases/simple/valued.yaml' ],
+        it('single yaml file with single value', () => {
+            const yaml = testExec(
+                [ 'testcases/yaml/valued.yaml' ],
                 { value: 1 }
             );
             assert.equal('value: 1\n', yaml);
         });
+        it('single yaml file with three values', () => {
+            const yaml = testExec(
+                [ 'testcases/yaml/three_values.yaml' ],
+                { val1: 1, val2: 2, val3: 3 }
+            );
+            assert.equal('val1: 1\nval2: 2\nval3: 3\n', yaml);
+        });        
         it('multiple yaml files with single value', () => {
-            const yaml = expandFiles(
+            const yaml = testExec(
                 [
-                    'testcases/simple/real.yaml',
-                    'testcases/simple/valued.yaml'
+                    'testcases/yaml/real.yaml',
+                    'testcases/yaml/valued.yaml'
                 ],
                 { value: 10 },
             );
@@ -31,124 +38,88 @@ describe('expand', () => {
         });
     });
 
-    describe('spec', () => {
-        it('minimal spec with default values', () => {
-            const yaml = expandFiles(
-                [ 'testcases/simple_spec/minimal.pkt' ]
+    describe('pkt', () => {
+        it('minimal pkt file with default values', () => {
+            const yaml = testExec(
+                [ 'testcases/pkt/minimal.pkt' ]
             );
             assert.equal('val1: 123\nval2: abc\nval3: true\n', yaml);
         });
-        it('dual spec with default values', () => {
-            const yaml = expandFiles(
+        it('dual pkt file with default values', () => {
+            const yaml = testExec(
                 [
-                    'testcases/simple_spec/minimal.pkt',
-                    'testcases/simple_spec/minimal.pkt',
+                    'testcases/pkt/minimal.pkt',
+                    'testcases/pkt/minimal.pkt',
                 ]
             );
             const output= 'val1: 123\nval2: abc\nval3: true\n';
             assert.equal(`${output}---\n${output}`, yaml);
         });
-        it('single spec with overriding step values', () => {
-            const yaml = expandFiles(
-                [ 'testcases/simple_spec/minimal.pkt' ],
+        it('single pkt with overriding input values', () => {
+            const yaml = testExec(
+                [ 'testcases/pkt/minimal.pkt' ],
                 { val1: 777 }
             );
             assert.equal('val1: 777\nval2: abc\nval3: true\n', yaml);
         });
-        it('single spec with multiple steps', () => {
-            const yaml = expandFiles(
-                [ 'testcases/simple_spec/multiple_steps.pkt' ],
+        it('single pkt with multiple includes', () => {
+            const yaml = testExec(
+                [ 'testcases/pkt/multiple_includes.pkt' ],
                 { val1: 777 }
             );
             const single = 'val1: 777\nval2: abc\nval3: true\n';
             assert.equal(`${single}---\n${single}`, yaml);
         });
-        it('single spec with script', () => {
-            const yaml = expandFiles(
-                [ 'testcases/simple_spec/script.pkt' ],
+        it('single pkt with script', () => {
+            const yaml = testExec(
+                [ 'testcases/pkt/script.pkt' ],
             );
             assert.equal(`val1: 123\n`, yaml);
         });
-        it('single spec with script and overriding values', () => {
-            const yaml = expandFiles(
-                [ 'testcases/simple_spec/script.pkt' ],
+        it('single pkt with script and overriding input', () => {
+            const yaml = testExec(
+                [ 'testcases/pkt/script.pkt' ],
                 { val1: 777 }
             );
             assert.equal(`val1: 777\n`, yaml);
         });
         it('single spec with script and step overriding values', () => {
-            const yaml = expandFiles(
-                [ 'testcases/simple_spec/script_with_values.pkt' ],
+            const yaml = testExec(
+                [ 'testcases/pkt/script_with_values.pkt' ],
                 { val1: 777 }
             );
             assert.equal(`val1: 888\n`, yaml);
         });
         it('single spec with relative file includes', () => {
-            const yaml = expandFiles(
-                [ 'testcases/simple_spec/relative_path_include.pkt' ],
+            const yaml = testExec(
+                [ 'testcases/pkt/relative_path_include.pkt' ],
             );
             assert.equal(`name: value\n`, yaml);
         });
     });
 
-    describe('spec advanced', () => {
-        it('spec in spec', () => {
-            const yaml = expandFiles(
-                [ 'testcases/simple_spec/spec_in_spec.pkt' ],
+    describe('pkt advanced', () => {
+        it('include_pkt', () => {
+            const yaml = testExec(
+                [ 'testcases/pkt/include_pkt.pkt' ],
             );
             assert.equal('val1: 123\nval2: abc\nval3: true\n', yaml);
         });
-        it('spec without preset', () => {
+        it('pkt without preset', () => {
             assert.equal(
-                expandFiles(
-                    [ 'testcases/simple_spec/preset.pkt' ],
+                testExec(
+                    [ 'testcases/pkt/preset.pkt' ],
                 ),
                 'val1: 123\n'
             );
         });
-        it('spec with preset', () => {
+        it('pkt with preset', () => {
             assert.equal(
-                expandFiles(
-                    [ 'testcases/simple_spec/preset.pkt' ],
+                testExec(
+                    [ 'testcases/pkt/preset.pkt' ],
                     { preset: 'dev' },
                 ),
                 'val1: 100\n'
-            );
-        });
-        // it('preset value can be overridden', () => {
-        //     assert.equal(
-        //         expandFiles(
-        //             [ 'testcases/simple_spec/preset.pkt' ],
-        //             { val1: 999, preset: 'dev' },
-        //         ),
-        //         'val1: 999\n'
-        //     );
-        // });
-        it('preset can be set in steps', () => {
-            assert.equal(
-                expandFiles(
-                    [ 'testcases/simple_spec/multi_depth_preset.pkt' ],
-                ),
-                'val1: 100\n'
-            );
-        });
-
-        // it('preset in steps can be overridden by values', () => {
-        //     assert.equal(
-        //         expandFiles(
-        //             [ 'testcases/simple_spec/multi_depth_preset_with_values.pkt' ],
-        //         ),
-        //         'val1: 0\n'
-        //     );
-        // });
-
-        it('preset does not propagate to multiple spec', () => {
-            assert.equal(
-                expandFiles(
-                    [ 'testcases/simple_spec/multi_depth_no_preset.pkt' ],
-                    {},
-                ),
-                'val1: 123\n'
             );
         });
     });
@@ -156,8 +127,8 @@ describe('expand', () => {
     describe('template inside spec', () => {
         it('can expand template inside spec', () => {
             assert.equal(
-                expandFiles(
-                    [ 'testcases/simple_spec/template.pkt' ],
+                testExec(
+                    [ 'testcases/pkt/template.pkt' ],
                     {},
                 ),
                 'hello: world\n'
@@ -166,8 +137,8 @@ describe('expand', () => {
 
         it('can expand multiple templates inside spec', () => {
             assert.equal(
-                expandFiles(
-                    [ 'testcases/simple_spec/dual_template.pkt' ],
+                testExec(
+                    [ 'testcases/pkt/dual_template.pkt' ],
                     {},
                 ),
                 'hello: world\n---\nworld: hello\n'
@@ -176,17 +147,17 @@ describe('expand', () => {
 
         it('template inside spec can expand values', () => {
             assert.equal(
-                expandFiles(
-                    [ 'testcases/simple_spec/template_with_value.pkt' ],
+                testExec(
+                    [ 'testcases/pkt/template_with_value.pkt' ],
                 ),
-                'val1: 10\nval2: 20\nval3: null\n'
+                'val1: 10\nval2: 20\nval3: 30\n'
             );
         });
 
         it('template inside spec can expand values from outside', () => {
             assert.equal(
-                expandFiles(
-                    [ 'testcases/simple_spec/template_with_value.pkt' ],
+                testExec(
+                    [ 'testcases/pkt/template_with_value.pkt' ],
                     { val1: 1, val2: 2, val3: 3 }
                 ),
                 'val1: 1\nval2: 2\nval3: 3\n'

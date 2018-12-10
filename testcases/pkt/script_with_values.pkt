@@ -1,0 +1,10 @@
+input:
+  val1: 123
+  val2: abc
+  val3: true
+
+routine:
+- assign:
+    val1: 888
+- script: |
+    $lib.add({ val1 })

@@ -1,0 +1,5 @@
+routine:
+- template: |
+    hello: world
+- template: |
+    world: hello

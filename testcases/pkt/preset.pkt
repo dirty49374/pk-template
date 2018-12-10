@@ -1,0 +1,14 @@
+input:
+  preset: none
+
+assign:
+  presets:
+    none:
+      val1: 123
+    dev:
+      val1: 100
+    prod:
+      val1: 200
+
+routine:
+- include: ../yaml/single_value.yaml

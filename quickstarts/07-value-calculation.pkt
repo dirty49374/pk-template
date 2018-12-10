@@ -1,0 +1,10 @@
+input:
+  name: world
+
+assign:
+  greet: welcome
+  name$: name.toUpperCase()
+
+routine:
+- template: |
+    <<<= greet >>>: <<<= name >>>

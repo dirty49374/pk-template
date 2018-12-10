@@ -1,0 +1,9 @@
+input:
+  name: pkt
+
+assign:
+  greet: welcome
+
+routine:
+- template: |
+    <<<= greet >>>: <<<= name >>>

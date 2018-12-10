@@ -1,15 +1,15 @@
 {
   "name": "pk-template",
-  "version": "0.0.5",
-  "description": "pubg kubernetes yaml template engine",
-  "main": "lib/index.js",
+  "version": "0.1.0",
+  "description": "p template engine for kubernetes",
+  "main": "src/index.js",
   "scripts": {
-    "start": "node ./cmd.js",
-    "watch": "nodemon cmd.js -- ./examples/simple-pkt/pkt.pkt https://raw.githubusercontent.com/dirty49374/devtools/master/devtools.yaml",
+    "start": "node bin/pkt.js",
+    "watch": "nodemon bin/pkt.js -- https://raw.githubusercontent.com/dirty49374/devtools/master/devtools.yaml",
     "test": "mocha"
   },
   "bin": {
-    "pkt": "./cmd.js"
+    "pkt": "bin/pkt.js"
   },
   "repository": {
     "type": "git",

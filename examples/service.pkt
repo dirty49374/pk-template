@@ -1,0 +1,20 @@
+input:
+  label: app
+  name: none
+  port: 80
+  service: ClusterIP
+
+routine:
+- template: |
+    kind: Service
+    apiVersion: v1
+    metadata:
+      name: <<<= name >>>
+      labels:
+        <<<= label >>>: <<<= name >>>
+    spec:
+      type: <<<= service || 'ClusterIP' >>>
+      selector:
+        <<<= label >>>: <<<= name >>>
+      ports:
+      - port: <<<= port >>>
