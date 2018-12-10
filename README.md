@@ -62,5 +62,5 @@ metadata:
 ```
 
 ## more info
-- [QuickStart](QuickStart.md)
+- [QuickStart](quickstarts/QuickStarts.md)
 
