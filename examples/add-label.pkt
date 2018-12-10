@@ -1,0 +1,24 @@
+input:
+  label: null
+  
+schema:
+  title: add-label
+  description: add labels to current scope objects
+  type: object
+  properties:
+    label:
+      description: --label name=value
+      type:
+      - string
+      - array
+
+routine:
+- script: |
+    labels = if typeof label == 'string' then [ label ] else label
+    (
+      (
+        n = l.split('=')[0]
+        v = l.split('=')[1]
+        o.metadata.labels[n] = v
+      ) for l in labels
+    ) for o in $.objects

@@ -4,52 +4,50 @@ const process = require('process');
 const glob = require('glob');
 const jsyaml = require('js-yaml');
 const pkt = require('../src');
+const chalk = require('chalk');
+const path = require('path');
 
-function parseArgs() {
+function parseArgs(config) {
     const argv = require('yargs')
         .version(false)
         .help(false)
-        .boolean(['v', 'i'])
+        .boolean(['i', 'h', 'v'])
         .argv;
 
-    const args = {
-        options: {},
-        values: {},
-        files: argv._
-    };
-
+    const options = {};
+    const values = {};
     Object.keys(argv).forEach(k => {
         if (k.length === 1) {
             if (k !== '_')
-                args.options[k] = argv[k];
+                options[k] = argv[k];
         } else if (k[0] != '$') {
-            args.values[k] = argv[k];
+            values[k] = argv[k];
         }
     });
+
+    const args = {
+        options: {
+            stdin: !!options.i,
+            help: !!options.h,
+            version: !!options.v,
+        },
+        values: values,
+        files: argv._.map(expandGlobs)
+            .reduce((sum, list) => sum.concat(list), [])
+            .map(p => config.resolve(p)),
+    };
 
     return args;
 }
 
 function expandGlobs(path) {
     if (path.toLowerCase().startsWith('http://') ||
-        path.toLowerCase().startsWith('https://'))
+        path.toLowerCase().startsWith('https://') ||
+        path[0] == ':')
         return [ path ];
     if (path.includes('?') || path.includes('*') || path.includes('+'))
         return glob.sync(path);
     return [ path ];
-}
-
-function setup() {
-    const args = parseArgs();
-    const values = args.values;
-    const options = {
-        verbose: !!args.options.v,
-        stdin: !!args.options.i
-    };
-    const files = args.files.map(expandGlobs)
-        .reduce((sum, list) => sum.concat(list), []);
-
-    return { values, files, options };
 }
 
 function readStdinUntilEnd(cb) {
@@ -67,24 +65,83 @@ function readStdinUntilEnd(cb) {
     });
 }
 
-function run(objects, values, files) {
+function run(objects, values, files, config) {
     objects = objects || [];
+    try {
+        const yaml = pkt.engine.exec(objects, values, files, config);
+        console.log(yaml);
+    } catch (e) {
+        if (e.summary) {
+            console.error(chalk.red('ERROR: ' + e.summary + ' in ' + e.uri));
+            console.error(chalk.red('       ' + e.message));
+        } else {
+            console.error(chalk.red(e.message));
+        }
+        // console.log(e);
+        process.exit(1);
+    }
+}
 
-    const yaml = pkt.exec(objects, values, files);
-    console.log(yaml);
+function helpPkt(url) {
+    console.log('- url:', url);
+    const yaml = pkt.load.yaml(null, url);
+    const schema = yaml.schema;
+    if (!schema) return;
+    const props = jsyaml.dump(schema).split('\n')
+        .map(line => '  ' + line)
+        .join('\n');
+    console.log(props);
+}
+
+function help(args) {
+    console.log('USAGE: pkt [options] ...files');
+    console.log();
+
+    console.log('OPTIONS:');
+    console.log('   -h           : help');
+    console.log('   -i           : load yamls from stdin as initial objects');
+    console.log('   --name value : assign name = value');
+    console.log();
+
+    if (args.files.length) {
+        console.log('FILES:');
+
+        for (const file of args.files) {
+            if (file.toLowerCase().endsWith('.pkt')) {
+                helpPkt(file);
+            } else {
+                console.log('- url:', file);
+            }
+        }
+    }
+}
+
+function version() {
+    const pkg = pkt.load.yaml(path.join(__dirname, '../package.json'));
+    console.log(pkg.version);
 }
 
 function main() {
+    const config = pkt.configs.load();
 
-    const setting = setup();
-    
-    if (setting.options.stdin) {
+    const args = parseArgs(config);
+    if (args.options.help || args.files.length == 0) {
+        help(args);
+        return;
+    }
+
+    if (args.options.version) {
+        version();
+        return;
+    }
+
+    if (args.options.stdin) {
         readStdinUntilEnd(text => {
             const objects = jsyaml.loadAll(text);
-            run(objects, setting.values, setting.files);
+            run(objects, args.values, args.files, config);
         })
     } else {
-        run([], setting.values, setting.files);
+        run([], args.values, args.files, config);
     }
 }
 

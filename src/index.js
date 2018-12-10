@@ -1,29 +1,43 @@
 const _ = require('underscore');
 const fs = require("fs");
 const url = require('url');
+const path = require('path');
 const jsyaml = require('js-yaml');
 const syncRequest = require('sync-request');
 const coffeeScript = require('coffee-script');
+const Ajv = require('ajv');
+const ajv = new Ajv({allErrors: true});
 
 _.templateSettings = {
     interpolate: /\<\<\<\=(.+?)\>\>\>/g,
     evaluate: /\<\<\<\_(.+?)\>\>\>/g,
 };
+const pktError = (scope, error, message) => {
+    error.summary = message;
+    error.uri = scope.uri;
+    return error;
+}
 
 const clone = obj => JSON.parse(JSON.stringify(obj));
 const scopes = {
-    create(values, uri, parent, objects) {
-        return {
+    create(values, uri, parent, config, objects) {
+        const scope = {
             objects: objects ? [ ...objects ] : [],
             values: values ? clone(values) : {},
             uri: uri || '.',
-            parent: parent || null
+            parent: parent || null,
+            config: config
         };
+        return scope;
     },
     open(parent, uri, func) {
-        const scope = clone(parent);
-        scope.uri = uri || '.';
-        scope.parent = parent;
+        const scope = {
+            objects: [],
+            values: clone(parent.values),
+            uri,
+            parent,
+            config: parent.config
+        };
 
         func(scope);
     },
@@ -36,31 +50,46 @@ const scopes = {
 }
 
 const load = {
-    text(uri) {
-        const urlPrefixes = [ 'http://', 'https://' ];
-        const isAbsoluteUrl = p => urlPrefixes.some(prefix => p.startsWith(prefix));
-        
-        return isAbsoluteUrl(uri)
-            ? syncRequest('GET', uri).getBody('utf8')
-            : fs.readFileSync(uri, 'utf8');
+    text(scope, uri) {
+        try {
+            uri = scope ? scope.config.resolve(uri) : uri; // resolve @
+            let parsed = url.parse(uri);
+
+            const supportedProtocols = [ 'http:', 'https:' ];
+            const isAbsoluteUrl = supportedProtocols.some(protocol => protocol == parsed.protocol);
+
+            return isAbsoluteUrl
+                ? syncRequest('GET', uri).getBody('utf8')
+                : fs.readFileSync(uri, 'utf8');
+        } catch (e) {
+            throw pktError(scope, e, `failed to load ${uri}`);
+        }
     },
-    yaml(uri) {
-        const text = load.text(uri);
-        return jsyaml.load(text);
+    yaml(scope, uri) {
+        const text = load.text(scope, uri);
+        try {
+            return jsyaml.load(text);
+        } catch (e) {
+            throw pktError(scope, e, `failed to parse yaml ${uri}`);
+        }
     },
-    template(uri) {
-        const text = load.text(uri);
-        return _.template(text);
+    template(scope, uri) {
+        const text = load.text(scope, uri);
+        try {
+            return _.template(text);
+        } catch (e) {
+            throw pktError(scope, e, `failed to parse template ${uri}`);
+        }
     }
 }
 
 const lib = scope => ({
     add: object => scopes.add(scope, object),
     expand: path => actions.include(scope, { include: path }),
-    loadText: path => load.text(url.resolve(scope.uri, path)),
-    loadYaml: path => jsyaml.load(load.text(path)),
-    loadYamlAll: path => jsyaml.loadAll(load.text(path)),
-    loadTemplate: path => load.template(path),
+    loadText: path => load.text(scope, url.resolve(scope.uri, path)),
+    loadYaml: path => jsyaml.load(load.text(scope, path)),
+    loadYamlAll: path => jsyaml.loadAll(load.text(scope, path)),
+    loadTemplate: path => load.template(scope, path),
 });
 
 const evaluate = {
@@ -79,27 +108,35 @@ const evaluate = {
         return evaluate.javsScript(scope, javascript);
     },
     script(scope, script) {
-        const regex = /^(\w+)>\s/;
-        const match = script.match(regex);
-        if (match) {
-            switch (match[1].toLowerCase()) {
-                case 'js':
-                    return evaluate.javsScript(scope, script.substr(match[0].length));
-                case 'coffee':
-                    return evaluate.coffeeScript(scope, script.substr(match[0].length));
+        try {
+            const regex = /^(\w+)>\s/;
+            const match = script.match(regex);
+            if (match) {
+                switch (match[1].toLowerCase()) {
+                    case 'js':
+                        return evaluate.javsScript(scope, script.substr(match[0].length));
+                    case 'coffee':
+                        return evaluate.coffeeScript(scope, script.substr(match[0].length));
+                }
+                return evaluate.coffeeScript(scope, script);
             }
-            return evaluate.coffeeScript(scope, script);
+            return evaluate.coffeeScript(scope, script);    
+        } catch (e) {
+            throw pktError(scope, e, `failed to evalute`);
         }
-        return evaluate.coffeeScript(scope, script);            
     },
     template(scope, text) {
-        const tpl = _.template(text);
-        const yaml = tpl({
-            ...scope.values,
-            $: scope
-        });
-        const objects = jsyaml.loadAll(yaml);
-        return objects;
+        try {
+            const tpl = _.template(text);
+            const yaml = tpl({
+                ...scope.values,
+                $: scope
+            });
+            const objects = jsyaml.loadAll(yaml);
+            return objects;
+        } catch (e) {
+            throw pktError(scope, e, 'failed to parse template');
+        }
     },
 }
 
@@ -126,10 +163,10 @@ const actions = {
         const uri = url.resolve(scope.uri, action.include);
 
         if (uri.toLowerCase().endsWith(".pkt")) {
-            const file = load.yaml(uri);
+            const file = load.yaml(scope, uri);
             engine.run(file, scope, uri);
         } else {
-            const tpl = load.text(uri);
+            const tpl = load.text(scope, uri);
             const objects = evaluate.template(scope, tpl);
             objects.forEach(object => scopes.add(scope, object));
         }
@@ -140,10 +177,10 @@ const actions = {
         const uri = url.resolve(scope.uri, action.includeWith);
 
         if (uri.toLowerCase().endsWith(".pkt")) {
-            const file = load.yaml(uri);
+            const file = load.yaml(scope, uri);
             engine.run(file, scope, uri, true);
         } else {
-            const tpl = load.text(uri);
+            const tpl = load.text(scope, uri);
             const objects = evaluate.template(scope, tpl);
             scope.objects.push(...objects);
         }
@@ -217,7 +254,7 @@ const engine = {
     run(file, parent, uri, withObject = false) {
         if (!file) return;
 
-        parent = parent || scopes.create();
+        if (!parent) throw 'no parent scope';
         uri = uri || '.';
 
         scopes.open(parent, uri, scope => {
@@ -225,23 +262,67 @@ const engine = {
             if (withObject)
                 scope.objects = [ ...parent.objects ];
 
-            // 1. build input & values
+            // 2. build input
             scope.values = utils.buildInput(file.input, parent.values);
+
+            // 3. validate schema
+            if (file.schema) {
+                const validate = ajv.compile(file.schema);
+                const valid = validate(scope.values);
+                if (!valid) {
+                    const errtext = ajv.errorsText(validate.errors, { dataVar: 'input' });
+                    throw pktError(scope, new Error(errtext), 'input validation failed');
+                }
+            }
+
+            // 4. build values
             scope.values = {
                 ...scope.values,
                 ...utils.buildAssign(scope, file.assign || {}),
             };
 
-            // 2. run routine
+            // 5. run routine
             engine.routine(scope, file.routine);
         });
         return parent.objects;
     },
-    exec(objects, values, files) {
-        const scope = scopes.create(values, '.', null, objects);
-        files.forEach(path => actions.include(scope, { include: path }));
+    exec(objects, values, files, config) {
+        const scope = scopes.create(values, '.', null, config, objects);
+        files.forEach(path => actions.includeWith(scope, { includeWith: path }));
+
         return scope.objects.map(o => jsyaml.dump(o)).join('---\n');
     }
 }
 
-module.exports = engine;
+class Config {
+    constructor({ repositories }) {
+        this.repositories = repositories || {};
+    }
+    resolve(uri) {
+        if (uri[0] == ':') {
+            const resolved = this.repositories[uri.substr(1)];
+            if (!resolved) {
+                throw new Error(`unknown repo ${uri}`)
+            }
+            return resolved;
+        }
+        return uri;
+    }
+}
+
+const configs = {
+    load() {
+        try {
+            const home = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
+            const confPath = path.join(home, 'pkt.conf');
+            const config = load.yaml(null, confPath);
+            if (!config) config = {};
+            return new Config(config);
+        } catch (e) {
+            console.log(e);
+            return new Config({});
+        }
+    }
+}
+
+module.exports = { engine, configs, load, utils, evaluate, actions, run: engine.run };

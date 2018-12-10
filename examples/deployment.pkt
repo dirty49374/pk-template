@@ -1,9 +1,28 @@
 input:
   port: 0
   label: app
-  name: null
+  name: ''
   image: alpine:latest
   kind: Deployment
+
+schema:
+  description: basic deployment example
+  properties:
+    image:
+      type: string
+      description: container image of deployment
+    name:
+      type: string
+      description: name of deployment, image name will be used if not specified (OPTIONAL)
+    kind:
+      type: string
+      description: kind of deployment, default is 'Deployment' (OPTIONAL)
+    port:
+      type: number
+      description: specify port number to open or zero (OPTIONAL)
+    label:
+      type: string
+      description: default app label name (OPTIONAL)
 
 assign:
   name$: |
