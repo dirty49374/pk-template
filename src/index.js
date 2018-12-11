@@ -12,10 +12,51 @@ _.templateSettings = {
     interpolate: /\<\<\<\=(.+?)\>\>\>/g,
     evaluate: /\<\<\<\_(.+?)\>\>\>/g,
 };
+
+const classAnnotationName = 'github.com/dirty49374/pk-template/class';
+
 const pktError = (scope, error, message) => {
     error.summary = message;
     error.uri = scope.uri;
     return error;
+}
+
+const compileSelector = src => {
+    const nv = src.split('=');
+
+    if (nv.length > 1) {
+        const labelName = nv[0];
+        const labelValue = nv[1];
+        return object =>
+            object.metadata &&
+            object.metadata.labels &&
+            (
+                labelValue === '*'
+                    ? labelName in object.metadata.labels
+                    : object.metadata.labels[labelName] === labelValue
+            );
+    } else if (src[0] === '.') {
+        const name = src.substr(1);
+        return object =>
+            object.metadata &&
+            object.metadata.name == name;
+    } else {
+        return object => object.kind === src;
+    }
+}
+
+const compileSelectorLine = src => {
+    const selectors = src.split(/\s+/)
+        .map(compileSelector);
+    return object => selectors.every(pred => pred(object));
+}
+
+const compileSelectors = src => {
+    if (typeof src === 'string')
+        src = [ src ];
+    const selectors = src.map(compileSelectorLine);
+
+    return object => selectors.some(pred => pred(object));
 }
 
 const clone = obj => JSON.parse(JSON.stringify(obj));
@@ -90,6 +131,29 @@ const lib = scope => ({
     loadYaml: path => jsyaml.load(load.text(scope, path)),
     loadYamlAll: path => jsyaml.loadAll(load.text(scope, path)),
     loadTemplate: path => load.template(scope, path),
+    addClass: (object, cls) => {
+        if (!object.metadata) object.metadata = {};
+        if (!object.metadata.annotations) object.metadata.annotations = {};
+        if (!object.metadata.annotations[classAnnotationName]) {
+            object.metadata.annotations[classAnnotationName] = cls;
+        } else {
+            object.metadata.annotations[classAnnotationName] =
+                `${object.metadata.annotations[classAnnotationName]},${cls}`;
+        }
+    },
+    hasClass: (object, cls) => {
+        if (!object.metadata) return false;
+        if (!object.metadata.annotations) return false;
+        const clsAnno = object.metadata.annotations[classAnnotationName];
+        if (!clsAnno) return false;
+        const classes = clsAnno.split(',');
+        return classes.includes(cls);
+    },
+    addLabel: (object, name, value) => {
+        if (!object.metadata) object.metadata = {};
+        if (!object.metadata.labels) object.metadata.labels = {};
+        object.metadata.labels[name] = value;
+    }
 });
 
 const evaluate = {
@@ -150,6 +214,15 @@ const actions = {
         evaluate.script(scope, action.script, {});
         return true;
     },
+    each(scope, action) {
+        if (!action.each) return false;
+        scope.objects.forEach(o => {
+            scope.object = o;
+            evaluate.script(scope, action.each, {});
+        });
+        delete scope.object;
+        return true;
+    },    
     assign(scope, action) {
         if (!action.assign) return false;
         scope.values = {
@@ -172,9 +245,9 @@ const actions = {
         }
         return true;
     },
-    includeWith(scope, action) {
-        if (!action.includeWith) return false;
-        const uri = url.resolve(scope.uri, action.includeWith);
+    apply(scope, action) {
+        if (!action.apply) return false;
+        const uri = url.resolve(scope.uri, action.apply);
 
         if (uri.toLowerCase().endsWith(".pkt")) {
             const file = load.yaml(scope, uri);
@@ -186,9 +259,14 @@ const actions = {
         }
         return true;
     },
-    routine(scope, action) {
+    routine(parentScope, action) {
         if (!action.routine) return false;
-        scopes.open(scope, scope.uri, scope => {
+        scopes.open(parentScope, parentScope.uri, scope => {
+            if (action.select) {
+                const selector = compileSelectors(action.select);
+                scope.objects = parentScope.objects.filter(selector);
+            }
+        
             engine.routine(scope, action.routine);
         });
         return true;
@@ -240,12 +318,13 @@ const engine = {
                 continue;
             }
 
-            actions.script(scope,      action);
-            actions.assign(scope,      action);
-            actions.include(scope,     action);
-            actions.includeWith(scope, action);
-            actions.template(scope,    action);
-            actions.routine(scope,     action);
+            actions.each(scope,     action);
+            actions.script(scope,   action);
+            actions.assign(scope,   action);
+            actions.include(scope,  action);
+            actions.apply(scope,    action);
+            actions.template(scope, action);
+            actions.routine(scope,  action);
 
             if (actions.break(scope, action))
                 return;
@@ -288,7 +367,7 @@ const engine = {
     },
     exec(objects, values, files, config) {
         const scope = scopes.create(values, '.', null, config, objects);
-        files.forEach(path => actions.includeWith(scope, { includeWith: path }));
+        files.forEach(path => actions.apply(scope, { apply: path }));
 
         return scope.objects.map(o => jsyaml.dump(o)).join('---\n');
     }
@@ -319,7 +398,6 @@ const configs = {
             if (!config) config = {};
             return new Config(config);
         } catch (e) {
-            console.log(e);
             return new Config({});
         }
     }

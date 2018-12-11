@@ -19,6 +19,6 @@ routine:
       (
         n = l.split('=')[0]
         v = l.split('=')[1]
-        o.metadata.labels[n] = v
+        $lib.addLabel(o, n, v)
       ) for l in labels
     ) for o in $.objects

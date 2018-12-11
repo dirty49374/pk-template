@@ -11,7 +11,7 @@ function parseArgs(config) {
     const argv = require('yargs')
         .version(false)
         .help(false)
-        .boolean(['i', 'h', 'v'])
+        .boolean(['i', 'h', 'v', 'd'])
         .argv;
 
     const options = {};
@@ -30,6 +30,7 @@ function parseArgs(config) {
             stdin: !!options.i,
             help: !!options.h,
             version: !!options.v,
+            debug: !!options.d,
         },
         values: values,
         files: argv._.map(expandGlobs)
@@ -65,7 +66,7 @@ function readStdinUntilEnd(cb) {
     });
 }
 
-function run(objects, values, files, config) {
+function run(objects, values, files, config, options) {
     objects = objects || [];
     try {
         const yaml = pkt.engine.exec(objects, values, files, config);
@@ -77,7 +78,9 @@ function run(objects, values, files, config) {
         } else {
             console.error(chalk.red(e.message));
         }
-        // console.log(e);
+        if (options.debug) {
+            console.error(e);
+        }
         process.exit(1);
     }
 }
@@ -138,10 +141,10 @@ function main() {
     if (args.options.stdin) {
         readStdinUntilEnd(text => {
             const objects = jsyaml.loadAll(text);
-            run(objects, args.values, args.files, config);
+            run(objects, args.values, args.files, config, args.options);
         })
     } else {
-        run([], args.values, args.files, config);
+        run([], args.values, args.files, config, args.options);
     }
 }
 
