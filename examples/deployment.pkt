@@ -26,9 +26,11 @@ schema:
 
 assign:
   name$: |
-    name if name
-    path = image.split(':')[0].split('/')
-    path[path.length - 1]
+    if name
+      name
+    else
+      paths = image.split(':')[0].split('/')
+      paths[paths.length - 1]
 
 routine:
 - template: |

@@ -79,16 +79,16 @@ const scopes = {
         };
         return scope;
     },
-    open(parent, uri, func) {
+    open(parent, { uri, objects, values }, handler) {
         const scope = {
-            objects: [],
-            values: clone(parent.values),
-            uri,
+            objects: objects || [],
+            values: values || clone(parent.values),
+            uri: uri || parent.uri,
+            config: parent.config,
             parent,
-            config: parent.config
         };
 
-        func(scope);
+        handler(scope);
     },
     add(scope, object) {
         while (scope) {
@@ -181,6 +181,7 @@ const lib = scope => ({
         if (!object.metadata.annotations) object.metadata.annotations = {};
         object.metadata.annotations[name] = value;
     },
+    arraify: value => Array.isArray(value) ? value : [ value ],
 });
 
 const evaluate = {
@@ -290,7 +291,7 @@ const statements = {
     },
     routine(parentScope, statement) {
         if (!statement.routine) return false;
-        scopes.open(parentScope, parentScope.uri, scope => {
+        scopes.open(parent, {}, scope => {
             if (statement.select) {
                 const selector = compileSelectors(statement.select);
                 scope.objects = parentScope.objects.filter(selector);
@@ -338,6 +339,15 @@ const utils = {
 };
 
 const engine = {
+    statement(scope, statement) {
+        statements.each(scope,     statement);
+        statements.script(scope,   statement);
+        statements.assign(scope,   statement);
+        statements.include(scope,  statement);
+        statements.apply(scope,    statement);
+        statements.template(scope, statement);
+        statements.routine(scope,  statement);
+    },
     routine(scope, routine) {
         if (!routine)
             return;
@@ -346,14 +356,16 @@ const engine = {
             if (statement.if && !evaluate.script(scope, statement.if)) {
                 continue;
             }
+            if (statement.select) {
+                const selector = compileSelectors(statement.select);
+                const objects = parentScope.objects.filter(selector);
+                scopes.open(parent, { objects, values: scope.values }, cscope => {
+                    engine.statement(scope, statement)
+                });
+            }
 
-            statements.each(scope,     statement);
-            statements.script(scope,   statement);
-            statements.assign(scope,   statement);
-            statements.include(scope,  statement);
-            statements.apply(scope,    statement);
-            statements.template(scope, statement);
-            statements.routine(scope,  statement);
+
+            scope.objects = objects;
 
             if (statements.break(scope, statement))
                 return;
@@ -365,7 +377,7 @@ const engine = {
         if (!parent) throw 'no parent scope';
         uri = uri || '.';
 
-        scopes.open(parent, uri, scope => {
+        scopes.open(parent, { uri }, scope => {
             // 1. bind objects
             if (withObject)
                 scope.objects = [ ...parent.objects ];

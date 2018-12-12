@@ -1,0 +1,25 @@
+input:
+  set: null
+  
+schema:
+  title: set-label
+  description: add labels to current scope objects
+  type: object
+  properties:
+    set:
+      description: label name and value set. ex) app=alpine
+      type:
+      - string
+      - array
+
+routine:
+- assign:
+    labels$: |
+      if typeof set == 'string'
+        [ set.split '=' ]
+      else
+        set.map (kvp) -> kvp.split '='
+- each: |
+    (
+      $.setlabel label[0], label[1]
+    ) for label in labels

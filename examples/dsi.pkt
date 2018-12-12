@@ -1,0 +1,57 @@
+#!/usr/bin/env pkt
+
+input:
+  kind: Deployment
+  name: null
+  image: null
+  label: app
+  port: 0
+  service: ClusterIP
+  host: null
+  path: /
+
+schema:
+  title: create Deployment or DaemonSet or StatefulSet with Service, Ingress
+  properties:
+    kind:
+      description: Deployment or DaemonSet or StatefulSet
+      type: string
+      enum: [ "Deployment", "DaemonSet", "StatefulSet" ]
+    name:
+      description: name of deployment
+      type: [ "string", "null" ]
+    image:
+      description: container image
+      type: string
+    label:
+      description: default label name
+      type: string
+    port:
+      description: tcp port number to expose. if specified, service will created.
+      type: number
+    service:
+      description: service type
+      type: string
+      enum: [ "ClusterIP", "NodePort", "LoadBalancer", "None" ]
+    host:
+      description: host name of ingress. if specified, ingress will created.
+      type: [ "string", "null" ]
+    path:
+      description: path of ingress
+      type: string
+  required: [ "image" ]
+
+assign:
+  name$: |
+    if name
+      name
+    else
+      paths = image.split(':')[0].split('/')
+      paths[paths.length - 1]
+
+routine:
+- include: deployment.pkt
+- if: port
+  include: service.pkt
+- if: port && host
+  include: ingress.pkt
