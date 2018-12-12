@@ -1,0 +1,33 @@
+input:
+  port: 0
+  label: app
+  name: null
+  command: null
+  image: alpine:latest
+
+assign:
+  name$: |
+    name if name
+    path = image.split(':')[0].split('/')
+    path[path.length - 1]
+
+routine:
+- template: |
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: <<<= name >>>
+      labels:
+        <<<= label >>>: <<<= name >>>
+    spec:
+      containers:
+      - name: <<<= name >>>
+        image: <<<= image >>>
+        <<<_ if (port) { >>>
+        ports:
+        - containerPort: <<<= port >>>
+        <<<_ } >>>
+        <<<_ if (command) { >>>
+        command: <<<= JSON.stringify(typeof command == 'string' ? [ command ] : command) >>>
+        <<<_ } >>>
+

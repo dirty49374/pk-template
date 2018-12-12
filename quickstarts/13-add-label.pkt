@@ -1,0 +1,8 @@
+input:
+  name: null
+  value: null
+
+routine:
+- if: name && value
+  script: |
+    $.setlabel o, name, value for o in $.objects

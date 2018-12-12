@@ -13,8 +13,6 @@ _.templateSettings = {
     evaluate: /\<\<\<\_(.+?)\>\>\>/g,
 };
 
-const classAnnotationName = 'github.com/dirty49374/pk-template/class';
-
 const pktError = (scope, error, message) => {
     error.summary = message;
     error.uri = scope.uri;
@@ -25,15 +23,25 @@ const compileSelector = src => {
     const nv = src.split('=');
 
     if (nv.length > 1) {
-        const labelName = nv[0];
-        const labelValue = nv[1];
+        const name = nv[0];
+        const value = nv[1];
+        if (type === '!') {
+            return object =>
+                object.metadata &&
+                object.metadata.annotations &&
+                (
+                    value === '*'
+                        ? name in object.metadata.annotations
+                        : object.metadata.annotations[name] === value
+                );
+        }
         return object =>
             object.metadata &&
             object.metadata.labels &&
             (
-                labelValue === '*'
-                    ? labelName in object.metadata.labels
-                    : object.metadata.labels[labelName] === labelValue
+                value === '*'
+                    ? name in object.metadata.labels
+                    : object.metadata.labels[name] === value
             );
     } else if (src[0] === '.') {
         const name = src.substr(1);
@@ -126,30 +134,18 @@ const load = {
 
 const lib = scope => ({
     add: object => scopes.add(scope, object),
-    expand: path => actions.include(scope, { include: path }),
+    expand: path => statements.include(scope, { include: path }),
     loadText: path => load.text(scope, url.resolve(scope.uri, path)),
     loadYaml: path => jsyaml.load(load.text(scope, path)),
     loadYamlAll: path => jsyaml.loadAll(load.text(scope, path)),
     loadTemplate: path => load.template(scope, path),
-    addClass: (object, cls) => {
+    setannotation: (object, name, value) => {
         if (!object.metadata) object.metadata = {};
         if (!object.metadata.annotations) object.metadata.annotations = {};
-        if (!object.metadata.annotations[classAnnotationName]) {
-            object.metadata.annotations[classAnnotationName] = cls;
-        } else {
-            object.metadata.annotations[classAnnotationName] =
-                `${object.metadata.annotations[classAnnotationName]},${cls}`;
-        }
+        object.metadata.annotations[name] = value;
+
     },
-    hasClass: (object, cls) => {
-        if (!object.metadata) return false;
-        if (!object.metadata.annotations) return false;
-        const clsAnno = object.metadata.annotations[classAnnotationName];
-        if (!clsAnno) return false;
-        const classes = clsAnno.split(',');
-        return classes.includes(cls);
-    },
-    addLabel: (object, name, value) => {
+    setlabel: (object, name, value) => {
         if (!object.metadata) object.metadata = {};
         if (!object.metadata.labels) object.metadata.labels = {};
         object.metadata.labels[name] = value;
@@ -158,8 +154,10 @@ const lib = scope => ({
 
 const evaluate = {
     eval(scope, script) {
-        const $ = scope;
-        const $lib = lib(scope);
+        const $ = {
+            ...scope,
+            ...lib(scope)
+        };
         with (scope.values) {
             return eval(script);
         }
@@ -204,36 +202,36 @@ const evaluate = {
     },
 }
 
-const actions = {
-    break(scope, action) {
-        if (!action.break) return false;
+const statements = {
+    break(scope, statement) {
+        if (!statement.break) return false;
         return true;
     },
-    script(scope, action) {
-        if (!action.script) return false;
-        evaluate.script(scope, action.script, {});
+    script(scope, statement) {
+        if (!statement.script) return false;
+        evaluate.script(scope, statement.script, {});
         return true;
     },
-    each(scope, action) {
-        if (!action.each) return false;
+    each(scope, statement) {
+        if (!statement.each) return false;
         scope.objects.forEach(o => {
             scope.object = o;
-            evaluate.script(scope, action.each, {});
+            evaluate.script(scope, statement.each, {});
         });
         delete scope.object;
         return true;
     },    
-    assign(scope, action) {
-        if (!action.assign) return false;
+    assign(scope, statement) {
+        if (!statement.assign) return false;
         scope.values = {
             ...scope.values,
-            ...utils.buildAssign(scope, action.assign),
+            ...utils.buildAssign(scope, statement.assign),
         };
         return true;
     },
-    include(scope, action) {
-        if (!action.include) return false;
-        const uri = url.resolve(scope.uri, action.include);
+    include(scope, statement) {
+        if (!statement.include) return false;
+        const uri = url.resolve(scope.uri, statement.include);
 
         if (uri.toLowerCase().endsWith(".pkt")) {
             const file = load.yaml(scope, uri);
@@ -245,9 +243,9 @@ const actions = {
         }
         return true;
     },
-    apply(scope, action) {
-        if (!action.apply) return false;
-        const uri = url.resolve(scope.uri, action.apply);
+    apply(scope, statement) {
+        if (!statement.apply) return false;
+        const uri = url.resolve(scope.uri, statement.apply);
 
         if (uri.toLowerCase().endsWith(".pkt")) {
             const file = load.yaml(scope, uri);
@@ -259,21 +257,21 @@ const actions = {
         }
         return true;
     },
-    routine(parentScope, action) {
-        if (!action.routine) return false;
+    routine(parentScope, statement) {
+        if (!statement.routine) return false;
         scopes.open(parentScope, parentScope.uri, scope => {
-            if (action.select) {
-                const selector = compileSelectors(action.select);
+            if (statement.select) {
+                const selector = compileSelectors(statement.select);
                 scope.objects = parentScope.objects.filter(selector);
             }
         
-            engine.routine(scope, action.routine);
+            engine.routine(scope, statement.routine);
         });
         return true;
     },
-    template(scope, action) {
-        if (!action.template) return false;
-        const objects = evaluate.template(scope, action.template);
+    template(scope, statement) {
+        if (!statement.template) return false;
+        const objects = evaluate.template(scope, statement.template);
         objects.forEach(object => scopes.add(scope, object));
         return true;
     },
@@ -313,20 +311,20 @@ const engine = {
         if (!routine)
             return;
 
-        for (const action of routine) {
-            if (action.if && !evaluate.script(scope, action.if)) {
+        for (const statement of routine) {
+            if (statement.if && !evaluate.script(scope, statement.if)) {
                 continue;
             }
 
-            actions.each(scope,     action);
-            actions.script(scope,   action);
-            actions.assign(scope,   action);
-            actions.include(scope,  action);
-            actions.apply(scope,    action);
-            actions.template(scope, action);
-            actions.routine(scope,  action);
+            statements.each(scope,     statement);
+            statements.script(scope,   statement);
+            statements.assign(scope,   statement);
+            statements.include(scope,  statement);
+            statements.apply(scope,    statement);
+            statements.template(scope, statement);
+            statements.routine(scope,  statement);
 
-            if (actions.break(scope, action))
+            if (statements.break(scope, statement))
                 return;
         }
     },
@@ -367,7 +365,7 @@ const engine = {
     },
     exec(objects, values, files, config) {
         const scope = scopes.create(values, '.', null, config, objects);
-        files.forEach(path => actions.apply(scope, { apply: path }));
+        files.forEach(path => statements.apply(scope, { apply: path }));
 
         return scope.objects.map(o => jsyaml.dump(o)).join('---\n');
     }
@@ -403,4 +401,4 @@ const configs = {
     }
 }
 
-module.exports = { engine, configs, load, utils, evaluate, actions, run: engine.run };
+module.exports = { engine, configs, load, utils, evaluate, statements, run: engine.run };

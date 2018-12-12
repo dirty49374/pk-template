@@ -1,4 +1,0 @@
-routine:
-- include: 00-hello-yaml.yaml
-- include: 00-hello-yaml.yaml
-- includeWith: 12-javascript.pkt  # includeWith send current objects too
