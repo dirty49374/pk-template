@@ -13,7 +13,6 @@ routine:
       name: <<<= name >>>
       labels:
         <<<= label >>>: <<<= name >>>
-      annotations: {}
     spec:
       rules:
         - host: <<<= host >>>

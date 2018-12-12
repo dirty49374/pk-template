@@ -1,0 +1,25 @@
+input:
+  set: null
+  
+schema:
+  title: set-annotation
+  description: add annotations to current scope objects
+  type: object
+  properties:
+    set:
+      description: annotation name and value set. ex) app=alpine
+      type:
+      - string
+      - array
+
+routine:
+- assign:
+    annotations$: |
+      if typeof set == 'string'
+        [ set.split '=' ]
+      else
+        set.map (kvp) -> kvp.split '='
+- each: |
+    (
+      $.setannotation annotation[0], annotation[1]
+    ) for annotation in annotations
