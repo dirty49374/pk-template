@@ -139,17 +139,48 @@ const lib = scope => ({
     loadYaml: path => jsyaml.load(load.text(scope, path)),
     loadYamlAll: path => jsyaml.loadAll(load.text(scope, path)),
     loadTemplate: path => load.template(scope, path),
-    setannotation: (object, name, value) => {
-        if (!object.metadata) object.metadata = {};
-        if (!object.metadata.annotations) object.metadata.annotations = {};
-        object.metadata.annotations[name] = value;
-
+    label: (object, name) => {
+        if (typeof object === 'string') {
+            name = object
+            object = scope.object
+        }
+        if (!object) return undefined;
+        if (!object.metadata) return undefined;
+        if (!object.metadata.labels) return undefined;
+        return object.metadata.labels[name];
     },
     setlabel: (object, name, value) => {
+        if (typeof object === 'string') {
+            value = name
+            name = object
+            object = scope.object
+        }
+        if (!object) throw pktError(scope, 'cannot set label', 'object is empty');
         if (!object.metadata) object.metadata = {};
         if (!object.metadata.labels) object.metadata.labels = {};
         object.metadata.labels[name] = value;
-    }
+    },
+    annotation: (object, name) => {
+        if (typeof object === 'string') {
+            name = object
+            object = scope.object
+        }
+        if (!object) return undefined;
+        if (!object.metadata) return undefined;
+        if (!object.metadata.annotations) return undefined;
+        return object.metadata.annotations[name];
+    },
+    setannotation: (object, name, value) => {
+        if (typeof object === 'string') {
+            value = name
+            name = object
+            object = scope.object
+        }
+        if (!object) throw pktError(scope, 'cannot set annotation', 'object is empty');
+        if (!object.metadata) object.metadata = {};
+        if (!object.metadata.annotations) object.metadata.annotations = {};
+        object.metadata.annotations[name] = value;
+    },
 });
 
 const evaluate = {
