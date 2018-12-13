@@ -1,0 +1,55 @@
+input:
+  namespace: null
+
+assign:
+  name: nginx
+
+routine:
+  - routine:
+    - assign:
+        image: nginx
+        port: 80
+        service: LoadBalancer
+    - include: dsi.pkt
+  - add:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: nginx-conf
+      data:
+        nginx.conf: |
+          http {
+            server {
+              listen 8008;
+              location / {
+                root /www;
+              }
+            }
+          }
+  - add:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: nginx-www
+      data:
+        index.html: !ls '"hello, " + name'
+  - routine:
+    - assign:
+        volumeMounts:
+          - name: nginx-conf
+            mountPath: /etc/nginx/nginx.conf
+            subPath: nginx.conf
+          - name: nginx-www
+            mountPath: /www/index.html
+            subPath: index.html
+        volumes:
+          - name: nginx-conf
+            configMap:
+              name: nginx-conf
+          - name: nginx-www
+            configMap:
+              name: nginx-www
+    - select: Deployment .nginx
+      each:
+        $.object.spec.template.spec.containers[0].volumeMounts = volumeMounts
+        $.object.spec.template.spec.containers[0].volumes = volumes

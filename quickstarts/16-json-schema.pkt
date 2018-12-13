@@ -13,10 +13,7 @@ input:
   image: null
 
 assign:
-  name$: |
-    name if name
-    pathes = image.split(':')[0].split('/')
-    pathes[pathes.length - 1]
+  name: !ls if name then name else image.split(':')[0].split('/')[*-1]
 
 routine:
 - template: |

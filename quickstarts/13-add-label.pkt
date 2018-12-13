@@ -5,4 +5,5 @@ input:
 routine:
 - if: name && value
   script: |
-    $.setlabel o, name, value for o in $.objects
+    for o in $.objects
+      $.setlabel o, name, value

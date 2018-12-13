@@ -14,12 +14,10 @@ schema:
 
 routine:
 - assign:
-    labels$: |
+    labels: !ls |
       if typeof set == 'string'
-        [ set.split '=' ]
-      else
-        set.map (kvp) -> kvp.split '='
+      then [ set.split '=' ]
+      else set.map (kvp) -> kvp.split '='
 - each: |
-    (
-      $.setlabel label[0], label[1]
-    ) for label in labels
+    for [ name, value ] in labels
+      $.object.{}metadata.{}labels[name] = value

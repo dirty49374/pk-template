@@ -14,12 +14,10 @@ schema:
 
 routine:
 - assign:
-    annotations$: |
+    annotations: !ls |
       if typeof set == 'string'
-        [ set.split '=' ]
-      else
-        set.map (kvp) -> kvp.split '='
+      then [ set.split '=' ]
+      else set.map (kvp) -> kvp.split '='
 - each: |
-    (
-      $.setannotation annotation[0], annotation[1]
-    ) for annotation in annotations
+    for [ name, value ] in annotations
+      $.object.{}metadata.{}annotations[name] = value

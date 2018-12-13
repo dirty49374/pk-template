@@ -1,10 +1,12 @@
 const _ = require('underscore');
 const fs = require("fs");
+const jsonpatch = require("json-patch");
 const url = require('url');
 const path = require('path');
 const jsyaml = require('js-yaml');
 const syncRequest = require('sync-request');
 const coffeeScript = require('coffee-script');
+const liveScript = require('livescript');
 const Ajv = require('ajv');
 const ajv = new Ajv({allErrors: true});
 
@@ -12,6 +14,34 @@ _.templateSettings = {
     interpolate: /\<\<\<\=(.+?)\>\>\>/g,
     evaluate: /\<\<\<\_(.+?)\>\>\>/g,
 };
+
+class JsCode {
+    constructor(code) {
+        this.code = code;
+    }
+}
+
+const createCustomTag = (name, compile) => {
+    return new jsyaml.Type(`!${name}`, {
+        kind: 'scalar',
+        resolve: data =>
+                typeof data === 'string' ||
+                typeof data === number ||
+                typeof data === null,
+        construct: data => new JsCode(compile ? compile(data) : data),
+        instanceOf: JsCode,
+        represent: jsCode => `!${name} ${jsCode.code}`
+    });
+}
+
+const PKT_SCHEMA = jsyaml.Schema.create([
+    createCustomTag('cs', data => coffeeScript.compile(data, { bare: true })),
+    //createCustomTag('coffee', data => coffeeScript.compile(data, { bare: true })),
+    createCustomTag('ls', data => liveScript.compile(data, { bare: true })),
+    createCustomTag('js', data => data),
+]);
+
+const pktYamlOption = { schema: PKT_SCHEMA };
 
 const pktError = (scope, error, message) => {
     error.summary = message;
@@ -23,16 +53,17 @@ const compileSelector = src => {
     const nv = src.split('=');
 
     if (nv.length > 1) {
-        const name = nv[0];
+        const lname = nv[0];
         const value = nv[1];
-        if (type === '!') {
+        if (lname[0] === '!') {
+            const aname = lname.substring(1)
             return object =>
                 object.metadata &&
                 object.metadata.annotations &&
                 (
                     value === '*'
-                        ? name in object.metadata.annotations
-                        : object.metadata.annotations[name] === value
+                        ? aname in object.metadata.annotations
+                        : object.metadata.annotations[aname] === value
                 );
         }
         return object =>
@@ -40,8 +71,8 @@ const compileSelector = src => {
             object.metadata.labels &&
             (
                 value === '*'
-                    ? name in object.metadata.labels
-                    : object.metadata.labels[name] === value
+                    ? lname in object.metadata.labels
+                    : object.metadata.labels[lname] === value
             );
     } else if (src[0] === '.') {
         const name = src.substr(1);
@@ -63,7 +94,6 @@ const compileSelectors = src => {
     if (typeof src === 'string')
         src = [ src ];
     const selectors = src.map(compileSelectorLine);
-
     return object => selectors.some(pred => pred(object));
 }
 
@@ -117,7 +147,7 @@ const load = {
     yaml(scope, uri) {
         const text = load.text(scope, uri);
         try {
-            return jsyaml.load(text);
+            return jsyaml.load(text, pktYamlOption);
         } catch (e) {
             throw pktError(scope, e, `failed to parse yaml ${uri}`);
         }
@@ -136,7 +166,9 @@ const lib = scope => ({
     add: object => scopes.add(scope, object),
     expand: path => statements.include(scope, { include: path }),
     loadText: path => load.text(scope, url.resolve(scope.uri, path)),
-    loadYaml: path => jsyaml.load(load.text(scope, path)),
+    loadYaml: path => path.toLowerCase().endsWith('.pkt')
+        ? jsyaml.load(load.text(scope, path), pktYamlOption)
+        : jsyaml.load(load.text(scope, path)),
     loadYamlAll: path => jsyaml.loadAll(load.text(scope, path)),
     loadTemplate: path => load.template(scope, path),
     label: (object, name) => {
@@ -194,6 +226,23 @@ const evaluate = {
             return eval(script);
         }
     },
+    deep(scope, object) {
+        if (object instanceof JsCode) {
+            return evaluate.javsScript(scope, object.code);
+        }
+
+        if (Array.isArray(object)) {
+            return object.map(item => evaluate.deep(scope, item));
+        }
+
+        if (typeof object === 'object') {
+            const clone = {};
+            Object.keys(object)
+                .forEach(key => clone[key] = evaluate.deep(scope, object[key]));
+            return clone;
+        }
+        return object;
+    },
     javsScript(scope, javascript) {
         return evaluate.eval(scope, javascript);
     },
@@ -201,20 +250,15 @@ const evaluate = {
         const javascript = coffeeScript.compile(coffeescript, { bare: true });
         return evaluate.javsScript(scope, javascript);
     },
+    liveScript(scope, livescript) {
+        const javascript = liveScript.compile(livescript, { bare: true });
+        return evaluate.javsScript(scope, javascript);
+    },
     script(scope, script) {
         try {
-            const regex = /^(\w+)>\s/;
-            const match = script.match(regex);
-            if (match) {
-                switch (match[1].toLowerCase()) {
-                    case 'js':
-                        return evaluate.javsScript(scope, script.substr(match[0].length));
-                    case 'coffee':
-                        return evaluate.coffeeScript(scope, script.substr(match[0].length));
-                }
-                return evaluate.coffeeScript(scope, script);
-            }
-            return evaluate.coffeeScript(scope, script);    
+            if (script instanceof JsCode)
+                return evaluate.javsScript(scope, script.code);
+            return evaluate.liveScript(scope, script);
         } catch (e) {
             throw pktError(scope, e, `failed to evalute`);
         }
@@ -226,7 +270,7 @@ const evaluate = {
                 ...scope.values,
                 $: scope
             });
-            const objects = jsyaml.loadAll(yaml);
+            const objects = jsyaml.loadAll(yaml, PKT_SCHEMA);
             return objects;
         } catch (e) {
             throw pktError(scope, e, 'failed to parse template');
@@ -257,8 +301,14 @@ const statements = {
         if (!statement.assign) return false;
         scope.values = {
             ...scope.values,
-            ...utils.buildAssign(scope, statement.assign),
+            ...evaluate.deep(scope, statement.assign || {}),
         };
+        return true;
+    },
+    add(scope, statement) {
+        if (!statement.add) return false;
+        const object = evaluate.deep(scope, statement.add);
+        scopes.add(scope, object);
         return true;
     },
     include(scope, statement) {
@@ -289,14 +339,18 @@ const statements = {
         }
         return true;
     },
+    patch(scope, statement) {
+        if (!statement.patch) return false;
+        const patch = Array.isArray(statement.patch) ? statement.patch : [ statement.patch ];
+        scope.objects.forEach((o, n) => {
+            jsonpatch.apply(o, patch);
+        });
+        delete scope.object;
+        return true;
+    },    
     routine(parentScope, statement) {
         if (!statement.routine) return false;
-        scopes.open(parent, {}, scope => {
-            if (statement.select) {
-                const selector = compileSelectors(statement.select);
-                scope.objects = parentScope.objects.filter(selector);
-            }
-        
+        scopes.open(parentScope, {}, scope => {
             engine.routine(scope, statement.routine);
         });
         return true;
@@ -323,18 +377,7 @@ const utils = {
     buildAssign(scope, assign) {
         if (!assign) return {};
 
-        const values = {};
-        Object
-            .keys(assign)
-            .forEach(key => {
-                if (!key.endsWith('$')) {
-                    values[key] = assign[key];
-                } else {
-                    values[key.substring(0, key.length - 1)] =
-                        evaluate.script(scope, assign[key], {});
-                }
-            });
-        return values;
+        return evaluate.deep(scope, assign);
     },
 };
 
@@ -345,6 +388,8 @@ const engine = {
         statements.assign(scope,   statement);
         statements.include(scope,  statement);
         statements.apply(scope,    statement);
+        statements.add(scope,      statement);
+        statements.patch(scope,    statement);
         statements.template(scope, statement);
         statements.routine(scope,  statement);
     },
@@ -358,14 +403,13 @@ const engine = {
             }
             if (statement.select) {
                 const selector = compileSelectors(statement.select);
-                const objects = parentScope.objects.filter(selector);
-                scopes.open(parent, { objects, values: scope.values }, cscope => {
-                    engine.statement(scope, statement)
+                const objects = scope.objects.filter(selector);
+                scopes.open(scope, { objects, values: scope.values }, cscope => {
+                    engine.statement(cscope, statement)
                 });
+            } else {
+                engine.statement(scope, statement)
             }
-
-
-            scope.objects = objects;
 
             if (statements.break(scope, statement))
                 return;
@@ -398,7 +442,7 @@ const engine = {
             // 4. build values
             scope.values = {
                 ...scope.values,
-                ...utils.buildAssign(scope, file.assign || {}),
+                ...evaluate.deep(scope, file.assign || {}),
             };
 
             // 5. run routine

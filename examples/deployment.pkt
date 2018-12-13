@@ -25,12 +25,7 @@ schema:
       description: default app label name (OPTIONAL)
 
 assign:
-  name$: |
-    if name
-      name
-    else
-      paths = image.split(':')[0].split('/')
-      paths[paths.length - 1]
+  name: !ls if name then name else image.split(':')[0].split('/')[*-1]
 
 routine:
 - template: |

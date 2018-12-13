@@ -8,7 +8,7 @@ $ npm install pk-template -g
 ```
 
 ## example
-```
+```bash
 $ cat > pod.yaml <<EOF
 apiVersion: v1
 kind: Pod
@@ -16,13 +16,16 @@ spec:
   containers:
   - image: <<<= image >>>
 EOF
+
 $ pkt pod.yaml --image nginx
 apiVersion: v1
 kind: Pod
 spec:
   containers:
     - image: nginx
+```
 
+```bash
 $ cat > sample.pkt <<EOF
 input:
   namespace: test
@@ -34,11 +37,10 @@ routine:
     image: apache
 - include: pod.yaml
 - script: |
-    (
+    for obj in $.objects
       obj.metadata =
-        name: obj.spec.containers[0].image.split(':')[0].split('/').reverse()[0]
+        name: obj.spec.containers[0].image.split(':')[0].split('/')[*-1*]
         namespace: namespace
-    ) for obj in $.objects
 EOF
 $ pkt sample.pkt --namespace pkt
 apiVersion: v1
@@ -62,5 +64,5 @@ metadata:
 ```
 
 ## more info
-- [QuickStart](quickstarts/QuickStarts.md)
+- [QuickStarts](quickstarts/QuickStarts.md)
 

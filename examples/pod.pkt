@@ -6,10 +6,7 @@ input:
   image: alpine:latest
 
 assign:
-  name$: |
-    name if name
-    path = image.split(':')[0].split('/')
-    path[path.length - 1]
+  name: !ls if name then name else image.split(':')[0].split('/')[*-1]
 
 routine:
 - template: |
@@ -31,3 +28,7 @@ routine:
         command: <<<= JSON.stringify(typeof command == 'string' ? [ command ] : command) >>>
         <<<_ } >>>
 
+- patch:
+    op: replace
+    path: /apiVersion
+    value: apps/v2

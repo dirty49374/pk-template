@@ -42,12 +42,10 @@ schema:
   required: [ "image" ]
 
 assign:
-  name$: |
+  name: !ls |
     if name
-      name
-    else
-      paths = image.split(':')[0].split('/')
-      paths[paths.length - 1]
+    then name
+    else image.split(':')[0].split('/')[*-1]
 
 routine:
 - include: deployment.pkt
