@@ -421,6 +421,7 @@ spec:
 
 ### json schema
 
+source
 ```yaml
 # 16-json-schema.pkt
 schema:
@@ -493,4 +494,144 @@ ERROR: input validation failed in quickstarts/16-json-schema.pkt
        input.image should be string
 ```
 
-       
+### add
+
+source
+```yaml
+# 17-add.pkt
+routine:
+- add:
+    kind: Pod
+    apiVersion: v1
+    metadata:
+      name: alpine
+      labels:
+        name: alpine
+    spec:
+      containers:
+      - name: alpine
+        image: alpine
+    
+```
+
+result
+```bash
+$ pkt 17-add.pkt
+kind: Pod
+apiVersion: v1
+metadata:
+  name: alpine
+  labels:
+    name: alpine
+spec:
+  containers:
+    - name: alpine
+      image: alpine
+```
+
+### json patch
+
+source
+```yaml
+# 18-json-patch.pkt
+routine:
+- add:
+    kind: Pod
+    apiVersion: v1
+    metadata:
+      name: alpine
+      labels:
+        name: alpine
+    spec:
+      containers:
+      - name: alpine
+        image: alpine
+- patch:
+    op: replace
+    path: /spec/containers/0/image
+    value: alpine:latest
+- patch:
+  - op: replace
+    path: /metadata/name
+    value: alpine
+  - op: replace
+    path: /metadata/labels/name
+    value: !ls $.objects[0].metadata.name
+  - op: replace
+    path: /spec/containers/0/name
+    value: !ls $.objects[0].metadata.name
+```
+
+result
+```bash
+$ pkt 18-json-patch.pkt
+kind: Pod
+apiVersion: v1
+metadata:
+  name: alpine
+  labels:
+    name: alpine
+spec:
+  containers:
+    - name: alpine
+      image: 'alpine:latest'
+```
+
+### json path
+
+source
+```yaml
+# 19-json-path.pkt
+routine:
+- add:
+    kind: Pod
+    apiVersion: v1
+    metadata:
+      name: alpine
+      labels:
+        name: alpine
+    spec:
+      containers:
+      - name: alpine
+        image: alpine
+      - name: ubuntu
+        image: ubuntu
+- select: Pod
+  jsonpath:
+    query: $..containers[?(@.name == 'alpine')].image
+    apply: alpine:latest    # apply to image
+- select: Pod
+  jsonpath:
+    query: $..containers[?(@.name == 'ubuntu')]
+    exec: !ls |             # execute script with qurey result stored in $.value
+      $.value.resources =
+        requests:
+          memory: "64Mi"
+          cpu: "100m"
+        limits:
+          memory: "128Mi"
+          cpu: "200m"
+```
+
+result
+```bash
+kind: Pod
+apiVersion: v1
+metadata:
+  name: alpine
+  labels:
+    name: alpine
+spec:
+  containers:
+    - name: alpine
+      image: 'alpine:latest'  # alpine -> alpine:latest
+    - name: ubuntu
+      image: ubuntu
+      resources:              # added
+        requests:
+          memory: 64Mi
+          cpu: 100m
+        limits:
+          memory: 128Mi
+          cpu: 200m
+```

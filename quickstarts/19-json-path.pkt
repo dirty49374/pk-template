@@ -15,11 +15,11 @@ routine:
 - select: Pod
   jsonpath:
     query: $..containers[?(@.name == 'alpine')].image
-    apply: alpine:latest
+    apply: alpine:latest    # apply to image
 - select: Pod
   jsonpath:
     query: $..containers[?(@.name == 'ubuntu')]
-    exec: !ls |
+    exec: !ls |             # execute script with qurey result stored in $.value
       $.value.resources =
         requests:
           memory: "64Mi"

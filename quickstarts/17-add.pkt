@@ -10,5 +10,3 @@ routine:
       containers:
       - name: alpine
         image: alpine
-    
-    
