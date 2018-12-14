@@ -1,7 +1,6 @@
 routine:
 - select: Deployment instance-type=c1
   each: |
-    console.log 'hi'
     $.object.spec.template.spec.containers[0].resources =
       requests:
         memory: "64Mi"

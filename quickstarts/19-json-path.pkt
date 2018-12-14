@@ -14,5 +14,16 @@ routine:
         image: ubuntu
 - select: Pod
   jsonpath:
-    query: $.metadata
-    exec: $.object.metadata = JSON.stringify $.value
+    query: $..containers[?(@.name == 'alpine')].image
+    apply: alpine:latest
+- select: Pod
+  jsonpath:
+    query: $..containers[?(@.name == 'ubuntu')]
+    exec: !ls |
+      $.value.resources =
+        requests:
+          memory: "64Mi"
+          cpu: "100m"
+        limits:
+          memory: "128Mi"
+          cpu: "200m"
