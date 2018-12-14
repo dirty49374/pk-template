@@ -6,4 +6,4 @@ routine:
 - if: name && value
   script: |
     for o in $.objects
-      $.setlabel o, name, value
+      o.{}metadata.{}labels[name] = value

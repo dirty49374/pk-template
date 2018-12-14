@@ -37,6 +37,7 @@
     "js-yaml": "^3.12.0",
     "json-patch": "^0.7.0",
     "jsonpatch": "^3.0.1",
+    "jsonpath": "^1.0.0",
     "livescript": "^1.6.0",
     "sync-request": "^6.0.0",
     "underscore": "^1.9.1",

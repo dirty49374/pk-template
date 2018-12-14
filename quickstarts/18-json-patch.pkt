@@ -1,0 +1,27 @@
+routine:
+- add:
+    kind: Pod
+    apiVersion: v1
+    metadata:
+      name: alpine
+      labels:
+        name: alpine
+    spec:
+      containers:
+      - name: alpine
+        image: alpine
+- patch:
+    op: replace
+    path: /spec/containers/0/image
+    value: alpine:latest
+- patch:
+  - op: replace
+    path: /metadata/name
+    value: alpine
+  - op: replace
+    path: /metadata/labels/name
+    value: !ls $.objects[0].metadata.name
+  - op: replace
+    path: /spec/containers/0/name
+    value: !ls $.objects[0].metadata.name
+    

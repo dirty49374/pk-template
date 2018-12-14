@@ -1,0 +1,18 @@
+routine:
+- add:
+    kind: Pod
+    apiVersion: v1
+    metadata:
+      name: alpine
+      labels:
+        name: alpine
+    spec:
+      containers:
+      - name: alpine
+        image: alpine
+      - name: ubuntu
+        image: ubuntu
+- select: Pod
+  jsonpath:
+    query: $.metadata
+    exec: $.object.metadata = JSON.stringify $.value

@@ -1,6 +1,7 @@
 const _ = require('underscore');
 const fs = require("fs");
 const jsonpatch = require("json-patch");
+const jsonpath = require("jsonpath");
 const url = require('url');
 const path = require('path');
 const jsyaml = require('js-yaml');
@@ -118,7 +119,7 @@ const scopes = {
             parent,
         };
 
-        handler(scope);
+        return handler(scope);
     },
     add(scope, object) {
         while (scope) {
@@ -325,6 +326,26 @@ const statements = {
         }
         return true;
     },
+    jsonpath(scope, statement) {
+        if (!statement.jsonpath) return false;
+        scope.objects.forEach(o => {
+            const nodes = jsonpath.nodes(o, statement.jsonpath.query);
+            nodes.forEach(node => {
+                scopes.open(scope, {}, cscope => {
+                    cscope.object = o;
+                    cscope.path = node.path;
+                    cscope.value = node.value;
+
+                    if (statement.jsonpath.apply) {
+                        const value = evaluate.deep(cscope, statement.jsonpath.apply);
+                        jsonpath.apply(o, jsonpath.stringify(node.path), () => value);
+                    } else if (statement.jsonpath.exec) {
+                        evaluate.script(cscope, statement.jsonpath.exec);
+                    }
+                });
+            })
+        });
+    },
     apply(scope, statement) {
         if (!statement.apply) return false;
         const uri = url.resolve(scope.uri, statement.apply);
@@ -342,8 +363,9 @@ const statements = {
     patch(scope, statement) {
         if (!statement.patch) return false;
         const patch = Array.isArray(statement.patch) ? statement.patch : [ statement.patch ];
-        scope.objects.forEach((o, n) => {
-            jsonpatch.apply(o, patch);
+        scope.objects.forEach(o => {
+            const p = evaluate.deep(scope, patch);
+            jsonpatch.apply(o, p);
         });
         delete scope.object;
         return true;
@@ -384,6 +406,7 @@ const utils = {
 const engine = {
     statement(scope, statement) {
         statements.each(scope,     statement);
+        statements.jsonpath(scope, statement);
         statements.script(scope,   statement);
         statements.assign(scope,   statement);
         statements.include(scope,  statement);
