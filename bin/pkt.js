@@ -11,7 +11,7 @@ function parseArgs(config) {
     const argv = require('yargs')
         .version(false)
         .help(false)
-        .boolean(['i', 'h', 'v', 'd'])
+        .boolean(['i', 'h', 'v', 'd', 's'])
         .argv;
 
     const options = {};
@@ -31,6 +31,7 @@ function parseArgs(config) {
             help: !!options.h,
             version: !!options.v,
             debug: !!options.d,
+            shellscript: !!options.s,
         },
         values: values,
         files: argv._.map(expandGlobs)
@@ -69,8 +70,20 @@ function readStdinUntilEnd(cb) {
 function run(objects, values, files, config, options) {
     objects = objects || [];
     try {
-        const yaml = pkt.runtimes.exec(objects, values, files, config);
-        console.log(yaml);
+        const userdata = {};
+        const yaml = pkt.runtimes.exec(objects, values, files, config, userdata);
+        if (options.shellscript) {
+            if (userdata.kubeconfig) {
+                console.log(`cat | kubectl --kubeconfig ${userdata.kubeconfig} apply -f - <<EOF`)
+            } else {
+                console.log(`cat | kubectl apply -f - <<EOF`)
+            }
+            console.log(yaml);
+            console.log("EOF")
+            console.log("")
+        } else {
+            console.log(yaml);
+        }
     } catch (e) {
         if (e.summary) {
             console.error(chalk.red('ERROR: ' + e.summary + ' in ' + e.uri));
@@ -102,6 +115,7 @@ function help(args) {
 
     console.log('OPTIONS:');
     console.log('   -h           : help');
+    console.log('   -s           : generate shell script');
     console.log('   -i           : load yamls from stdin as initial objects');
     console.log('   --name value : assign name = value');
     console.log();

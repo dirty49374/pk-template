@@ -4,7 +4,7 @@ const jsyaml = require('js-yaml');
 const jsonpath = require('jsonpath');
 const jsonpatch = require('json-patch');
 
-const base = require('./base');
+const utils = require('./utils');
 const scopes = require('./scopes');
 const loaders = require('./loaders');
 const selectors = require('./selectors');
@@ -111,6 +111,11 @@ const runtimes = {
             });
             return true;
         },
+        kubeconfig(scope, statement) {
+            if (!statement.kubeconfig) return false;
+            scope.userdata.kubeconfig = evaluators.deep(scope, statement.kubeconfig);
+            return true;
+        },
         template(scope, statement) {
             if (!statement.template) return false;
             const objects = evaluators.template(scope, statement.template);
@@ -128,6 +133,7 @@ const runtimes = {
         runtimes.statements.add(scope,      statement);
         runtimes.statements.patch(scope,    statement);
         runtimes.statements.template(scope, statement);
+        runtimes.statements.kubeconfig(scope, statement);
         runtimes.statements.routine(scope,  statement);
     },
     routine(scope, routine) {
@@ -182,7 +188,7 @@ const runtimes = {
                 const valid = validate(scope.values);
                 if (!valid) {
                     const errtext = ajv.errorsText(validate.errors, { dataVar: 'input' });
-                    throw base.pktError(scope, new Error(errtext), 'input validation failed');
+                    throw utils.pktError(scope, new Error(errtext), 'input validation failed');
                 }
             }
 
@@ -197,8 +203,8 @@ const runtimes = {
         });
         return parent.objects;
     },
-    exec(objects, values, files, config) {
-        const scope = scopes.create(values, '.', null, config, objects);
+    exec(objects, values, files, config, userdata) {
+        const scope = scopes.create(values, '.', null, config, objects, userdata || {});
         files.forEach(path => runtimes.statements.apply(scope, { apply: path }));
 
         return scope.objects.map(o => jsyaml.dump(o)).join('---\n');

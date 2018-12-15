@@ -1,6 +1,6 @@
 {
   "name": "pk-template",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "p template engine for kubernetes",
   "main": "src/index.js",
   "scripts": {
@@ -38,8 +38,10 @@
     "json-patch": "^0.7.0",
     "jsonpath": "^1.0.0",
     "livescript": "^1.6.0",
+    "node-whereis": "0.0.1",
     "sync-request": "^6.0.0",
     "underscore": "^1.9.1",
+    "whereis": "^1.0.0",
     "yargs": "^12.0.5"
   },
   "devDependencies": {

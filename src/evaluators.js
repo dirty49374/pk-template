@@ -1,8 +1,8 @@
 const _ = require('underscore');
 const liveScript = require('livescript');
 const coffeeScript = require('coffeescript');
-const base = require('./base');
-const loaders = require('./loaders');
+const utils = require('./utils');
+const yamls = require('./yamls');
 
 const evaluators = {
     eval(scope, script) {
@@ -15,7 +15,7 @@ const evaluators = {
         }
     },
     deep(scope, object) {
-        if (object instanceof base.JavaScriptCode) {
+        if (object instanceof utils.JavaScriptCode) {
             return evaluators.javsScript(scope, object.code);
         }
 
@@ -44,11 +44,11 @@ const evaluators = {
     },
     script(scope, script) {
         try {
-            if (script instanceof base.JavaScriptCode)
+            if (script instanceof utils.JavaScriptCode)
                 return evaluators.javsScript(scope, script.code);
             return evaluators.liveScript(scope, script);
         } catch (e) {
-            throw base.pktError(scope, e, `failed to evalute`);
+            throw utils.pktError(scope, e, `failed to evalute`);
         }
     },
     template(scope, text) {
@@ -58,10 +58,10 @@ const evaluators = {
                 ...scope.values,
                 $: scope
             });
-            const objects = loaders.yamlTextAll(yaml);
+            const objects = yamls.loadAll(yaml);
             return objects;
         } catch (e) {
-            throw base.pktError(scope, e, 'failed to parse template');
+            throw utils.pktError(scope, e, 'failed to parse template');
         }
     },
 }

@@ -1,5 +1,5 @@
 input:
-  namespace: null
+  namespace: nginx-test
 
 assign:
   name: nginx
@@ -53,3 +53,7 @@ routine:
       each:
         $.object.spec.template.spec.containers[0].volumeMounts = volumeMounts
         $.object.spec.template.spec.containers[0].volumes = volumes
+  - if: namespace
+    each:
+      $.object.{}metadata.namespace = namespace
+  - kubeconfig: ~/.kube/hive
