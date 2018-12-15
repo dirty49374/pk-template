@@ -2,4 +2,5 @@ routine:
 - include: 00-hello-yaml.yaml
 - include: 00-hello-yaml.yaml
 - script: |
-    o.hello = "#{o.hello}-#{i}" for o, i in $.objects
+    for o, i in $.objects
+        o.hello = "#{o.hello}-#{i}"

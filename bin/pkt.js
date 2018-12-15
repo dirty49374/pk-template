@@ -69,7 +69,7 @@ function readStdinUntilEnd(cb) {
 function run(objects, values, files, config, options) {
     objects = objects || [];
     try {
-        const yaml = pkt.engine.exec(objects, values, files, config);
+        const yaml = pkt.runtimes.exec(objects, values, files, config);
         console.log(yaml);
     } catch (e) {
         if (e.summary) {
