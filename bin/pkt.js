@@ -11,7 +11,7 @@ function parseArgs(config) {
     const argv = require('yargs')
         .version(false)
         .help(false)
-        .boolean(['i', 'h', 'v', 'd', 's'])
+        .boolean(['i', 'h', 'v', 'd', 'x'])
         .argv;
 
     const options = {};
@@ -31,7 +31,7 @@ function parseArgs(config) {
             help: !!options.h,
             version: !!options.v,
             debug: !!options.d,
-            shellscript: !!options.s,
+            shellscript: !!options.x,
         },
         values: values,
         files: argv._.map(expandGlobs)
@@ -73,12 +73,18 @@ function run(objects, values, files, config, options) {
         const userdata = {};
         const yaml = pkt.runtimes.exec(objects, values, files, config, userdata);
         if (options.shellscript) {
+            console.log("#!/bin/sh")
+            console.log()
+            console.log(`echo "now deploying objects using '${userdata.kubeconfig}' kubeconfig"`)
+            console.log()
             if (userdata.kubeconfig) {
                 console.log(`cat | kubectl --kubeconfig ${userdata.kubeconfig} apply -f - <<EOF`)
             } else {
                 console.log(`cat | kubectl apply -f - <<EOF`)
             }
+            console.log("# ------- YAML BEGIN -------")
             console.log(yaml);
+            console.log("# ------- YAML ENDS -------")
             console.log("EOF")
             console.log("")
         } else {
@@ -115,7 +121,7 @@ function help(args) {
 
     console.log('OPTIONS:');
     console.log('   -h           : help');
-    console.log('   -s           : generate shell script');
+    console.log('   -x           : generate shell script');
     console.log('   -i           : load yamls from stdin as initial objects');
     console.log('   --name value : assign name = value');
     console.log();
