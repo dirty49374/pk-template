@@ -8,8 +8,8 @@ const scopes = {
             values: values ? clone(values) : {},
             uri: uri || '.',
             parent: parent || null,
-            config: config,
-            userdata: userdata,
+            config: config || {},
+            userdata: userdata || {},
             $buildLib: scopes.buildLib,
         };
         return scope;
