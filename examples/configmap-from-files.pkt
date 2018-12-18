@@ -1,0 +1,46 @@
+input:
+  name: null
+  files: null
+  namespace: null
+
+schema:
+  title: create configmap from directory
+  properties:
+    name:
+      type: string
+      description: name of ConfigMap
+    files:
+      type: [ "string", "array" ]
+      description: file path (glob)
+    namespace:
+      type: [ "string", "null" ]
+      description: namespace name
+  required: [ "name", "files" ]
+
+routine:
+- assign:
+    globs: !ls |
+      if typeof files === 'string' then [ files ] else files
+- assign:
+    paths: !ls |
+      map = {}
+      for glob in globs
+        list = $.globs(glob, true)
+        for path in list
+          map[path] = true
+      Object.keys(map)
+- add:
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: !ls name
+    data: {}
+- if: namespace
+  script: |
+    $.objects[*-1].metadata.namespace = namespace
+- script: |
+    data = $.objects[*-1].data
+    for path in paths
+      key = $.basename path
+      data[key] = $.loadText(path, true).replace(/\r/g, "")
+  
