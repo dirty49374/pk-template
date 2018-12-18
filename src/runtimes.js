@@ -98,8 +98,10 @@ const runtimes = {
             if (!statement.patch) return false;
             const patch = Array.isArray(statement.patch) ? statement.patch : [ statement.patch ];
             scope.objects.forEach(o => {
+                scope.object = o;
                 const p = evaluators.deep(scope, patch);
                 jsonpatch.apply(o, p);
+                delete scope.object;
             });
             delete scope.object;
             return true;

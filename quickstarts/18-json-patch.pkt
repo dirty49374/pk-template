@@ -20,8 +20,8 @@ routine:
     value: alpine
   - op: replace
     path: /metadata/labels/name
-    value: !ls $.objects[0].metadata.name
+    value: !ls $.object.metadata.name
   - op: replace
     path: /spec/containers/0/name
-    value: !ls $.objects[0].metadata.name
+    value: !ls $.object.metadata.name
     

@@ -87,7 +87,7 @@ result
 $ pkt 04-pkt.pkt
 hi: pkt
 
-$ pkt 04-pkt.pkt --greet hi --name world   # cannot override 'assign'
+$ pkt 04-pkt.pkt --greet hello --name world   # cannot override 'assign'
 hi: pkt
 
 ```
@@ -147,7 +147,7 @@ input:
 
 assign:
   greet: welcome
-  name$: name.toUpperCase()         # name ends with '$' is coffee script
+  name: !js name.toUpperCase()         # !js yaml tag is javsscript
 
 routine:
 - template: |
@@ -197,10 +197,10 @@ input:
   world: 1
 
 routine:
-- if: world == 1            # if works too ( it's coffee script )
+- if: world == 1          # if works too ( default script is live script )
   template: |
     hello: world1
-- if: world == 2
+- if: !js world == 2      # !js = javascript
   template: |
     hello: world2
 
@@ -216,7 +216,7 @@ hello: world2
 
 ```
 
-### using subroutine
+### subroutine & scope
 
 source
 ```yaml
@@ -252,34 +252,41 @@ hello: world
 
 source
 ```yaml
-# 11-default-is-coffeescript.pkt
+# 11-default-is-livescript.pkt
 routine:
 - include: 00-hello-yaml.yaml
 - include: 00-hello-yaml.yaml
 - script: |
-    o.hello = "#{o.hello}-#{i}" for o, i in $.objects   # this is coffee script
+    for o, i in $.objects       # this is livescript codes
+      o.hello = "#{o.hello}-#{i}" 
 
 ```
 
 result
 ```bash
-$ pkt 11-default-is-coffeescript.pkt
+$ pkt 11-default-is-livescript.pkt
 hello: yaml-0
 ---
 hello: yaml-1
 
 ```
 
-### javascript can be used (prefixed '`js>`')
+### javascript can be used (`js!` or `javaScript!` yaml tag)
 
 source
 ```yaml
-# 12-javascript.pkt
+# 12-java-live-coffee-script.pkt
 routine:
 - include: 00-hello-yaml.yaml
 - include: 00-hello-yaml.yaml
-- script: |
-    js> $.objects.forEach((o, i) => o.hello = `${o.hello}-${i}`)
+- script: !js | # javascript
+    $.objects.forEach((o, i) => o.hello = `${o.hello}-js${i}`)
+- script: !cs | # coffeescript
+    for o, i in $.objects
+      o.hello = o.hello + "-cs#{i}"
+- script: !ls | # livescript
+    for o, i in $.objects
+      o.hello = o.hello + "-ls#{i}"
 ```
 
 result
@@ -295,7 +302,7 @@ hello: yaml-1
 
 source
 ```yaml
-# 13-include-with.pkt
+# 13-add-label.pkt
 input:
   name: null
   value: null
@@ -303,17 +310,21 @@ input:
 routine:
 - if: name && value
   script: |
-    $.setlabel o, name, value for o in $.objects
+    for o in $.objects
+      o.{}metadata.{}labels[name] = value
 ```
 
 result
 ```bash
-# when -i flag is set, pkt read yamls from stdin
+$ pkt 00-hello-yaml.yaml
+hello: yaml
+
+# when -i flag is set, pkt reads yamls built previously from stdin
 $ pkt 00-hello-yaml.yaml | pkt -i 13-add-label.pkt --name app --value hello
 hello: yaml
 metadata:
   labels:
-    hello: world
+    app: hello
 
 ```
 
@@ -410,7 +421,7 @@ spec:
       containers:
         - name: nginx
           image: 'nginx:latest'
-          resources:
+          resources: # added
             requests:
               memory: 64Mi
               cpu: 100m
@@ -439,10 +450,7 @@ input:
   image: null
 
 assign:
-  name$: |
-    name if name
-    pathes = image.split(':')[0].split('/')
-    pathes[pathes.length - 1]
+  name: !ls if name then name else image.split(':')[0].split('/')[*-1]
 
 routine:
 - template: |
@@ -491,7 +499,7 @@ FILES:
 
 $ pkt 16-json-schema.pkt
 ERROR: input validation failed in quickstarts/16-json-schema.pkt
-       input.image should be string
+       input.image should be string   # json schema validates input
 ```
 
 ### add
@@ -548,18 +556,18 @@ routine:
         image: alpine
 - patch:
     op: replace
-    path: /spec/containers/0/image
+    path: /spec/containers/0/image  # change container image
     value: alpine:latest
 - patch:
   - op: replace
-    path: /metadata/name
+    path: /metadata/name            # replace pod name
     value: alpine
   - op: replace
-    path: /metadata/labels/name
-    value: !ls $.objects[0].metadata.name
+    path: /metadata/labels/name     # replace pod label
+    value: !ls $.object.metadata.name
   - op: replace
-    path: /spec/containers/0/name
-    value: !ls $.objects[0].metadata.name
+    path: /spec/containers/0/name   # replace container name
+    value: !ls $.object.metadata.name
 ```
 
 result
@@ -598,11 +606,11 @@ routine:
         image: ubuntu
 - select: Pod
   jsonpath:
-    query: $..containers[?(@.name == 'alpine')].image
-    apply: alpine:latest    # apply to image
+    query: $..containers[?(@.name == 'alpine')].image  # select container's image with container name is 'alpine'
+    apply: alpine:latest    # change image to 'alpine:latest'
 - select: Pod
   jsonpath:
-    query: $..containers[?(@.name == 'ubuntu')]
+    query: $..containers[?(@.name == 'ubuntu')]  # query containers named 'ubuntu'
     exec: !ls |             # execute script with qurey result stored in $.value
       $.value.resources =
         requests:
@@ -615,6 +623,34 @@ routine:
 
 result
 ```bash
+$ pkt 19-jsonpath.pkt
+kind: Pod
+apiVersion: v1
+metadata:
+  name: alpine
+  labels:
+    name: alpine
+spec:
+  containers:
+    - name: alpine
+      image: 'alpine:latest'  # alpine -> alpine:latest
+    - name: ubuntu
+      image: ubuntu
+      resources:              # added
+        requests:
+          memory: 64Mi
+          cpu: 100m
+        limits:
+          memory: 128Mi
+          cpu: 200m
+```
+
+
+### remote script
+
+result
+```bash
+$ pkt https://raw.githubusercontent.com/dirty49374/pk-template/master/quickstarts/19-json-path.pkt
 kind: Pod
 apiVersion: v1
 metadata:

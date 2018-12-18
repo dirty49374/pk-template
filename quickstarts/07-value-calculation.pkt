@@ -3,7 +3,7 @@ input:
 
 assign:
   greet: welcome
-  name: !ls name.toUpperCase()
+  name: !js name.toUpperCase()
 
 routine:
 - template: |

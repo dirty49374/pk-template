@@ -106,7 +106,7 @@ function run(objects, values, files, config, options) {
 
 function helpPkt(url) {
     console.log('- url:', url);
-    const yaml = pkt.load.yaml(null, url);
+    const yaml = pkt.loaders.yaml(null, url);
     const schema = yaml.schema;
     if (!schema) return;
     const props = jsyaml.dump(schema).split('\n')
