@@ -24,4 +24,3 @@ routine:
   - op: replace
     path: /spec/containers/0/name
     value: !ls $.object.metadata.name
-    

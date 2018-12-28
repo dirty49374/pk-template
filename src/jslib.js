@@ -1,8 +1,14 @@
 const path = require('path');
+const scopes = require('./scopes');
 const loaders = require('./loaders');
 
 const jslib = scope => ({
-    add: object => scopes.add(scope, object),
+    add: object => {
+        while (scope) {
+            scope.objects.push(object);
+            scope = scope.parent;
+        }
+    },
     expand: path => statements.include(scope, { include: path }),
     globs: (path, fromCwd) => loaders.globs(scope, path, fromCwd),
     files: (path, fromCwd) => loaders.files(scope, path, fromCwd),

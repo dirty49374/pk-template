@@ -37,4 +37,3 @@ const scopes = {
 };
 
 module.exports = scopes;
-
