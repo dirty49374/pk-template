@@ -48,8 +48,8 @@ const runtimes = {
         },
         include(scope, statement) {
             if (!statement.include) return false;
-            const uri = url.resolve(scope.uri, statement.include);
-    
+
+            const uri = statement.include;
             if (uri.toLowerCase().endsWith(".pkt")) {
                 const file = loaders.yaml(scope, uri);
                 runtimes.run(file, scope, uri);
@@ -82,8 +82,8 @@ const runtimes = {
         },
         apply(scope, statement) {
             if (!statement.apply) return false;
-            const uri = url.resolve(scope.uri, statement.apply);
-    
+
+            const uri = statement.apply;
             if (uri.toLowerCase().endsWith(".pkt")) {
                 const file = loaders.yaml(scope, uri);
                 runtimes.run(file, scope, uri, true);

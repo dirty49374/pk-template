@@ -18,9 +18,12 @@ function help(args) {
 
     console.log('OPTIONS:');
     console.log('   -h           : help');
+    console.log('   -v           : version');
     console.log('   -x           : generate shell script');
+    console.log('   -d           : show nodejs errors and callstack');
     console.log('   -i           : load yamls from stdin as initial objects');
-    console.log('   --name value : assign name = value');
+    console.log('   --name value : assign value to name');
+    console.log('   --name path@ : assign yaml content to name');
     console.log();
 
     if (args.files.length) {

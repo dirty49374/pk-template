@@ -25,10 +25,7 @@ function expandValues(values) {
 function filterValues(argv) {
     const values = {}
     Object.keys(argv).forEach(k => {
-        if (k.length === 1) {
-            if (k !== '_')
-                options[k] = argv[k];
-        } else if (k[0] != '$') {
+        if (k[0] != '$') {
             values[k] = argv[k];
         }
     });
@@ -45,6 +42,16 @@ function buildFiles(config, argv) {
         .map(p => config.resolve(p))
 }
 
+function buildOptions(argv) {
+    return {
+        stdin: !!argv.i,
+        help: !!argv.h,
+        version: !!argv.v,
+        debug: !!argv.d,
+        shellscript: !!argv.x,
+    }
+}
+
 function parseArgs(config) {
     const argv = require('yargs')
         .version(false)
@@ -52,23 +59,10 @@ function parseArgs(config) {
         .boolean(['i', 'h', 'v', 'd', 'x'])
         .argv;
 
-    const options = {};
     const values = buildValues(config, argv)
     const files = buildFiles(config, argv)
-    
-    const args = {
-        options: {
-            stdin: !!options.i,
-            help: !!options.h,
-            version: !!options.v,
-            debug: !!options.d,
-            shellscript: !!options.x,
-        },
-        values,
-        files,
-    };
-
-    return args;
+    const options = buildOptions(argv)
+    return { options, values, files, };
 }
 
 function expandGlobs(path) {
@@ -123,13 +117,13 @@ function main() {
     const config = pkt.configs.load();
 
     const args = parseArgs(config);
-    if (args.options.help || args.files.length == 0) {
-        help(args);
+    if (args.options.version) {
+        version();
         return;
     }
 
-    if (args.options.version) {
-        version();
+    if (args.options.help || args.files.length == 0) {
+        help(args);
         return;
     }
 

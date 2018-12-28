@@ -30,7 +30,6 @@ const loaders = {
     text(scope, uri, fromCwd) {
         try {
             uri = loaders.resolve(scope, uri, fromCwd);
-
             return loaders.isHttp(uri)
                 ? syncRequest('GET', uri).getBody('utf8')
                 : fs.readFileSync(uri, 'utf8');
