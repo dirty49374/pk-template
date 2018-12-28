@@ -5,7 +5,45 @@ const glob = require('glob');
 const jsyaml = require('js-yaml');
 const pkt = require('../src');
 const chalk = require('chalk');
-const path = require('path');
+const gensh = require('./gensh');
+const help = require('./help');
+const version = require('./version');
+
+function expandValues(values) {
+    Object.keys(values).forEach(k => {
+        if (k.endsWith('@')) {
+            const path = values[k]
+            const value = pkt.loaders.yaml(null, path, true)
+
+            delete values[k]
+            values[k.substr(0, k.length-1)] = value
+        }
+    });
+    return values
+}
+
+function filterValues(argv) {
+    const values = {}
+    Object.keys(argv).forEach(k => {
+        if (k.length === 1) {
+            if (k !== '_')
+                options[k] = argv[k];
+        } else if (k[0] != '$') {
+            values[k] = argv[k];
+        }
+    });
+    return values
+}
+
+function buildValues(config, argv) {
+    return expandValues(filterValues(argv))
+}
+
+function buildFiles(config, argv) {
+    return argv._.map(expandGlobs)
+        .reduce((sum, list) => sum.concat(list), [])
+        .map(p => config.resolve(p))
+}
 
 function parseArgs(config) {
     const argv = require('yargs')
@@ -15,16 +53,9 @@ function parseArgs(config) {
         .argv;
 
     const options = {};
-    const values = {};
-    Object.keys(argv).forEach(k => {
-        if (k.length === 1) {
-            if (k !== '_')
-                options[k] = argv[k];
-        } else if (k[0] != '$') {
-            values[k] = argv[k];
-        }
-    });
-
+    const values = buildValues(config, argv)
+    const files = buildFiles(config, argv)
+    
     const args = {
         options: {
             stdin: !!options.i,
@@ -33,10 +64,8 @@ function parseArgs(config) {
             debug: !!options.d,
             shellscript: !!options.x,
         },
-        values: values,
-        files: argv._.map(expandGlobs)
-            .reduce((sum, list) => sum.concat(list), [])
-            .map(p => config.resolve(p)),
+        values,
+        files,
     };
 
     return args;
@@ -72,24 +101,10 @@ function run(objects, values, files, config, options) {
     try {
         const userdata = {};
         const yaml = pkt.runtimes.exec(objects, values, files, config, userdata);
-        if (options.shellscript) {
-            console.log("#!/bin/sh")
-            console.log()
-            console.log(`echo "now deploying objects using '${userdata.kubeconfig}' kubeconfig"`)
-            console.log()
-            if (userdata.kubeconfig) {
-                console.log(`cat | kubectl --kubeconfig ${userdata.kubeconfig} apply -f - <<EOF`)
-            } else {
-                console.log(`cat | kubectl apply -f - <<EOF`)
-            }
-            console.log("# ------- YAML BEGIN -------")
-            console.log(yaml);
-            console.log("# ------- YAML ENDS -------")
-            console.log("EOF")
-            console.log("")
-        } else {
-            console.log(yaml);
-        }
+        const output = options.shellscript
+            ? gensh(yaml, userdata)
+            : yaml
+        console.log(output);
     } catch (e) {
         if (e.summary) {
             console.error(chalk.red('ERROR: ' + e.summary + ' in ' + e.uri));
@@ -102,46 +117,6 @@ function run(objects, values, files, config, options) {
         }
         process.exit(1);
     }
-}
-
-function helpPkt(url) {
-    console.log('- url:', url);
-    const yaml = pkt.loaders.yaml(null, url);
-    const schema = yaml.schema;
-    if (!schema) return;
-    const props = jsyaml.dump(schema).split('\n')
-        .map(line => '  ' + line)
-        .join('\n');
-    console.log(props);
-}
-
-function help(args) {
-    console.log('USAGE: pkt [options] ...files');
-    console.log();
-
-    console.log('OPTIONS:');
-    console.log('   -h           : help');
-    console.log('   -x           : generate shell script');
-    console.log('   -i           : load yamls from stdin as initial objects');
-    console.log('   --name value : assign name = value');
-    console.log();
-
-    if (args.files.length) {
-        console.log('FILES:');
-
-        for (const file of args.files) {
-            if (file.toLowerCase().endsWith('.pkt')) {
-                helpPkt(file);
-            } else {
-                console.log('- url:', file);
-            }
-        }
-    }
-}
-
-function version() {
-    const pkg = pkt.load.yaml(path.join(__dirname, '../package.json'));
-    console.log(pkg.version);
 }
 
 function main() {

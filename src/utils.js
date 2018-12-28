@@ -7,7 +7,7 @@ _.templateSettings = {
 
 const pktError = (scope, error, message) => {
     error.summary = message;
-    error.uri = scope.uri;
+    error.uri = scope ? scope.uri : '.';
     return error;
 }
 
