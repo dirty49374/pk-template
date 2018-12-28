@@ -62,6 +62,15 @@ const jslib = scope => ({
         object.metadata.annotations[name] = value;
     },
     arraify: value => Array.isArray(value) ? value : [ value ],
+    parseKvps: (value) => {
+        const items = value.split(';')
+            .map(kvp => kvp.trim())
+            .map(kvp => {
+                const pair = kvp.split('=');
+                return { key: pair[0].trim(), value: pair[1].trim() }
+            });
+        return items;
+    }
 });
 
 module.exports = jslib;
