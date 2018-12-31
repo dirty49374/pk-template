@@ -1,6 +1,7 @@
 const path = require('path');
-const scopes = require('./scopes');
+const jsyaml = require('js-yaml');
 const loaders = require('./loaders');
+const { parseKvps } = require('./utils');
 
 const jslib = scope => ({
     add: object => {
@@ -14,8 +15,8 @@ const jslib = scope => ({
     files: (path, fromCwd) => loaders.files(scope, path, fromCwd),
     loadText: (path, fromCwd) => loaders.text(scope, path, fromCwd),
     loadYaml: (path, fromCwd) => path.toLowerCase().endsWith('.pkt')
-        ? jsyaml.load(load.text(scope, path, fromCwd), pktYamlOption)
-        : jsyaml.load(load.text(scope, path, fromCwd)),
+        ? jsyaml.load(loaders.text(scope, path, fromCwd), pktYamlOption)
+        : jsyaml.load(loaders.text(scope, path, fromCwd)),
     loadYamlAll: (path, fromCwd) => jsyaml.loadAll(load.text(scope, path, fromCwd)),
     loadTemplate: (path, fromCwd) => load.template(scope, path, fromCwd),
     basename: p => path.basename(p),
@@ -62,16 +63,7 @@ const jslib = scope => ({
         object.metadata.annotations[name] = value;
     },
     arraify: value => Array.isArray(value) ? value : [ value ],
-    parseKvps: (value) => {
-        const kvps = {};
-        value.split(';')
-            .map(kvp => kvp.trim())
-            .forEach(kvp => {
-                const pair = kvp.split('=');
-                kvps[pair[0].trim()] = pair[1].trim();
-            });
-        return kvps;
-    }
+    parseKvps,
 });
 
 module.exports = jslib;

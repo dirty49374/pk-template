@@ -17,4 +17,15 @@ class JavaScriptCode {
     }
 }
 
-module.exports = { pktError, JavaScriptCode };
+const parseKvps = value => {
+    if (!value) return {};
+    const kvps = {};
+    value.split(';')
+        .forEach(kvp => {
+            const [ key, value ] = kvp.split('=');
+            kvps[key.trim()] = value.trim();
+        });
+    return kvps;
+}
+
+module.exports = { pktError, JavaScriptCode, parseKvps };

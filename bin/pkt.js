@@ -5,7 +5,7 @@ const glob = require('glob');
 const jsyaml = require('js-yaml');
 const pkt = require('../src');
 const chalk = require('chalk');
-const gensh = require('./gensh');
+const genout = require('./genout');
 const help = require('./help');
 const version = require('./version');
 
@@ -49,6 +49,9 @@ function buildOptions(argv) {
         version: !!argv.v,
         debug: !!argv.d,
         shellscript: !!argv.x,
+        json: !!argv.j,
+        json1: !!argv.J,
+        indent: !!argv.n,
     }
 }
 
@@ -56,12 +59,13 @@ function parseArgs(config) {
     const argv = require('yargs')
         .version(false)
         .help(false)
-        .boolean(['i', 'h', 'v', 'd', 'x'])
+        .boolean(['i', 'h', 'v', 'd', 'x', 'j', 'n', 'J' ])
         .argv;
 
     const values = buildValues(config, argv)
     const files = buildFiles(config, argv)
     const options = buildOptions(argv)
+
     return { options, values, files, };
 }
 
@@ -95,9 +99,8 @@ function run(objects, values, files, config, options) {
     try {
         const userdata = {};
         const yaml = pkt.runtimes.exec(objects, values, files, config, userdata);
-        const output = options.shellscript
-            ? gensh(yaml, userdata)
-            : yaml
+
+        const output = getout(yaml, options, userdata)
         console.log(output);
     } catch (e) {
         if (e.summary) {

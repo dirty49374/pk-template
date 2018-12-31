@@ -24,6 +24,8 @@ const evaluators = {
         }
 
         if (typeof object === 'object') {
+            if (object === null) return object;
+
             const clone = {};
             Object.keys(object)
                 .forEach(key => clone[key] = evaluators.deep(scope, object[key]));
@@ -39,7 +41,7 @@ const evaluators = {
         return evaluators.javsScript(scope, javascript);
     },
     liveScript(scope, livescript) {
-        const javascript = liveScript.compile(livescript, { bare: true });
+        const javascript = liveScript.compile(livescript + '\n', { bare: true });
         return evaluators.javsScript(scope, javascript);
     },
     script(scope, script) {

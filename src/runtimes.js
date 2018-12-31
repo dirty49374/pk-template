@@ -34,9 +34,13 @@ const runtimes = {
         },    
         assign(scope, statement) {
             if (!statement.assign) return false;
+
+            const values = typeof statement.assign == 'string'
+                ? utils.utils.parseKvps(statement.assign)
+                : evaluators.deep(scope, statement.assign || {});
             scope.values = {
                 ...scope.values,
-                ...evaluators.deep(scope, statement.assign || {}),
+                ...values,
             };
             return true;
         },
@@ -60,6 +64,32 @@ const runtimes = {
             }
             return true;
         },
+        includeWith(scope, statement) {
+            if (!statement.includeWith) return false;
+            const idx = statement.includeWith.indexOf(' ')
+            const path = idx >= 0
+                ? statement.includeWith.substring(0, idx)
+                : statement.includeWith;
+            const kvps = idx >= 0
+                ? statement.includeWith.substring(idx)
+                : "";
+            const values = utils.parseKvps(kvps);
+            scopes.open(scope, {}, cscope => {
+                cscope.values = { ...scopes.values, ...values };
+                const uri = path; //url.resolve(cscope.uri, path);
+
+                if (uri.toLowerCase().endsWith(".pkt")) {
+                    const file = loaders.yaml(cscope, uri);
+                    runtimes.run(file, cscope, uri);
+                } else {
+                    const tpl = loaders.text(cscope, uri);
+                    const objects = evaluators.template(cscope, tpl);
+                    objects.forEach(object => scopes.add(cscope, object));
+                }
+            });
+
+            return true;
+        },
         jsonpath(scope, statement) {
             if (!statement.jsonpath) return false;
             scope.objects.forEach(o => {
@@ -73,7 +103,13 @@ const runtimes = {
                         if (statement.jsonpath.apply) {
                             const value = evaluators.deep(cscope, statement.jsonpath.apply);
                             jsonpath.apply(o, jsonpath.stringify(node.path), () => value);
-                        } else if (statement.jsonpath.exec) {
+                        }
+                        if (statement.jsonpath.merge) {
+                            const value = evaluators.deep(cscope, statement.jsonpath.merge);
+                            const merged = { ...node.value, ...value };
+                            jsonpath.apply(o, jsonpath.stringify(node.path), () => merged);
+                        }
+                        if (statement.jsonpath.exec) {
                             evaluators.script(cscope, statement.jsonpath.exec);
                         }
                     });
@@ -92,6 +128,31 @@ const runtimes = {
                 const objects = evaluators.template(scope, tpl);
                 scope.objects.push(...objects);
             }
+            return true;
+        },
+        applyWith(scope, statement) {
+            if (!statement.applyWith) return false;
+            const idx = statement.applyWith.indexOf(' ')
+            const path = idx >= 0
+                ? statement.applyWith.substring(0, idx)
+                : statement.applyWith;
+            const kvps = idx >= 0
+                ? statement.applyWith.substring(idx)
+                : "";
+            const values = utils.parseKvps(kvps);
+            scopes.open(scope, { objects: scope.objects }, cscope => {
+                cscope.values = { ...scopes.values, ...values };
+                const uri = path; // statement.include; //url.resolve(cscope.uri, path);
+        
+                if (uri.toLowerCase().endsWith(".pkt")) {
+                    const file = loaders.yaml(cscope, uri);
+                    runtimes.run(file, cscope, uri, true);
+                } else {
+                    const tpl = loaders.text(cscope, uri);
+                    const objects = evaluators.template(cscope, tpl);
+                    cscope.objects.push(...objects);
+                }
+            });
             return true;
         },
         patch(scope, statement) {
@@ -113,6 +174,13 @@ const runtimes = {
             });
             return true;
         },
+        routineWith(parentScope, statement) {
+            if (!statement.routineWith) return false;
+            scopes.open(parentScope, { objects: parentScope.objects }, scope => {
+                runtimes.routine(scope, statement.routineWith);
+            });
+            return true;
+        },
         kubeconfig(scope, statement) {
             if (!statement.kubeconfig) return false;
             scope.userdata.kubeconfig = evaluators.deep(scope, statement.kubeconfig);
@@ -126,17 +194,20 @@ const runtimes = {
         },
     },
     statement(scope, statement) {
-        runtimes.statements.each(scope,     statement);
-        runtimes.statements.jsonpath(scope, statement);
-        runtimes.statements.script(scope,   statement);
-        runtimes.statements.assign(scope,   statement);
-        runtimes.statements.include(scope,  statement);
-        runtimes.statements.apply(scope,    statement);
-        runtimes.statements.add(scope,      statement);
-        runtimes.statements.patch(scope,    statement);
-        runtimes.statements.template(scope, statement);
-        runtimes.statements.kubeconfig(scope, statement);
-        runtimes.statements.routine(scope,  statement);
+        runtimes.statements.each(scope,        statement);
+        runtimes.statements.jsonpath(scope,    statement);
+        runtimes.statements.script(scope,      statement);
+        runtimes.statements.assign(scope,      statement);
+        runtimes.statements.include(scope,     statement);
+        runtimes.statements.includeWith(scope, statement);
+        runtimes.statements.apply(scope,       statement);
+        runtimes.statements.applyWith(scope,   statement);
+        runtimes.statements.add(scope,         statement);
+        runtimes.statements.patch(scope,       statement);
+        runtimes.statements.template(scope,    statement);
+        runtimes.statements.kubeconfig(scope,  statement);
+        runtimes.statements.routine(scope,     statement);
+        runtimes.statements.routineWith(scope, statement);
     },
     routine(scope, routine) {
         if (!routine)
