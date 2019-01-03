@@ -4,6 +4,7 @@ class Config {
     constructor({ repositories }) {
         this.repositories = repositories || {};
     }
+
     resolve(uri) {
         if (uri[0] == ':') {
             const resolved = this.repositories[uri.substr(1)];

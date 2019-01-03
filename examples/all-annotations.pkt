@@ -1,0 +1,3 @@
+routine:
+- apply: mount-annotation.pkt
+- apply: configmap-from-annotation.pkt

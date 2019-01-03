@@ -1,0 +1,10 @@
+routine:
+- add:
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: my-config
+      annotations:
+        pkt/configmap-from: testfiles/config.j*, testfiles/*.ini
+    # data will be generated from files
+- apply: configmap-from-annotation.pkt

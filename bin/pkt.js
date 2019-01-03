@@ -100,7 +100,7 @@ function run(objects, values, files, config, options) {
         const userdata = {};
         const yaml = pkt.runtimes.exec(objects, values, files, config, userdata);
 
-        const output = getout(yaml, options, userdata)
+        const output = genout(yaml, options, userdata)
         console.log(output);
     } catch (e) {
         if (e.summary) {

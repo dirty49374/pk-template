@@ -47,20 +47,20 @@ const runtimes = {
         add(scope, statement) {
             if (!statement.add) return false;
             const object = evaluators.deep(scope, statement.add);
-            scopes.add(scope, object);
+            scope.add(object);
             return true;
         },
         include(scope, statement) {
             if (!statement.include) return false;
 
-            const uri = statement.include;
+            const uri = scope.resolve(statement.include);
             if (uri.toLowerCase().endsWith(".pkt")) {
-                const file = loaders.yaml(scope, uri);
+                const file = loaders.pkt(scope, uri);
                 runtimes.run(file, scope, uri);
             } else {
                 const tpl = loaders.text(scope, uri);
                 const objects = evaluators.template(scope, tpl);
-                objects.forEach(object => scopes.add(scope, object));
+                objects.forEach(object => scope.add(object));
             }
             return true;
         },
@@ -74,12 +74,12 @@ const runtimes = {
                 ? statement.includeWith.substring(idx)
                 : "";
             const values = utils.parseKvps(kvps);
-            scopes.open(scope, {}, cscope => {
+            scope.child({}, cscope => {
                 cscope.values = { ...scopes.values, ...values };
-                const uri = path; //url.resolve(cscope.uri, path);
+                const uri = scope.resolve(path);
 
                 if (uri.toLowerCase().endsWith(".pkt")) {
-                    const file = loaders.yaml(cscope, uri);
+                    const file = loaders.pkt(cscope, uri);
                     runtimes.run(file, cscope, uri);
                 } else {
                     const tpl = loaders.text(cscope, uri);
@@ -95,7 +95,7 @@ const runtimes = {
             scope.objects.forEach(o => {
                 const nodes = jsonpath.nodes(o, statement.jsonpath.query);
                 nodes.forEach(node => {
-                    scopes.open(scope, {}, cscope => {
+                    scope.child({}, cscope => {
                         cscope.object = o;
                         cscope.path = node.path;
                         cscope.value = node.value;
@@ -119,9 +119,9 @@ const runtimes = {
         apply(scope, statement) {
             if (!statement.apply) return false;
 
-            const uri = statement.apply;
+            const uri = scope.resolve(statement.apply);
             if (uri.toLowerCase().endsWith(".pkt")) {
-                const file = loaders.yaml(scope, uri);
+                const file = loaders.pkt(scope, uri);
                 runtimes.run(file, scope, uri, true);
             } else {
                 const tpl = loaders.text(scope, uri);
@@ -140,12 +140,12 @@ const runtimes = {
                 ? statement.applyWith.substring(idx)
                 : "";
             const values = utils.parseKvps(kvps);
-            scopes.open(scope, { objects: scope.objects }, cscope => {
+            scope.child({ objects: scope.objects }, cscope => {
                 cscope.values = { ...scopes.values, ...values };
-                const uri = path; // statement.include; //url.resolve(cscope.uri, path);
+                const uri = scope.resolve(path);
         
                 if (uri.toLowerCase().endsWith(".pkt")) {
-                    const file = loaders.yaml(cscope, uri);
+                    const file = loaders.pkt(cscope, uri);
                     runtimes.run(file, cscope, uri, true);
                 } else {
                     const tpl = loaders.text(cscope, uri);
@@ -169,14 +169,14 @@ const runtimes = {
         },    
         routine(parentScope, statement) {
             if (!statement.routine) return false;
-            scopes.open(parentScope, {}, scope => {
+            parentScope.child({}, scope => {
                 runtimes.routine(scope, statement.routine);
             });
             return true;
         },
         routineWith(parentScope, statement) {
             if (!statement.routineWith) return false;
-            scopes.open(parentScope, { objects: parentScope.objects }, scope => {
+            parentScope.child({ objects: parentScope.objects }, scope => {
                 runtimes.routine(scope, statement.routineWith);
             });
             return true;
@@ -189,7 +189,7 @@ const runtimes = {
         template(scope, statement) {
             if (!statement.template) return false;
             const objects = evaluators.template(scope, statement.template);
-            objects.forEach(object => scopes.add(scope, object));
+            objects.forEach(object => scope.add(object));
             return true;
         },
     },
@@ -220,7 +220,7 @@ const runtimes = {
             if (statement.select) {
                 const predicate = selectors.compile(statement.select);
                 const objects = scope.objects.filter(predicate);
-                scopes.open(scope, { objects, values: scope.values }, cscope => {
+                scope.child({ objects, values: scope.values }, cscope => {
                     runtimes.statement(cscope, statement)
                 });
             } else {
@@ -241,19 +241,19 @@ const runtimes = {
         }
         return values;
     },
-    run(file, parent, uri, withObject = false) {
+    run(file, parentScope, uri, withObject = false) {
         if (!file) return;
 
-        if (!parent) throw 'no parent scope';
+        if (!parentScope) throw 'no parent scope';
         uri = uri || '.';
 
-        scopes.open(parent, { uri }, scope => {
+        parentScope.child({ uri }, scope => {
             // 1. bind objects
             if (withObject)
-                scope.objects = [ ...parent.objects ];
+                scope.objects = [ ...parentScope.objects ];
 
             // 2. build input
-            scope.values = runtimes.buildInput(file.input, parent.values);
+            scope.values = runtimes.buildInput(file.input, parentScope.values);
 
             // 3. validate schema
             if (file.schema) {
@@ -274,7 +274,7 @@ const runtimes = {
             // 5. run routine
             runtimes.routine(scope, file.routine);
         });
-        return parent.objects;
+        return parentScope.objects;
     },
     exec(objects, values, files, config, userdata) {
         const scope = scopes.create(values, '.', null, config, objects, userdata || {});

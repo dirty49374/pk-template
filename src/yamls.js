@@ -28,6 +28,7 @@ const PKT_SCHEMA = jsyaml.Schema.create([
 const pktYamlOption = { schema: PKT_SCHEMA };
 
 const yamls = {
+    load: text => jsyaml.load(text),
     loadAll: text => jsyaml.loadAll(text),
     loadAsPkt: (text) => jsyaml.load(text, pktYamlOption),
 };

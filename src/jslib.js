@@ -1,24 +1,18 @@
 const path = require('path');
-const jsyaml = require('js-yaml');
 const loaders = require('./loaders');
+// const runtimes = require('./runtimes');
 const { parseKvps } = require('./utils');
 
 const jslib = scope => ({
-    add: object => {
-        while (scope) {
-            scope.objects.push(object);
-            scope = scope.parent;
-        }
-    },
-    expand: path => statements.include(scope, { include: path }),
-    globs: (path, fromCwd) => loaders.globs(scope, path, fromCwd),
-    files: (path, fromCwd) => loaders.files(scope, path, fromCwd),
-    loadText: (path, fromCwd) => loaders.text(scope, path, fromCwd),
-    loadYaml: (path, fromCwd) => path.toLowerCase().endsWith('.pkt')
-        ? jsyaml.load(loaders.text(scope, path, fromCwd), pktYamlOption)
-        : jsyaml.load(loaders.text(scope, path, fromCwd)),
-    loadYamlAll: (path, fromCwd) => jsyaml.loadAll(load.text(scope, path, fromCwd)),
-    loadTemplate: (path, fromCwd) => load.template(scope, path, fromCwd),
+    // disabled ( causing circular dependency )
+    // expand: path => runtimes.statements.include(scope, { include: path }),
+    globs: (path) => loaders.globs(scope, scope.resolve(path)),
+    files: (path) => loaders.files(scope, scope.resolve(path)),
+    loadText: (path) => loaders.text(scope, scope.resolve(path)),
+    loadPkt: (path) => loaders.pkt(scope, scope.resolve(path)),
+    loadYaml: (path) => loaders.yaml(scope, scope.resolve(path)),
+    loadYamlAll: (path) => loaders.yamlAll(scope, scope.resolve(path)),
+    loadTemplate: (path) => loaders.template(scope, scope.resolve(path)),
     basename: p => path.basename(p),
     label: (object, name) => {
         if (typeof object === 'string') {

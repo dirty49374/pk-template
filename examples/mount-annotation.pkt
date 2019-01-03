@@ -1,0 +1,25 @@
+schema:
+  title: mount ConfigMap from pkt/mount annotation
+
+routine:
+- select:
+  - DaemonSet !pkt/mount=*
+  - Deployment !pkt/mount=*
+  - StatefulSet !pkt/mount=*
+  each: |
+    # parse annotation value 'pkt/mount: name=configmap_name; path=/path/to/mount'
+    kv = $.parseKvps $.annotation 'pkt/mount'
+    
+    # add volume
+    volume =
+      name: kv.name
+      configMap:
+        name: kv.name
+    $.object.spec.template.spec.[]volumes.push volume
+
+    # add volumeMount
+    volumeMount =
+      name: kv.name
+      mountPath: kv.path
+    for c in $.object.spec.template.spec.containers
+      c.[]volumeMounts.push volumeMount

@@ -1,0 +1,12 @@
+routine:
+- add:
+    kind: Deployment
+    metadata:
+      annotations:
+        pkt/mount: name=test; path=/app/config
+    spec:
+      template:
+        spec:
+          containers:
+          - image: busybox
+- apply: mount-annotation.pkt
