@@ -1,4 +1,5 @@
 const loaders = require('./loaders');
+const path = require('path');
 
 class Config {
     constructor({ repositories }) {
