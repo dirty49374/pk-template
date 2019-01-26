@@ -1,4 +1,3 @@
-const url = require('url');
 const Ajv = require('ajv');
 const jsyaml = require('js-yaml');
 const jsonpath = require('jsonpath');

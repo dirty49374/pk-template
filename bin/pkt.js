@@ -1,12 +1,13 @@
 #!/usr/bin/env node
-
-const process = require('process');
-const glob = require('glob');
-const jsyaml = require('js-yaml');
+const fs = require('fs');
 const pkt = require('../src');
-const chalk = require('chalk');
-const genout = require('./genout');
+const glob = require('glob');
+const path = require('path');
 const help = require('./help');
+const chalk = require('chalk');
+const jsyaml = require('js-yaml');
+const process = require('process');
+const genout = require('./genout');
 const version = require('./version');
 
 function expandValues(values) {
@@ -36,10 +37,38 @@ function buildValues(config, argv) {
     return expandValues(filterValues(argv))
 }
 
+function expandLibPath(p) {
+    if (p.length === 0 && p[0] !== '@') {
+        return p;
+    }
+
+    p = p.substr(1)
+
+    if (fs.existsSync(p)) {
+        return p;
+    }
+
+    let cur = process.cwd();
+    while (true) {
+        const libdir = path.join(cur, "pkt_lib");
+        if (fs.existsSync(libdir)) {
+            const rpath = path.join(libdir, p);
+            if (fs.existsSync(rpath))
+                return rpath;
+        }
+
+        const parent = path.dirname(cur)
+        if (parent == cur)
+            return p;
+        cur = parent;
+    }
+}
+
 function buildFiles(config, argv) {
     return argv._.map(expandGlobs)
         .reduce((sum, list) => sum.concat(list), [])
         .map(p => config.resolve(p))
+        .map(p => expandLibPath(p))
 }
 
 function buildOptions(argv) {
