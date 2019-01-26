@@ -38,7 +38,7 @@ function buildValues(config, argv) {
 }
 
 function expandLibPath(p) {
-    if (p.length === 0 && p[0] !== '@') {
+    if (p.length === 0 || p[0] !== '@') {
         return p;
     }
 
