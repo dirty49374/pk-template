@@ -1,7 +1,7 @@
 const path = require('path');
 const loaders = require('./loaders');
 // const runtimes = require('./runtimes');
-const { parseKvps } = require('./utils');
+const { parseKvps, parseList } = require('./utils');
 
 const jslib = scope => ({
     // disabled ( causing circular dependency )
@@ -58,6 +58,7 @@ const jslib = scope => ({
     },
     arraify: value => Array.isArray(value) ? value : [ value ],
     parseKvps,
+    parseList,
 });
 
 module.exports = jslib;

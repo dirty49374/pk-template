@@ -3,6 +3,7 @@ const liveScript = require('livescript');
 const coffeeScript = require('coffeescript');
 const utils = require('./utils');
 const yamls = require('./yamls');
+const loaders = require('./loaders');
 
 const evaluators = {
     eval(scope, script) {
@@ -16,7 +17,7 @@ const evaluators = {
     },
     deep(scope, object) {
         if (object instanceof utils.JavaScriptCode) {
-            return evaluators.javsScript(scope, object.code);
+            return evaluators.javaScriptCode(scope, object);
         }
 
         if (Array.isArray(object)) {
@@ -33,21 +34,29 @@ const evaluators = {
         }
         return object;
     },
-    javsScript(scope, javascript) {
+    javaScript(scope, javascript) {
         return evaluators.eval(scope, javascript);
+    },
+    javaScriptCode(scope, code) {
+        switch (code.type) {
+            case 'js':
+                return evaluators.javaScript(scope, code.code);
+            case 'file':
+                return loaders.text(scope, code.code);
+        }
     },
     coffeeScript(scope, coffeescript) {
         const javascript = coffeeScript.compile(coffeescript, { bare: true });
-        return evaluators.javsScript(scope, javascript);
+        return evaluators.javaScript(scope, javascript);
     },
     liveScript(scope, livescript) {
         const javascript = liveScript.compile(livescript + '\n', { bare: true });
-        return evaluators.javsScript(scope, javascript);
+        return evaluators.javaScript(scope, javascript);
     },
     script(scope, script) {
         try {
             if (script instanceof utils.JavaScriptCode)
-                return evaluators.javsScript(scope, script.code);
+                return evaluators.javaScriptCode(scope, script);
             return evaluators.liveScript(scope, script);
         } catch (e) {
             throw utils.pktError(scope, e, `failed to evalute`);

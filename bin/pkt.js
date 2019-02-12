@@ -72,26 +72,26 @@ function buildFiles(config, argv) {
 }
 
 function buildOptions(argv) {
-    var options = {
-        stdin: !!argv.i,
-        help: !!argv.h,
-        version: !!argv.v,
-        debug: !!argv.d,
-        shellscript: !!argv.x,
-        json: !!argv.j,
-        json1: !!argv.J,
-        indent: !!argv.n,
-    }
-    if (argv.S) options.save = argv.S;
-    if (argv.L) options.load = argv.L;
+    const options = {}
+    if ('i' in argv) options.stdin = !!argv.i;
+    if ('h' in argv) options.help = !!argv.h;
+    if ('v' in argv) options.version = !!argv.v;
+    if ('d' in argv) options.debug = !!argv.d;
+    if ('x' in argv) options.shellscript = !!argv.x;
+    if ('j' in argv) options.json = !!argv.j;
+    if ('J' in argv) options.json1 = !!argv.J;
+    if ('P' in argv) options.pkt = !!argv.P;
+    if ('n' in argv) options.indent = !!argv.n;
+    if ('S' in argv) options.save = argv.S;
+    if ('L' in argv) options.load = argv.L;
     return options;
 }
 
-function parseArgs(config) {
-    const argv = require('yargs')
+function parseArgs(oargv, config) {
+    const argv = require('yargs/yargs')(oargv)
         .version(false)
         .help(false)
-        .boolean(['i', 'h', 'v', 'd', 'x', 'j', 'n', 'J' ])
+        .boolean(['i', 'h', 'v', 'd', 'x', 'j', 'n', 'J', 'P' ])
         .argv;
 
     const values = buildValues(config, argv)
@@ -148,29 +148,21 @@ function run(objects, values, files, config, options) {
     }
 }
 
-function main() {
+function main(argv) {
     const config = pkt.configs.load();
 
-    let args = parseArgs(config);
+    let args = parseArgs(argv, config);
 
     if (args.options.save) {
-        const fn = args.options.save + '.pkv';
-        delete args.options['save'];
-        const txt = jsyaml.dump(args);
-        fs.writeFileSync(fn, txt, { encoding: 'utf8' });
+        const fn = args.options.save;
+        const optIndex = argv.indexOf('-S');
+        argv.splice(optIndex, 2);
+        argv.push('$@');
+
+        const txt = '#!/bin/sh\n\npkt ' + argv.join(' \\\n\t') + '\n';
+        fs.writeFileSync(fn, txt, { mode: 0o755, encoding: 'utf8' });
         return;
     } 
-    
-    if (args.options.load) {
-        const txt = fs.readFileSync(args.options.load, { encoding: 'utf8' });
-        delete args.options.load;
-        const saved = jsyaml.load(txt);
-        args = {
-            values: { ...saved.values, ...args.values, },
-            options: { ...saved.options, ...args.options, },
-            files: saved.files.concat(args.files),
-        };
-    }
 
     if (args.options.version) {
         version();
@@ -192,4 +184,4 @@ function main() {
     }
 }
 
-main();
+main(process.argv.slice(2));

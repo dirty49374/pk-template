@@ -1,3 +1,5 @@
+const jsyaml = require('js-yaml');
+
 const gensh = (yaml, userdata) => {
     const lines = []
     lines.push("#!/bin/sh")
@@ -34,6 +36,12 @@ const genout = (yaml, options) => {
         } else {
             return JSON.stringify(jsyaml.loadAll(yaml)[0]);
         }                
+    } else if (options.pkt) {
+        const objs = jsyaml.loadAll(yaml);
+        var pkt = {
+            routine: objs.map(o => ({ add: o }))
+        }
+        return jsyaml.dump(pkt);
     } else {
         return yaml;
     }

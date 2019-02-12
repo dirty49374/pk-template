@@ -12,7 +12,8 @@ const pktError = (scope, error, message) => {
 }
 
 class JavaScriptCode {
-    constructor(code) {
+    constructor(type, code) {
+        this.type = type;
         this.code = code;
     }
 }
@@ -28,4 +29,9 @@ const parseKvps = value => {
     return kvps;
 }
 
-module.exports = { pktError, JavaScriptCode, parseKvps };
+const parseList = value => {
+    if (!value) return [];
+    return value.split(';').map(p => p.trim());
+}
+
+module.exports = { pktError, JavaScriptCode, parseKvps, parseList };
