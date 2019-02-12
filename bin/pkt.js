@@ -4,6 +4,8 @@ const pkt = require('../src');
 const glob = require('glob');
 const path = require('path');
 const help = require('./help');
+const process = require('process');
+const jsyaml = require('js-yaml');
 const chalk = require('chalk');
 const jsyaml = require('js-yaml');
 const process = require('process');
@@ -72,7 +74,7 @@ function buildFiles(config, argv) {
 }
 
 function buildOptions(argv) {
-    return {
+    var options = {
         stdin: !!argv.i,
         help: !!argv.h,
         version: !!argv.v,
@@ -82,6 +84,9 @@ function buildOptions(argv) {
         json1: !!argv.J,
         indent: !!argv.n,
     }
+    if (argv.S) options.save = argv.S;
+    if (argv.L) options.load = argv.L;
+    return options;
 }
 
 function parseArgs(config) {
@@ -148,7 +153,27 @@ function run(objects, values, files, config, options) {
 function main() {
     const config = pkt.configs.load();
 
-    const args = parseArgs(config);
+    let args = parseArgs(config);
+
+    if (args.options.save) {
+        const fn = args.options.save + '.pkv';
+        delete args.options['save'];
+        const txt = jsyaml.dump(args);
+        fs.writeFileSync(fn, txt, { encoding: 'utf8' });
+        return;
+    } 
+    
+    if (args.options.load) {
+        const txt = fs.readFileSync(args.options.load, { encoding: 'utf8' });
+        delete args.options.load;
+        const saved = jsyaml.load(txt);
+        args = {
+            values: { ...saved.values, ...args.values, },
+            options: { ...saved.options, ...args.options, },
+            files: saved.files.concat(args.files),
+        };
+    }
+
     if (args.options.version) {
         version();
         return;
