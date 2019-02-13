@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import fs from 'fs';
-import pkt from '../lib';
 import help from './help';
 import chalk from 'chalk';
 import jsyaml from 'js-yaml';
@@ -8,6 +7,7 @@ import process from 'process';
 import genout from './genout';
 import version from './version';
 import { ArgsBuilder } from './cmd';
+import { runtimes, configs } from '../lib';
 
 function readStdinUntilEnd(cb: (text: string)=> void) {
     const chunks: any[] = [];
@@ -28,7 +28,7 @@ function run(objects: any[], values: any, files: string[], config: IConfig, opti
     objects = objects || [];
     try {
         const userdata = {};
-        const yaml = pkt.runtimes.exec(objects, values, files, config, userdata);
+        const yaml = runtimes.exec(objects, values, files, config, userdata);
 
         const output = genout(yaml, options);
         console.log(output);
@@ -47,7 +47,7 @@ function run(objects: any[], values: any, files: string[], config: IConfig, opti
 }
 
 function main(argv: any) {
-    const config = pkt.configs.load();
+    const config = configs.load();
 
 
     let args = new ArgsBuilder().build(argv, config);

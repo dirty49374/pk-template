@@ -21,70 +21,79 @@ underscore_1.default.templateSettings = {
     interpolate: /\<\<\<\=(.+?)\>\>\>/g,
     evaluate: /\<\<\<\_(.+?)\>\>\>/g,
 };
-const loaders = {
-    isHttp(uri) {
-        const supportedProtocols = ['http:', 'https:'];
-        const parsed = url_1.default.parse(uri);
-        return supportedProtocols.some(protocol => protocol == parsed.protocol);
-    },
-    text(scope, uri) {
-        try {
-            return loaders.isHttp(uri)
-                ? sync_request_1.default('GET', uri).getBody('utf8')
-                : fs_1.default.readFileSync(uri, 'utf8');
-        }
-        catch (e) {
-            throw utils.pktError(scope, e, `failed to load ${uri}`);
-        }
-    },
-    yaml(scope, uri) {
-        const text = loaders.text(scope, uri);
-        try {
-            return yamls.load(text);
-        }
-        catch (e) {
-            throw utils.pktError(scope, e, `failed to parse yaml ${uri}`);
-        }
-    },
-    yamlAll(scope, uri) {
-        const text = loaders.text(scope, uri);
-        try {
-            return yamls.loadAll(text);
-        }
-        catch (e) {
-            throw utils.pktError(scope, e, `failed to parse yaml ${uri}`);
-        }
-    },
-    pkt(scope, uri) {
-        const text = loaders.text(scope, uri);
-        try {
-            return yamls.loadAsPkt(text);
-        }
-        catch (e) {
-            throw utils.pktError(scope, e, `failed to parse yaml ${uri}`);
-        }
-    },
-    template(scope, uri) {
-        const text = loaders.text(scope, uri);
-        try {
-            return underscore_1.default.template(text);
-        }
-        catch (e) {
-            throw utils.pktError(scope, e, `failed to parse template ${uri}`);
-        }
-    },
-    files(scope, uri) {
-        if (loaders.isHttp(uri)) {
-            throw new Error(`cannot get directory listing from ${uri}`);
-        }
-        return fs_1.default.readdirSync(uri);
-    },
-    globs(scope, uri) {
-        if (loaders.isHttp(uri)) {
-            throw new Error(`cannot get directory listing from ${uri}`);
-        }
-        const list = glob_1.default.sync(uri);
-        return list;
-    },
-};
-exports.default = loaders;
+function isHttp(uri) {
+    const supportedProtocols = ['http:', 'https:'];
+    const parsed = url_1.default.parse(uri);
+    return supportedProtocols.some(protocol => protocol == parsed.protocol);
+}
+exports.isHttp = isHttp;
+function loadText(scope, uri) {
+    try {
+        return isHttp(uri)
+            ? sync_request_1.default('GET', uri).getBody('utf8')
+            : fs_1.default.readFileSync(uri, 'utf8');
+    }
+    catch (e) {
+        throw utils.pktError(scope, e, `failed to load ${uri}`);
+    }
+}
+exports.loadText = loadText;
+function yaml(scope, uri) {
+    const str = loadText(scope, uri);
+    try {
+        return yamls.load(str);
+    }
+    catch (e) {
+        throw utils.pktError(scope, e, `failed to parse yaml ${uri}`);
+    }
+}
+exports.yaml = yaml;
+function yamlAll(scope, uri) {
+    const str = loadText(scope, uri);
+    try {
+        return yamls.loadAll(str);
+    }
+    catch (e) {
+        throw utils.pktError(scope, e, `failed to parse yaml ${uri}`);
+    }
+}
+exports.yamlAll = yamlAll;
+function pkt(scope, uri) {
+    const str = loadText(scope, uri);
+    try {
+        return yamls.loadAsPkt(str);
+    }
+    catch (e) {
+        throw utils.pktError(scope, e, `failed to parse yaml ${uri}`);
+    }
+}
+exports.pkt = pkt;
+function template(scope, uri) {
+    const str = loadText(scope, uri);
+    try {
+        return underscore_1.default.template(str);
+    }
+    catch (e) {
+        throw utils.pktError(scope, e, `failed to parse template ${uri}`);
+    }
+}
+exports.template = template;
+function files(scope, uri) {
+    if (isHttp(uri)) {
+        throw new Error(`cannot get directory listing from ${uri}`);
+    }
+    return fs_1.default.readdirSync(uri);
+}
+exports.files = files;
+function globs(scope, uri) {
+    if (isHttp(uri)) {
+        throw new Error(`cannot get directory listing from ${uri}`);
+    }
+    const list = glob_1.default.sync(uri);
+    return list;
+}
+exports.globs = globs;
+function xx() {
+    console.log('xxxxx');
+}
+exports.xx = xx;

@@ -19,18 +19,14 @@ class Config {
     }
 }
 
-const configs = {
-    load(): IConfig {
-        try {
-            const home = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
-            const confPath = path.join(home, 'pkt.conf');
-            let config = loaders.yaml(null, confPath);
-            if (!config) config = {};
-            return new Config(config);
-        } catch (e) {
-            return new Config({ repositories: null });
-        }
+export function load(): IConfig {
+    try {
+        const home = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
+        const confPath = path.join(home, 'pkt.conf');
+        let config = loaders.yaml(null, confPath);
+        if (!config) config = {};
+        return new Config(config);
+    } catch (e) {
+        return new Config({ repositories: null });
     }
 }
-
-export default configs;

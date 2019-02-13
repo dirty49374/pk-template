@@ -4,15 +4,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
-const lib_1 = __importDefault(require("../lib"));
 const path_1 = __importDefault(require("path"));
 const glob_1 = __importDefault(require("glob"));
+const lib_1 = require("../lib");
 class ArgsBuilder {
     expandValues(values) {
         Object.keys(values).forEach(k => {
             if (k.endsWith('@')) {
                 const path = values[k];
-                const value = lib_1.default.loaders.yaml(null, path, true);
+                const value = lib_1.loaders.yaml(null, path);
                 delete values[k];
                 values[k.substr(0, k.length - 1)] = value;
             }

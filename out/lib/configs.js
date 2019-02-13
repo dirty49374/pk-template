@@ -17,19 +17,17 @@ class Config {
         return uri;
     }
 }
-const configs = {
-    load() {
-        try {
-            const home = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
-            const confPath = path.join(home, 'pkt.conf');
-            let config = loaders.yaml(null, confPath);
-            if (!config)
-                config = {};
-            return new Config(config);
-        }
-        catch (e) {
-            return new Config({ repositories: null });
-        }
+function load() {
+    try {
+        const home = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
+        const confPath = path.join(home, 'pkt.conf');
+        let config = loaders.yaml(null, confPath);
+        if (!config)
+            config = {};
+        return new Config(config);
     }
-};
-exports.default = configs;
+    catch (e) {
+        return new Config({ repositories: null });
+    }
+}
+exports.load = load;

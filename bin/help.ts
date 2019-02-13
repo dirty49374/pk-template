@@ -1,9 +1,9 @@
 import jsyaml from 'js-yaml';
-import pkt from '../lib';
+import { loaders } from '../lib';
 
 function helpPkt(url: string): void {
     console.log('- url:', url);
-    const yaml = pkt.loaders.yaml(null, url);
+    const yaml = loaders.yaml(null, url);
     const schema = yaml.schema;
     if (!schema) return;
     const props = jsyaml.dump(schema).split('\n')

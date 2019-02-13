@@ -1,15 +1,8 @@
 import fs from 'fs';
-import pkt from '../lib';
 import path from 'path';
 import glob from 'glob';
+import { IValues, loaders, IOptions } from '../lib';
 
-export interface IOptions {
-    [ id: string ]: any;
-}
-
-export interface IValues {
-    [ id: string ]: any;
-}
 
 export interface IArgs {
     options: IOptions;
@@ -22,7 +15,7 @@ export class ArgsBuilder {
         Object.keys(values).forEach(k => {
             if (k.endsWith('@')) {
                 const path = values[k]
-                const value = pkt.loaders.yaml(null, path, true)
+                const value = loaders.yaml(null, path)
     
                 delete values[k]
                 values[k.substr(0, k.length-1)] = value

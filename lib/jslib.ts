@@ -1,15 +1,15 @@
 import path from 'path';
-import loaders from './loaders';
+import * as loaders from './loaders';
 // const runtimes = require('./runtimes');
 import { parseKvps, parseList, pktError } from './utils';
-import { IScope } from './scope';
+import { IScope } from './types';
 
 const jslib = (scope: IScope) => ({
     // disabled ( causing circular dependency )
     // expand: path => runtimes.statements.include(scope, { include: path }),
     globs: (path: string) => loaders.globs(scope, scope.resolve(path)),
     files: (path: string) => loaders.files(scope, scope.resolve(path)),
-    loadText: (path: string) => loaders.text(scope, scope.resolve(path)),
+    loadText: (path: string) => loaders.loadText(scope, scope.resolve(path)),
     loadPkt: (path: string) => loaders.pkt(scope, scope.resolve(path)),
     loadYaml: (path: string) => loaders.yaml(scope, scope.resolve(path)),
     loadYamlAll: (path: string) => loaders.yamlAll(scope, scope.resolve(path)),

@@ -1,6 +1,6 @@
 import url from 'url';
 import jslib from './jslib';
-import { IScope } from './scope';
+import { IScope } from './types';
 
 const clone = (obj: any): any => JSON.parse(JSON.stringify(obj));
 class Scope implements IScope {

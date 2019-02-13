@@ -1,7 +1,7 @@
 import jsyaml from 'js-yaml';
 import liveScript from 'livescript';
 import coffeeScript from 'coffeescript';
-const utils = require('./utils');
+import * as utils from './utils';
 
 interface TagData {
     type: string;
@@ -17,9 +17,9 @@ const createCustomTag = (name: string, compile: (text: string)=>TagData) => {
                 typeof data === null,
         construct: (data: any) => {
             const compiled = compile(data);
-            return new utils.JavaScriptCode(compiled.type, compiled.code);
+            return new utils.CustomYamlTag(compiled.type, compiled.code);
         },
-        instanceOf: utils.JavaScriptCode,
+        instanceOf: utils.CustomYamlTag,
         represent: (jsCode: any) => `!${name} ${jsCode.code}`
     });
 }

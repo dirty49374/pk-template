@@ -15,70 +15,75 @@ const livescript_1 = __importDefault(require("livescript"));
 const coffeescript_1 = __importDefault(require("coffeescript"));
 const utils = __importStar(require("./utils"));
 const yamls = __importStar(require("./yamls"));
-const loaders_1 = __importDefault(require("./loaders"));
+const loaders = __importStar(require("./loaders"));
 const evalWithValues = require('./eval');
-const evaluators = {
-    eval(scope, script) {
-        const $ = Object.assign({}, scope, scope.$buildLib(scope));
-        return evalWithValues($, script, scope.values);
-    },
-    deep(scope, object) {
-        if (object instanceof utils.JavaScriptCode) {
-            return evaluators.javaScriptCode(scope, object);
-        }
-        if (Array.isArray(object)) {
-            return object.map(item => evaluators.deep(scope, item));
-        }
-        if (typeof object === 'object') {
-            if (object === null)
-                return object;
-            const clone = {};
-            Object.keys(object)
-                .forEach(key => clone[key] = evaluators.deep(scope, object[key]));
-            return clone;
-        }
-        return object;
-    },
-    javaScript(scope, javascript) {
-        return evaluators.eval(scope, javascript);
-    },
-    javaScriptCode(scope, code) {
-        switch (code.type) {
-            case 'js':
-                return evaluators.javaScript(scope, code.code);
-            case 'file':
-                const uri = scope.resolve(code.code);
-                return loaders_1.default.text(scope, uri);
-        }
-    },
-    coffeeScript(scope, coffeescript) {
-        const javascript = coffeescript_1.default.compile(coffeescript, { bare: true });
-        return evaluators.javaScript(scope, javascript);
-    },
-    liveScript(scope, livescript) {
-        const javascript = livescript_1.default.compile(livescript + '\n', { bare: true });
-        return evaluators.javaScript(scope, javascript);
-    },
-    script(scope, script) {
-        try {
-            if (script instanceof utils.JavaScriptCode)
-                return evaluators.javaScriptCode(scope, script);
-            return evaluators.liveScript(scope, script);
-        }
-        catch (e) {
-            throw utils.pktError(scope, e, `failed to evalute`);
-        }
-    },
-    template(scope, text) {
-        try {
-            const tpl = underscore_1.default.template(text);
-            const yaml = tpl(Object.assign({}, scope.values, { $: scope }));
-            const objects = yamls.loadAll(yaml);
-            return objects;
-        }
-        catch (e) {
-            throw utils.pktError(scope, e, 'failed to parse template');
-        }
-    },
-};
-exports.default = evaluators;
+function doEval(scope, script) {
+    const $ = Object.assign({}, scope, scope.$buildLib(scope));
+    return evalWithValues($, script, scope.values);
+}
+exports.doEval = doEval;
+function deep(scope, object) {
+    if (object instanceof utils.CustomYamlTag) {
+        return javaScriptCode(scope, object);
+    }
+    if (Array.isArray(object)) {
+        return object.map(item => deep(scope, item));
+    }
+    if (typeof object === 'object') {
+        if (object === null)
+            return object;
+        const clone = {};
+        Object.keys(object)
+            .forEach(key => clone[key] = deep(scope, object[key]));
+        return clone;
+    }
+    return object;
+}
+exports.deep = deep;
+function javaScript(scope, javascript) {
+    return doEval(scope, javascript);
+}
+exports.javaScript = javaScript;
+function javaScriptCode(scope, code) {
+    switch (code.type) {
+        case 'js':
+            return javaScript(scope, code.code);
+        case 'file':
+            const uri = scope.resolve(code.code);
+            return loaders.loadText(scope, uri);
+    }
+}
+exports.javaScriptCode = javaScriptCode;
+function coffeeScript(scope, coffeescript) {
+    const javascript = coffeescript_1.default.compile(coffeescript, { bare: true });
+    return javaScript(scope, javascript);
+}
+exports.coffeeScript = coffeeScript;
+function liveScript(scope, livescript) {
+    const javascript = livescript_1.default.compile(livescript + '\n', { bare: true });
+    return javaScript(scope, javascript);
+}
+exports.liveScript = liveScript;
+function script(scope, script) {
+    try {
+        if (script instanceof utils.CustomYamlTag)
+            return javaScriptCode(scope, script);
+        return liveScript(scope, script);
+    }
+    catch (e) {
+        throw utils.pktError(scope, e, `failed to evalute`);
+    }
+}
+exports.script = script;
+function template(scope, text) {
+    try {
+        const tpl = underscore_1.default.template(text);
+        const yaml = tpl(Object.assign({}, scope.values, { $: scope }));
+        const objects = yamls.loadAll(yaml);
+        return objects;
+    }
+    catch (e) {
+        throw utils.pktError(scope, e, 'failed to parse template');
+    }
+}
+exports.template = template;

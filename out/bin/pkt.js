@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
-const lib_1 = __importDefault(require("../lib"));
 const help_1 = __importDefault(require("./help"));
 const chalk_1 = __importDefault(require("chalk"));
 const js_yaml_1 = __importDefault(require("js-yaml"));
@@ -13,6 +12,7 @@ const process_1 = __importDefault(require("process"));
 const genout_1 = __importDefault(require("./genout"));
 const version_1 = __importDefault(require("./version"));
 const cmd_1 = require("./cmd");
+const lib_1 = require("../lib");
 function readStdinUntilEnd(cb) {
     const chunks = [];
     process_1.default.stdin.resume();
@@ -29,7 +29,7 @@ function run(objects, values, files, config, options) {
     objects = objects || [];
     try {
         const userdata = {};
-        const yaml = lib_1.default.runtimes.exec(objects, values, files, config, userdata);
+        const yaml = lib_1.runtimes.exec(objects, values, files, config, userdata);
         const output = genout_1.default(yaml, options);
         console.log(output);
     }
@@ -48,7 +48,7 @@ function run(objects, values, files, config, options) {
     }
 }
 function main(argv) {
-    const config = lib_1.default.configs.load();
+    const config = lib_1.configs.load();
     let args = new cmd_1.ArgsBuilder().build(argv, config);
     if (args.options.save) {
         const fn = args.options.save;

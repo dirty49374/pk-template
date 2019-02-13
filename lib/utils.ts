@@ -1,5 +1,5 @@
 import _ from 'underscore';
-import { IScope } from './scope';
+import { IScope } from './types';
 
 _.templateSettings = {
     interpolate: /\<\<\<\=(.+?)\>\>\>/g,
@@ -15,14 +15,14 @@ interface KvpType {
     [ id: string ]: string
 }
 
-export const pktError = (scope: IScope, error: Error, message: string): PktError => {
+export const pktError = (scope: IScope | null, error: Error, message: string): PktError => {
     const pe = error as PktError;
     pe.summary = message;
     pe.uri = scope ? scope.uri : '.';
     return pe;
 }
 
-export class JavaScriptCode {
+export class CustomYamlTag {
     constructor(public type: string, public code: string) {}
 }
 
@@ -41,5 +41,3 @@ export const parseList = (value: string): string[] => {
     if (!value) return [];
     return value.split(';').map(p => p.trim());
 }
-
-module.exports = { pktError, JavaScriptCode, parseKvps, parseList };

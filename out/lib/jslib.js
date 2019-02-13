@@ -2,21 +2,28 @@
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = __importDefault(require("path"));
-const loaders_1 = __importDefault(require("./loaders"));
+const loaders = __importStar(require("./loaders"));
 // const runtimes = require('./runtimes');
 const utils_1 = require("./utils");
 const jslib = (scope) => ({
     // disabled ( causing circular dependency )
     // expand: path => runtimes.statements.include(scope, { include: path }),
-    globs: (path) => loaders_1.default.globs(scope, scope.resolve(path)),
-    files: (path) => loaders_1.default.files(scope, scope.resolve(path)),
-    loadText: (path) => loaders_1.default.text(scope, scope.resolve(path)),
-    loadPkt: (path) => loaders_1.default.pkt(scope, scope.resolve(path)),
-    loadYaml: (path) => loaders_1.default.yaml(scope, scope.resolve(path)),
-    loadYamlAll: (path) => loaders_1.default.yamlAll(scope, scope.resolve(path)),
-    loadTemplate: (path) => loaders_1.default.template(scope, scope.resolve(path)),
+    globs: (path) => loaders.globs(scope, scope.resolve(path)),
+    files: (path) => loaders.files(scope, scope.resolve(path)),
+    loadText: (path) => loaders.loadText(scope, scope.resolve(path)),
+    loadPkt: (path) => loaders.pkt(scope, scope.resolve(path)),
+    loadYaml: (path) => loaders.yaml(scope, scope.resolve(path)),
+    loadYamlAll: (path) => loaders.yamlAll(scope, scope.resolve(path)),
+    loadTemplate: (path) => loaders.template(scope, scope.resolve(path)),
     basename: (p) => path_1.default.basename(p),
     label: (object, name) => {
         if (name === null) {

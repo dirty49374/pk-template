@@ -1,8 +1,8 @@
 import path from 'path';
-import pkt from '../lib';
+import { loaders } from '../lib';
 
 function version() {
-    const pkg = pkt.loaders.yaml(null, path.join(__dirname, '../package.json'), true);
+    const pkg = loaders.yaml(null, path.join(__dirname, '../package.json'));
     console.log(pkg.version);
 }
 

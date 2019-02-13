@@ -14,13 +14,13 @@ exports.pktError = (scope, error, message) => {
     pe.uri = scope ? scope.uri : '.';
     return pe;
 };
-class JavaScriptCode {
+class CustomYamlTag {
     constructor(type, code) {
         this.type = type;
         this.code = code;
     }
 }
-exports.JavaScriptCode = JavaScriptCode;
+exports.CustomYamlTag = CustomYamlTag;
 exports.parseKvps = (value) => {
     if (!value)
         return {};
@@ -37,4 +37,3 @@ exports.parseList = (value) => {
         return [];
     return value.split(';').map(p => p.trim());
 };
-module.exports = { pktError: exports.pktError, JavaScriptCode, parseKvps: exports.parseKvps, parseList: exports.parseList };

@@ -2,11 +2,18 @@
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const js_yaml_1 = __importDefault(require("js-yaml"));
 const livescript_1 = __importDefault(require("livescript"));
 const coffeescript_1 = __importDefault(require("coffeescript"));
-const utils = require('./utils');
+const utils = __importStar(require("./utils"));
 const createCustomTag = (name, compile) => {
     return new js_yaml_1.default.Type(`!${name}`, {
         kind: 'scalar',
@@ -15,9 +22,9 @@ const createCustomTag = (name, compile) => {
             typeof data === null,
         construct: (data) => {
             const compiled = compile(data);
-            return new utils.JavaScriptCode(compiled.type, compiled.code);
+            return new utils.CustomYamlTag(compiled.type, compiled.code);
         },
-        instanceOf: utils.JavaScriptCode,
+        instanceOf: utils.CustomYamlTag,
         represent: (jsCode) => `!${name} ${jsCode.code}`
     });
 };

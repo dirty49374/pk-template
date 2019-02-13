@@ -4,10 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const js_yaml_1 = __importDefault(require("js-yaml"));
-const lib_1 = __importDefault(require("../lib"));
+const lib_1 = require("../lib");
 function helpPkt(url) {
     console.log('- url:', url);
-    const yaml = lib_1.default.loaders.yaml(null, url);
+    const yaml = lib_1.loaders.yaml(null, url);
     const schema = yaml.schema;
     if (!schema)
         return;
