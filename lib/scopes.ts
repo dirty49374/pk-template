@@ -1,9 +1,18 @@
-const url = require('url');
-const jslib = require('./jslib');
+import url from 'url';
+import jslib from './jslib';
+import { IScope } from './scope';
 
-const clone = obj => JSON.parse(JSON.stringify(obj));
-class Scope {
-    constructor({ objects, values, uri, parent, config, userdata }) {
+const clone = (obj: any): any => JSON.parse(JSON.stringify(obj));
+class Scope implements IScope {
+    objects: any[];
+    object: any;
+    values: any;
+    uri: string;
+    parent: IScope;
+    config: IConfig;
+    userdata: any;
+    $buildLib: any;
+    constructor({ objects, values, uri, parent, config, userdata }: any) {
         this.objects = objects;
         this.values = values;
         this.uri = uri;
@@ -13,21 +22,21 @@ class Scope {
         this.$buildLib = jslib;
     }
 
-    resolve(path) {
+    resolve(path: string): string {
         const p1 = this.config.resolve ? this.config.resolve(path) : path; // resolve @
         const resolved = url.resolve(this.uri, p1);
         return resolved || '.';
     }
 
-    add(object) {
-        let scope = this;
+    add(object: any): void {
+        let scope: IScope = this;
         while (scope) {
             scope.objects.push(object);
             scope = scope.parent;
         }
     }
 
-    child({ uri, objects, values }, handler) {
+    child<T>({ uri, objects, values }: any, handler: (scope: IScope)=>T): T {
         const scope = new Scope({
             objects: objects || [],
             values: values || clone(this.values),
@@ -43,7 +52,7 @@ class Scope {
 }
 
 const scopes = {
-    create(values, uri, parent, config, objects, userdata) {
+    create(values: any, uri: string, parent: IScope | null, config: IConfig, objects: any[], userdata: any): IScope {
         const scope = new Scope({
             objects: objects ? [ ...objects ] : [],
             values: values ? clone(values) : {},
@@ -56,4 +65,4 @@ const scopes = {
     },
 };
 
-module.exports = scopes;
+export default scopes;

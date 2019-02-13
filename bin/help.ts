@@ -1,7 +1,7 @@
-const jsyaml = require('js-yaml');
-const pkt = require('../src');
+import jsyaml from 'js-yaml';
+import pkt from '../lib';
 
-function helpPkt(url) {
+function helpPkt(url: string): void {
     console.log('- url:', url);
     const yaml = pkt.loaders.yaml(null, url);
     const schema = yaml.schema;
@@ -12,7 +12,7 @@ function helpPkt(url) {
     console.log(props);
 }
 
-function help(args) {
+function help(args: any): void {
     console.log('USAGE: pkt [options] ...files');
     console.log();
 
@@ -39,4 +39,4 @@ function help(args) {
     }
 }
 
-module.exports = help
+export default help;

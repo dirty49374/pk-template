@@ -61,3 +61,5 @@ typings/
 .next
 
 tmp/
+
+pkt_lib/

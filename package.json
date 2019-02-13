@@ -1,15 +1,15 @@
 {
   "name": "pk-template",
-  "version": "0.1.24",
+  "version": "0.1.25",
   "description": "p template engine for kubernetes",
-  "main": "src/index.js",
+  "main": "out/lib/index.js",
   "scripts": {
-    "start": "node bin/pkt.js",
+    "start": "node out/bin/pkt.js",
     "watch": "nodemon bin/pkt.js -- https://raw.githubusercontent.com/dirty49374/devtools/master/devtools.yaml",
     "test": "mocha"
   },
   "bin": {
-    "pkt": "bin/pkt.js"
+    "pkt": "out/bin/pkt.js"
   },
   "repository": {
     "type": "git",
@@ -43,6 +43,11 @@
     "yargs": "^12.0.5"
   },
   "devDependencies": {
+    "@types/glob": "^7.1.1",
+    "@types/js-yaml": "^3.12.0",
+    "@types/json-patch": "0.0.30",
+    "@types/jsonpath": "^0.2.0",
+    "@types/underscore": "^1.8.9",
     "mocha": "^5.2.0"
   }
 }

@@ -3,3 +3,5 @@ testcases/
 tmp/
 examples/
 quickstarts/
+src/
+lib/

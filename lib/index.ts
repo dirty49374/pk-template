@@ -1,6 +1,6 @@
 const loaders = require('./loaders');
 const evaluators = require('./evaluators');
 const runtimes = require('./runtimes');
-const configs = require('./configs');
+import configs from './configs';
 
-module.exports = { runtimes, configs, loaders, evaluators, run: runtimes.run };
+export default { runtimes, configs, loaders, evaluators, run: runtimes.run };

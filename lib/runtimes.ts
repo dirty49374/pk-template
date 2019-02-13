@@ -1,41 +1,42 @@
-const Ajv = require('ajv');
-const jsyaml = require('js-yaml');
-const jsonpath = require('jsonpath');
-const jsonpatch = require('json-patch');
+import Ajv from 'ajv';
+import jsyaml from 'js-yaml';
+import jsonpath from 'jsonpath';
+import jsonpatch from 'json-patch';
 
-const utils = require('./utils');
-const scopes = require('./scopes');
-const loaders = require('./loaders');
-const selectors = require('./selectors');
-const evaluators = require('./evaluators');
+import * as utils from './utils';
+import scopes from './scopes';
+import loaders from './loaders';
+import selectors from './selectors';
+import evaluators from './evaluators';
+import { IScope } from './scope';
 
 const ajv = new Ajv({ allErrors: true });
 
 const runtimes = {
     statements: {
-        break(scope, statement) {
+        break(scope: IScope, statement: IStatement) {
             if (!statement.break) return false;
             return true;
         },
-        script(scope, statement) {
+        script(scope: IScope, statement: IStatement) {
             if (!statement.script) return false;
-            evaluators.script(scope, statement.script, {});
+            evaluators.script(scope, statement.script);
             return true;
         },
-        each(scope, statement) {
+        each(scope: IScope, statement: IStatement) {
             if (!statement.each) return false;
             scope.objects.forEach(o => {
                 scope.object = o;
-                evaluators.script(scope, statement.each, {});
+                evaluators.script(scope, statement.each);
             });
             delete scope.object;
             return true;
         },    
-        assign(scope, statement) {
+        assign(scope: IScope, statement: IStatement) {
             if (!statement.assign) return false;
 
             const values = typeof statement.assign == 'string'
-                ? utils.utils.parseKvps(statement.assign)
+                ? utils.parseKvps(statement.assign)
                 : evaluators.deep(scope, statement.assign || {});
             scope.values = {
                 ...scope.values,
@@ -43,13 +44,13 @@ const runtimes = {
             };
             return true;
         },
-        add(scope, statement) {
+        add(scope: IScope, statement: IStatement) {
             if (!statement.add) return false;
             const object = evaluators.deep(scope, statement.add);
             scope.add(object);
             return true;
         },
-        include(scope, statement) {
+        include(scope: IScope, statement: IStatement) {
             if (!statement.include) return false;
 
             const uri = scope.resolve(statement.include);
@@ -63,7 +64,7 @@ const runtimes = {
             }
             return true;
         },
-        includeWith(scope, statement) {
+        includeWith(scope: IScope, statement: IStatement) {
             if (!statement.includeWith) return false;
             const idx = statement.includeWith.indexOf(' ')
             const path = idx >= 0
@@ -73,8 +74,8 @@ const runtimes = {
                 ? statement.includeWith.substring(idx)
                 : "";
             const values = utils.parseKvps(kvps);
-            scope.child({}, cscope => {
-                cscope.values = { ...scopes.values, ...values };
+            scope.child({}, (cscope: IScope) => {
+                cscope.values = { ...scope.values, ...values };
                 const uri = scope.resolve(path);
 
                 if (uri.toLowerCase().endsWith(".pkt")) {
@@ -83,21 +84,22 @@ const runtimes = {
                 } else {
                     const tpl = loaders.text(cscope, uri);
                     const objects = evaluators.template(cscope, tpl);
-                    objects.forEach(object => scopes.add(cscope, object));
+                    objects.forEach(object => cscope.add(object));
                 }
             });
 
             return true;
         },
-        jsonpath(scope, statement) {
+        jsonpath(scope: IScope, statement: IStatement) {
             if (!statement.jsonpath) return false;
             scope.objects.forEach(o => {
                 const nodes = jsonpath.nodes(o, statement.jsonpath.query);
                 nodes.forEach(node => {
                     scope.child({}, cscope => {
                         cscope.object = o;
-                        cscope.path = node.path;
-                        cscope.value = node.value;
+                        // XXX: ??
+                        // cscope.path = node.path;
+                        // cscope.value = node.value;
     
                         if (statement.jsonpath.apply) {
                             const value = evaluators.deep(cscope, statement.jsonpath.apply);
@@ -115,7 +117,7 @@ const runtimes = {
                 })
             });
         },
-        apply(scope, statement) {
+        apply(scope: IScope, statement: IStatement) {
             if (!statement.apply) return false;
 
             const uri = scope.resolve(statement.apply);
@@ -129,7 +131,7 @@ const runtimes = {
             }
             return true;
         },
-        applyWith(scope, statement) {
+        applyWith(scope: IScope, statement: IStatement) {
             if (!statement.applyWith) return false;
             const idx = statement.applyWith.indexOf(' ')
             const path = idx >= 0
@@ -140,7 +142,7 @@ const runtimes = {
                 : "";
             const values = utils.parseKvps(kvps);
             scope.child({ objects: scope.objects }, cscope => {
-                cscope.values = { ...scopes.values, ...values };
+                cscope.values = { ...scope.values, ...values };
                 const uri = scope.resolve(path);
         
                 if (uri.toLowerCase().endsWith(".pkt")) {
@@ -154,7 +156,7 @@ const runtimes = {
             });
             return true;
         },
-        patch(scope, statement) {
+        patch(scope: IScope, statement: IStatement) {
             if (!statement.patch) return false;
             const patch = Array.isArray(statement.patch) ? statement.patch : [ statement.patch ];
             scope.objects.forEach(o => {
@@ -166,33 +168,33 @@ const runtimes = {
             delete scope.object;
             return true;
         },    
-        routine(parentScope, statement) {
+        routine(parentScope: IScope, statement: IStatement) {
             if (!statement.routine) return false;
             parentScope.child({}, scope => {
                 runtimes.routine(scope, statement.routine);
             });
             return true;
         },
-        routineWith(parentScope, statement) {
+        routineWith(parentScope: IScope, statement: IStatement) {
             if (!statement.routineWith) return false;
             parentScope.child({ objects: parentScope.objects }, scope => {
                 runtimes.routine(scope, statement.routineWith);
             });
             return true;
         },
-        kubeconfig(scope, statement) {
+        kubeconfig(scope: IScope, statement: IStatement) {
             if (!statement.kubeconfig) return false;
             scope.userdata.kubeconfig = evaluators.deep(scope, statement.kubeconfig);
             return true;
         },
-        template(scope, statement) {
+        template(scope: IScope, statement: IStatement) {
             if (!statement.template) return false;
             const objects = evaluators.template(scope, statement.template);
             objects.forEach(object => scope.add(object));
             return true;
         },
     },
-    statement(scope, statement) {
+    statement(scope: IScope, statement: IStatement) {
         runtimes.statements.each(scope,        statement);
         runtimes.statements.jsonpath(scope,    statement);
         runtimes.statements.script(scope,      statement);
@@ -208,7 +210,7 @@ const runtimes = {
         runtimes.statements.routine(scope,     statement);
         runtimes.statements.routineWith(scope, statement);
     },
-    routine(scope, routine) {
+    routine(scope: IScope, routine: IStatement) {
         if (!routine)
             return;
 
@@ -230,7 +232,7 @@ const runtimes = {
                 return;
         }
     },
-    buildInput(input, parentValues) {
+    buildInput(input: any, parentValues: any): any {
         if (!input) return {}
 
         const values = { ...input };
@@ -240,7 +242,7 @@ const runtimes = {
         }
         return values;
     },
-    run(file, parentScope, uri, withObject = false) {
+    run(file: IPkt, parentScope: IScope, uri: string, withObject: boolean = false) {
         if (!file) return;
 
         if (!parentScope) throw 'no parent scope';
@@ -275,7 +277,7 @@ const runtimes = {
         });
         return parentScope.objects;
     },
-    exec(objects, values, files, config, userdata) {
+    exec(objects: any[], values: any, files: string[], config: IConfig, userdata: IUserdata) {
         const scope = scopes.create(values, '.', null, config, objects, userdata || {});
         files.forEach(path => runtimes.statements.apply(scope, { apply: path }));
 

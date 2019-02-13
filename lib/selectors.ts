@@ -1,5 +1,6 @@
+type ObjectPredicate = (object: any) => boolean;
 
-const makePredicate = src => {
+const buildPredicate = (src: string): ObjectPredicate => {
     const nv = src.split('=');
 
     if (nv.length > 1) {
@@ -7,7 +8,7 @@ const makePredicate = src => {
         const value = nv[1];
         if (lname[0] === '!') {
             const aname = lname.substring(1)
-            return object =>
+            return (object: any) =>
                 object.metadata &&
                 object.metadata.annotations &&
                 (
@@ -16,7 +17,7 @@ const makePredicate = src => {
                         : object.metadata.annotations[aname] === value
                 );
         }
-        return object =>
+        return (object: any) =>
             object.metadata &&
             object.metadata.labels &&
             (
@@ -26,26 +27,26 @@ const makePredicate = src => {
             );
     } else if (src[0] === '.') {
         const name = src.substr(1);
-        return object =>
+        return (object: any) =>
             object.metadata &&
             object.metadata.name == name;
     } else {
-        return object => object.kind === src;
+        return (object: any) => object.kind === src;
     }
 };
 
 const selectors = {
-    compileOne: src => {
-        const predicates = src.split(/\s+/).map(makePredicate);
-        return object => predicates.every(pred => pred(object));
+    compileOne: (src: string): ObjectPredicate => {
+        const predicates = src.split(/\s+/).map(buildPredicate);
+        return (object: any) => predicates.every(pred => pred(object));
     },
-    compile: src => {
+    compile: (src: string[] | string): ObjectPredicate => {
         if (typeof src === 'string') {
             src = [ src ];
         }
         const predicates = src.map(selectors.compileOne);
-        return object => predicates.some(pred => pred(object));
+        return (object: any) => predicates.some(pred => pred(object));
     }
 };
 
-module.exports = selectors;
+export default selectors;

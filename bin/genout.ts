@@ -1,6 +1,6 @@
-const jsyaml = require('js-yaml');
+import jsyaml from 'js-yaml';
 
-const gensh = (yaml, userdata) => {
+const gensh = (yaml: string, userdata: IUserdata) => {
     const lines = []
     lines.push("#!/bin/sh")
     lines.push("")
@@ -20,9 +20,9 @@ const gensh = (yaml, userdata) => {
     return lines.join("\n")
 }
 
-const genout = (yaml, options) => {
+const genout = (yaml: string, options: any) => {
     if (options.shellscript)
-        return gensh(yaml, userdata);
+        return gensh(yaml, {});
 
     if (options.json) {
         if (options.indent) {
@@ -47,4 +47,4 @@ const genout = (yaml, options) => {
     }
 }
 
-module.exports =  genout;
+export default genout;

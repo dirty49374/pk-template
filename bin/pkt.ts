@@ -1,16 +1,16 @@
 #!/usr/bin/env node
-const fs = require('fs');
-const pkt = require('../src');
-const glob = require('glob');
-const path = require('path');
-const help = require('./help');
-const chalk = require('chalk');
-const jsyaml = require('js-yaml');
-const process = require('process');
-const genout = require('./genout');
-const version = require('./version');
+import fs from 'fs';
+import pkt from '../lib';
+import glob from 'glob';
+import path from 'path';
+import help from './help';
+import chalk from 'chalk';
+import jsyaml from 'js-yaml';
+import process from 'process';
+import genout from './genout';
+import version from './version';
 
-function expandValues(values) {
+function expandValues(values: any): any {
     Object.keys(values).forEach(k => {
         if (k.endsWith('@')) {
             const path = values[k]
@@ -20,11 +20,11 @@ function expandValues(values) {
             values[k.substr(0, k.length-1)] = value
         }
     });
-    return values
+    return values;
 }
 
-function filterValues(argv) {
-    const values = {}
+function filterValues(argv: any): any {
+    const values: any = {}
     Object.keys(argv).forEach(k => {
         if (k[0] != '$') {
             values[k] = argv[k];
@@ -33,11 +33,11 @@ function filterValues(argv) {
     return values
 }
 
-function buildValues(config, argv) {
-    return expandValues(filterValues(argv))
+function buildValues(config: IConfig, argv: any): any {
+    return expandValues(filterValues(argv));
 }
 
-function expandLibPath(p) {
+function expandLibPath(p: string): string {
     if (p.length === 0 || p[0] !== '@') {
         return p;
     }
@@ -64,15 +64,15 @@ function expandLibPath(p) {
     }
 }
 
-function buildFiles(config, argv) {
+function buildFiles(config: IConfig, argv: any): string[] {
     return argv._.map(expandGlobs)
-        .reduce((sum, list) => sum.concat(list), [])
-        .map(p => config.resolve(p))
-        .map(p => expandLibPath(p))
+        .reduce((sum: string[], list: string[]) => sum.concat(list), [])
+        .map((p: string) => config.resolve(p))
+        .map((p: string) => expandLibPath(p))
 }
 
-function buildOptions(argv) {
-    const options = {}
+function buildOptions(argv: any) {
+    const options: IOption = {}
     if ('i' in argv) options.stdin = !!argv.i;
     if ('h' in argv) options.help = !!argv.h;
     if ('v' in argv) options.version = !!argv.v;
@@ -87,7 +87,7 @@ function buildOptions(argv) {
     return options;
 }
 
-function parseArgs(oargv, config) {
+function parseArgs(oargv: any, config: IConfig) {
     const argv = require('yargs/yargs')(oargv)
         .version(false)
         .help(false)
@@ -101,7 +101,7 @@ function parseArgs(oargv, config) {
     return { options, values, files, };
 }
 
-function expandGlobs(path) {
+function expandGlobs(path: string): string[] {
     if (path.toLowerCase().startsWith('http://') ||
         path.toLowerCase().startsWith('https://') ||
         path[0] == ':')
@@ -111,8 +111,8 @@ function expandGlobs(path) {
     return [ path ];
 }
 
-function readStdinUntilEnd(cb) {
-    const chunks = [];
+function readStdinUntilEnd(cb: (text: string)=> void) {
+    const chunks: any[] = [];
 
     process.stdin.resume();
     process.stdin.setEncoding('utf8');
@@ -126,13 +126,13 @@ function readStdinUntilEnd(cb) {
     });
 }
 
-function run(objects, values, files, config, options) {
+function run(objects: any[], values: any, files: string[], config: IConfig, options: IOption) {
     objects = objects || [];
     try {
         const userdata = {};
         const yaml = pkt.runtimes.exec(objects, values, files, config, userdata);
 
-        const output = genout(yaml, options, userdata)
+        const output = genout(yaml, options);
         console.log(output);
     } catch (e) {
         if (e.summary) {
@@ -148,7 +148,7 @@ function run(objects, values, files, config, options) {
     }
 }
 
-function main(argv) {
+function main(argv: any) {
     const config = pkt.configs.load();
 
     let args = parseArgs(argv, config);
@@ -175,10 +175,10 @@ function main(argv) {
     }
 
     if (args.options.stdin) {
-        readStdinUntilEnd(text => {
+        readStdinUntilEnd((text: string): void => {
             const objects = jsyaml.loadAll(text);
             run(objects, args.values, args.files, config, args.options);
-        })
+        });
     } else {
         run([], args.values, args.files, config, args.options);
     }

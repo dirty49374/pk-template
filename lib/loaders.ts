@@ -1,12 +1,13 @@
-const _ = require('underscore');
-const fs = require("fs");
-const url = require('url');
-const glob = require('glob');
-const syncRequest = require('sync-request');
+import _ from 'underscore';
+import fs from "fs";
+import url from 'url';
+import glob from 'glob';
+import syncRequest from 'sync-request';
 
-const utils = require('./utils');
-const yamls = require('./yamls');
-
+import * as utils from './utils';
+import * as yamls from './yamls';
+import { load } from 'js-yaml';
+import { IScope } from './scope';
 
 _.templateSettings = {
     interpolate: /\<\<\<\=(.+?)\>\>\>/g,
@@ -14,12 +15,12 @@ _.templateSettings = {
 };
 
 const loaders = {
-    isHttp(uri) {
+    isHttp(uri: string): boolean {
         const supportedProtocols = [ 'http:', 'https:' ];
         const parsed = url.parse(uri);
         return supportedProtocols.some(protocol => protocol == parsed.protocol);
     },
-    text(scope, uri) {
+    text(scope: IScope, uri: string): string {
         try {
             return loaders.isHttp(uri)
                 ? syncRequest('GET', uri).getBody('utf8')
@@ -28,7 +29,7 @@ const loaders = {
             throw utils.pktError(scope, e, `failed to load ${uri}`);
         }
     },
-    yaml(scope, uri) {
+    yaml(scope: IScope, uri: string): any {
         const text = loaders.text(scope, uri);
         try {
             return yamls.load(text);
@@ -36,7 +37,7 @@ const loaders = {
             throw utils.pktError(scope, e, `failed to parse yaml ${uri}`);
         }
     },
-    yamlAll(scope, uri) {
+    yamlAll(scope: IScope, uri: string): any[] {
         const text = loaders.text(scope, uri);
         try {
             return yamls.loadAll(text);
@@ -44,7 +45,7 @@ const loaders = {
             throw utils.pktError(scope, e, `failed to parse yaml ${uri}`);
         }
     },
-    pkt(scope, uri) {
+    pkt(scope: IScope, uri: string): IPkt {
         const text = loaders.text(scope, uri);
         try {
             return yamls.loadAsPkt(text);
@@ -52,7 +53,7 @@ const loaders = {
             throw utils.pktError(scope, e, `failed to parse yaml ${uri}`);
         }
     },
-    template(scope, uri) {
+    template(scope: IScope, uri: string) {
         const text = loaders.text(scope, uri);
         try {
             return _.template(text);
@@ -60,14 +61,14 @@ const loaders = {
             throw utils.pktError(scope, e, `failed to parse template ${uri}`);
         }
     },
-    files(scope, uri) {
+    files(scope: IScope, uri: string) {
         if (loaders.isHttp(uri)) {
             throw new Error(`cannot get directory listing from ${uri}`);
         }
 
         return fs.readdirSync(uri);
     },
-    globs(scope, uri) {
+    globs(scope: IScope, uri: string) {
         if (loaders.isHttp(uri)) {
             throw new Error(`cannot get directory listing from ${uri}`);
         }
@@ -75,6 +76,6 @@ const loaders = {
         const list = glob.sync(uri);
         return list;
     },
-}
+};
 
-module.exports = loaders;
+export default loaders;
