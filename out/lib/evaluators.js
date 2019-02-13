@@ -47,7 +47,8 @@ const evaluators = {
             case 'js':
                 return evaluators.javaScript(scope, code.code);
             case 'file':
-                return loaders_1.default.text(scope, code.code);
+                const uri = scope.resolve(code.code);
+                return loaders_1.default.text(scope, uri);
         }
     },
     coffeeScript(scope, coffeescript) {

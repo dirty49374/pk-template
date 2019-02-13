@@ -6,111 +6,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
 const lib_1 = __importDefault(require("../lib"));
-const glob_1 = __importDefault(require("glob"));
-const path_1 = __importDefault(require("path"));
 const help_1 = __importDefault(require("./help"));
 const chalk_1 = __importDefault(require("chalk"));
 const js_yaml_1 = __importDefault(require("js-yaml"));
 const process_1 = __importDefault(require("process"));
 const genout_1 = __importDefault(require("./genout"));
 const version_1 = __importDefault(require("./version"));
-function expandValues(values) {
-    Object.keys(values).forEach(k => {
-        if (k.endsWith('@')) {
-            const path = values[k];
-            const value = lib_1.default.loaders.yaml(null, path, true);
-            delete values[k];
-            values[k.substr(0, k.length - 1)] = value;
-        }
-    });
-    return values;
-}
-function filterValues(argv) {
-    const values = {};
-    Object.keys(argv).forEach(k => {
-        if (k[0] != '$') {
-            values[k] = argv[k];
-        }
-    });
-    return values;
-}
-function buildValues(config, argv) {
-    return expandValues(filterValues(argv));
-}
-function expandLibPath(p) {
-    if (p.length === 0 || p[0] !== '@') {
-        return p;
-    }
-    p = p.substr(1);
-    if (fs_1.default.existsSync(p)) {
-        return p;
-    }
-    let cur = process_1.default.cwd();
-    while (true) {
-        const libdir = path_1.default.join(cur, "pkt_lib");
-        if (fs_1.default.existsSync(libdir)) {
-            const rpath = path_1.default.join(libdir, p);
-            if (fs_1.default.existsSync(rpath))
-                return rpath;
-        }
-        const parent = path_1.default.dirname(cur);
-        if (parent == cur)
-            return p;
-        cur = parent;
-    }
-}
-function buildFiles(config, argv) {
-    return argv._.map(expandGlobs)
-        .reduce((sum, list) => sum.concat(list), [])
-        .map((p) => config.resolve(p))
-        .map((p) => expandLibPath(p));
-}
-function buildOptions(argv) {
-    const options = {};
-    if ('i' in argv)
-        options.stdin = !!argv.i;
-    if ('h' in argv)
-        options.help = !!argv.h;
-    if ('v' in argv)
-        options.version = !!argv.v;
-    if ('d' in argv)
-        options.debug = !!argv.d;
-    if ('x' in argv)
-        options.shellscript = !!argv.x;
-    if ('j' in argv)
-        options.json = !!argv.j;
-    if ('J' in argv)
-        options.json1 = !!argv.J;
-    if ('P' in argv)
-        options.pkt = !!argv.P;
-    if ('n' in argv)
-        options.indent = !!argv.n;
-    if ('S' in argv)
-        options.save = argv.S;
-    if ('L' in argv)
-        options.load = argv.L;
-    return options;
-}
-function parseArgs(oargv, config) {
-    const argv = require('yargs/yargs')(oargv)
-        .version(false)
-        .help(false)
-        .boolean(['i', 'h', 'v', 'd', 'x', 'j', 'n', 'J', 'P'])
-        .argv;
-    const values = buildValues(config, argv);
-    const files = buildFiles(config, argv);
-    const options = buildOptions(argv);
-    return { options, values, files, };
-}
-function expandGlobs(path) {
-    if (path.toLowerCase().startsWith('http://') ||
-        path.toLowerCase().startsWith('https://') ||
-        path[0] == ':')
-        return [path];
-    if (path.includes('?') || path.includes('*') || path.includes('+'))
-        return glob_1.default.sync(path);
-    return [path];
-}
+const cmd_1 = require("./cmd");
 function readStdinUntilEnd(cb) {
     const chunks = [];
     process_1.default.stdin.resume();
@@ -147,8 +49,7 @@ function run(objects, values, files, config, options) {
 }
 function main(argv) {
     const config = lib_1.default.configs.load();
-    let args = parseArgs(argv, config);
-    console.log(args);
+    let args = new cmd_1.ArgsBuilder().build(argv, config);
     if (args.options.save) {
         const fn = args.options.save;
         const optIndex = argv.indexOf('-S');
