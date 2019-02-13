@@ -11,7 +11,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const ajv_1 = __importDefault(require("ajv"));
-const js_yaml_1 = __importDefault(require("js-yaml"));
 const jsonpath_1 = __importDefault(require("jsonpath"));
 const json_patch_1 = __importDefault(require("json-patch"));
 const utils = __importStar(require("./utils"));
@@ -292,6 +291,6 @@ exports.run = run;
 function exec(objects, values, files, config, userdata) {
     const scope = scopes_1.default.create(values, '.', null, config, objects, userdata || {});
     files.forEach(path => statements.apply(scope, { apply: path }));
-    return scope.objects.map(o => js_yaml_1.default.dump(o)).join('---\n');
+    return scope.objects;
 }
 exports.exec = exec;

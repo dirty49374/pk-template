@@ -8,6 +8,7 @@ const jslib_1 = __importDefault(require("./jslib"));
 const clone = (obj) => JSON.parse(JSON.stringify(obj));
 class Scope {
     constructor({ objects, values, uri, parent, config, userdata }) {
+        this.object = null;
         this.objects = objects;
         this.values = values;
         this.uri = uri;

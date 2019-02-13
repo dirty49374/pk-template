@@ -1,12 +1,12 @@
 import url from 'url';
 import jslib from './jslib';
-import { IScope } from './types';
+import { IScope, IObject, IValues } from './types';
 
 const clone = (obj: any): any => JSON.parse(JSON.stringify(obj));
 class Scope implements IScope {
-    objects: any[];
-    object: any;
-    values: any;
+    objects: IObject[];
+    object: IObject | null = null;
+    values: IValues;
     uri: string;
     parent: IScope;
     config: IConfig;
@@ -52,7 +52,7 @@ class Scope implements IScope {
 }
 
 const scopes = {
-    create(values: any, uri: string, parent: IScope | null, config: IConfig, objects: any[], userdata: any): IScope {
+    create(values: IValues, uri: string, parent: IScope | null, config: IConfig, objects: IObject[], userdata: any): IScope {
         const scope = new Scope({
             objects: objects ? [ ...objects ] : [],
             values: values ? clone(values) : {},

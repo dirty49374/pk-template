@@ -11,8 +11,9 @@ const js_yaml_1 = __importDefault(require("js-yaml"));
 const process_1 = __importDefault(require("process"));
 const genout_1 = __importDefault(require("./genout"));
 const version_1 = __importDefault(require("./version"));
-const cmd_1 = require("./cmd");
+const args_1 = require("./args");
 const lib_1 = require("../lib");
+const kube_1 = require("./kube");
 function readStdinUntilEnd(cb) {
     const chunks = [];
     process_1.default.stdin.resume();
@@ -25,13 +26,22 @@ function readStdinUntilEnd(cb) {
         cb(all);
     });
 }
+function apply(objects, options) {
+    const kube = new kube_1.Kube(options.kubeconfig, options.namespace);
+    kube.apply(objects);
+}
 function run(objects, values, files, config, options) {
     objects = objects || [];
     try {
         const userdata = {};
-        const yaml = lib_1.runtimes.exec(objects, values, files, config, userdata);
-        const output = genout_1.default(yaml, options);
-        console.log(output);
+        const results = lib_1.runtimes.exec(objects, values, files, config, userdata);
+        if (options.apply) {
+            apply(results, options);
+        }
+        else {
+            const yaml = results.map(o => js_yaml_1.default.dump(o)).join('---\n');
+            const output = genout_1.default(yaml, options);
+        }
     }
     catch (e) {
         if (e.summary) {
@@ -49,7 +59,7 @@ function run(objects, values, files, config, options) {
 }
 function main(argv) {
     const config = lib_1.configs.load();
-    let args = new cmd_1.ArgsBuilder().build(argv, config);
+    let args = new args_1.ArgsBuilder().build(argv, config);
     if (args.options.save) {
         const fn = args.options.save;
         const optIndex = argv.indexOf('-S');

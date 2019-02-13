@@ -11,7 +11,7 @@ export interface IArgs {
 }
 
 export class ArgsBuilder {
-    private expandValues(values: any): any {
+    private expandValues(values: IValues): any {
         Object.keys(values).forEach(k => {
             if (k.endsWith('@')) {
                 const path = values[k]
@@ -25,7 +25,7 @@ export class ArgsBuilder {
     }
     
     private filterValues(argv: any): any {
-        const values: any = {}
+        const values: IValues = {}
         Object.keys(argv).forEach(k => {
             if (k[0] != '$') {
                 values[k] = argv[k];
@@ -94,7 +94,9 @@ export class ArgsBuilder {
         if ('P' in argv) options.pkt = !!argv.P;
         if ('n' in argv) options.indent = !!argv.n;
         if ('S' in argv) options.save = argv.S;
-        if ('L' in argv) options.load = argv.L;
+        if ('K' in argv) options.kubeconfig = argv.K;
+        if ('N' in argv) options.namespace = argv.N;
+        if ('A' in argv) options.apply = !!argv.A;
         return options;
     }
     
@@ -102,7 +104,7 @@ export class ArgsBuilder {
         const yargv = require('yargs/yargs')(argv)
             .version(false)
             .help(false)
-            .boolean(['i', 'h', 'v', 'd', 'x', 'j', 'n', 'J', 'P' ])
+            .boolean(['i', 'h', 'v', 'd', 'x', 'j', 'n', 'J', 'P', 'A' ])
             .argv;
     
         const values = this.buildValues(config, yargv)

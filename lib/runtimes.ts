@@ -8,7 +8,7 @@ import scopes from './scopes';
 import * as loaders from './loaders';
 import selectors from './selectors';
 import * as evaluators from './evaluators';
-import { IScope } from './types';
+import { IScope, IValues, IObject } from './types';
 
 const ajv = new Ajv({ allErrors: true });
 
@@ -234,7 +234,7 @@ export function routine(scope: IScope, routine: IStatement) {
     }
 }
 
-export function buildInput(input: any, parentValues: any): any {
+export function buildInput(input: any, parentValues: IValues): any {
     if (!input) return {}
 
     const values = { ...input };
@@ -281,9 +281,9 @@ export function run(file: IPkt, parentScope: IScope, uri: string, withObject: bo
     return parentScope.objects;
 }
 
-export function exec(objects: any[], values: any, files: string[], config: IConfig, userdata: IUserdata) {
+export function exec(objects: IObject[], values: IValues, files: string[], config: IConfig, userdata: IUserdata): IObject[] {
     const scope = scopes.create(values, '.', null, config, objects, userdata || {});
     files.forEach(path => statements.apply(scope, { apply: path }));
 
-    return scope.objects.map(o => jsyaml.dump(o)).join('---\n');
+    return scope.objects;
 }

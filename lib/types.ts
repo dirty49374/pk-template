@@ -2,6 +2,10 @@ export interface IValues {
     [ id: string ]: any;
 }
 
+export interface IObject {
+    [ id: string ]: any;
+}
+
 export interface IOptions {
     [ id: string ]: any;
 }
@@ -9,8 +13,8 @@ export interface IOptions {
 export type IScopeHandler = (scope: IScope) => any;
 
 export interface IScope {
-    objects: any[];
-    object: any;
+    objects: IObject[];
+    object: IObject | null;
     values: IValues;
     uri: string;
     parent: IScope;

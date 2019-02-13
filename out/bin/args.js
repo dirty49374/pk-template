@@ -90,15 +90,19 @@ class ArgsBuilder {
             options.indent = !!argv.n;
         if ('S' in argv)
             options.save = argv.S;
-        if ('L' in argv)
-            options.load = argv.L;
+        if ('K' in argv)
+            options.kubeconfig = argv.K;
+        if ('N' in argv)
+            options.namespace = argv.N;
+        if ('A' in argv)
+            options.apply = !!argv.A;
         return options;
     }
     build(argv, config) {
         const yargv = require('yargs/yargs')(argv)
             .version(false)
             .help(false)
-            .boolean(['i', 'h', 'v', 'd', 'x', 'j', 'n', 'J', 'P'])
+            .boolean(['i', 'h', 'v', 'd', 'x', 'j', 'n', 'J', 'P', 'A'])
             .argv;
         const values = this.buildValues(config, yargv);
         const files = this.buildFiles(config, yargv);
