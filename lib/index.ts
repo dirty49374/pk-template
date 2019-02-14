@@ -1,4 +1,4 @@
-export { IValues, IOptions } from './types';
+export { IObject, IValues, IOptions } from './types';
 import * as loaders from './loaders';
 import * as evaluators from './evaluators';
 import * as configs from './configs';

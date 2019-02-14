@@ -4,12 +4,11 @@ import help from './help';
 import chalk from 'chalk';
 import jsyaml from 'js-yaml';
 import process from 'process';
-import genout from './genout';
+import { outputFactory } from './genout';
 import version from './version';
 import { ArgsBuilder } from './args';
 import { runtimes, configs, IValues } from '../lib';
-import { IObject } from '../lib/types';
-import { Kube } from './kube';
+import { IObject, IOptions } from '../lib';
 
 function readStdinUntilEnd(cb: (text: string)=> void) {
     const chunks: any[] = [];
@@ -26,22 +25,14 @@ function readStdinUntilEnd(cb: (text: string)=> void) {
     });
 }
 
-function apply(objects: IObject[], options: IOption) {
-    const kube = new Kube(options.kubeconfig, options.namespace);
-    kube.apply(objects);
-}
-
-function run(objects: IObject[], values: IValues, files: string[], config: IConfig, options: IOption) {
+function run(objects: IObject[], values: IValues, files: string[], config: IConfig, options: IOptions) {
     objects = objects || [];
     try {
         const userdata = {};
         const results = runtimes.exec(objects, values, files, config, userdata);
-        if (options.apply) {
-            apply(results, options);
-        } else {
-            const yaml = results.map(o => jsyaml.dump(o)).join('---\n');
-            const output = genout(yaml, options);
-        }
+        const module = outputFactory(options);
+
+        module.write(results);
     } catch (e) {
         if (e.summary) {
             console.error(chalk.red('ERROR: ' + e.summary + ' in ' + e.uri));

@@ -92,8 +92,12 @@ class ArgsBuilder {
             options.save = argv.S;
         if ('K' in argv)
             options.kubeconfig = argv.K;
+        if ('C' in argv)
+            options.kubecluster = argv.C;
+        if ('X' in argv)
+            options.kubecontext = argv.X;
         if ('N' in argv)
-            options.namespace = argv.N;
+            options.kubenamespace = argv.N;
         if ('A' in argv)
             options.apply = !!argv.A;
         return options;
@@ -102,7 +106,7 @@ class ArgsBuilder {
         const yargv = require('yargs/yargs')(argv)
             .version(false)
             .help(false)
-            .boolean(['i', 'h', 'v', 'd', 'x', 'j', 'n', 'J', 'P', 'A'])
+            .boolean(['i', 'h', 'v', 'd', 'x', 'j', 'n', 'J', 'P'])
             .argv;
         const values = this.buildValues(config, yargv);
         const files = this.buildFiles(config, yargv);

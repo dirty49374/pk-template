@@ -5,4 +5,3 @@ type IPkt = any;
 type IConfig = any;
 type IStatement = any;
 type IUserdata = any;
-type IOption = any;

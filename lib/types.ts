@@ -7,7 +7,21 @@ export interface IObject {
 }
 
 export interface IOptions {
-    [ id: string ]: any;
+    stdin?: boolean;
+    help?: boolean;
+    version?: boolean;
+    debug?: boolean;
+    shellscript?: boolean;
+    json?: boolean;
+    json1?: boolean;
+    pkt?: boolean;
+    indent?: boolean;
+    save?: string;
+    kubeconfig?: string;
+    kubecluster?: string;
+    kubecontext?: string;
+    kubenamespace?: string;
+    apply?: boolean;
 }
 
 export type IScopeHandler = (scope: IScope) => any;

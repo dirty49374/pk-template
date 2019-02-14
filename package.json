@@ -9,7 +9,8 @@
     "test": "mocha"
   },
   "bin": {
-    "pkt": "out/bin/pkt.js"
+    "pkt": "out/bin/pkt.js",
+    "pk-apply": "out/bin/apply.js"
   },
   "repository": {
     "type": "git",

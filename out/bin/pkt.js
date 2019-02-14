@@ -9,11 +9,10 @@ const help_1 = __importDefault(require("./help"));
 const chalk_1 = __importDefault(require("chalk"));
 const js_yaml_1 = __importDefault(require("js-yaml"));
 const process_1 = __importDefault(require("process"));
-const genout_1 = __importDefault(require("./genout"));
+const genout_1 = require("./genout");
 const version_1 = __importDefault(require("./version"));
 const args_1 = require("./args");
 const lib_1 = require("../lib");
-const kube_1 = require("./kube");
 function readStdinUntilEnd(cb) {
     const chunks = [];
     process_1.default.stdin.resume();
@@ -26,22 +25,13 @@ function readStdinUntilEnd(cb) {
         cb(all);
     });
 }
-function apply(objects, options) {
-    const kube = new kube_1.Kube(options.kubeconfig, options.namespace);
-    kube.apply(objects);
-}
 function run(objects, values, files, config, options) {
     objects = objects || [];
     try {
         const userdata = {};
         const results = lib_1.runtimes.exec(objects, values, files, config, userdata);
-        if (options.apply) {
-            apply(results, options);
-        }
-        else {
-            const yaml = results.map(o => js_yaml_1.default.dump(o)).join('---\n');
-            const output = genout_1.default(yaml, options);
-        }
+        const module = genout_1.outputFactory(options);
+        module.write(results);
     }
     catch (e) {
         if (e.summary) {
