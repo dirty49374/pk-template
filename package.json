@@ -1,16 +1,18 @@
 {
   "name": "pk-template",
-  "version": "0.1.25",
+  "version": "0.1.26",
   "description": "p template engine for kubernetes",
   "main": "out/lib/index.js",
   "scripts": {
-    "start": "node out/bin/pkt.js",
-    "watch": "nodemon bin/pkt.js -- https://raw.githubusercontent.com/dirty49374/devtools/master/devtools.yaml",
+    "start": "ts-node bin/pkt.ts",
+    "watch": "tsc --watch",
+    "build": "tsc --build",
+    "publish": "tsc --build && npm publish",
     "test": "mocha"
   },
   "bin": {
     "pkt": "out/bin/pkt.js",
-    "pk-apply": "out/bin/apply.js"
+    "pkt-apply": "out/bin/pkt-apply.js"
   },
   "repository": {
     "type": "git",
@@ -31,24 +33,32 @@
   },
   "homepage": "https://github.com/dirty49374/pk-template#readme",
   "dependencies": {
+    "@types/readline-sync": "^1.4.3",
     "ajv": "^6.6.1",
     "chalk": "^2.4.1",
     "coffeescript": "^2.3.2",
+    "colors": "^1.3.3",
+    "diff": "^4.0.1",
     "glob": "^7.1.3",
-    "js-yaml": "^3.12.0",
+    "js-yaml": "^3.12.1",
     "json-patch": "^0.7.0",
     "jsonpath": "^1.0.0",
     "livescript": "^1.6.0",
+    "readline-sync": "^1.4.9",
     "sync-request": "^6.0.0",
     "underscore": "^1.9.1",
     "yargs": "^12.0.5"
   },
   "devDependencies": {
+    "@types/ajv": "^1.0.0",
+    "@types/diff": "^4.0.1",
     "@types/glob": "^7.1.1",
     "@types/js-yaml": "^3.12.0",
     "@types/json-patch": "0.0.30",
     "@types/jsonpath": "^0.2.0",
+    "@types/node": "^11.9.3",
     "@types/underscore": "^1.8.9",
-    "mocha": "^5.2.0"
+    "mocha": "^5.2.0",
+    "typescript": "^3.3.3"
   }
 }

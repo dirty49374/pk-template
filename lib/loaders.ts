@@ -6,7 +6,7 @@ import syncRequest from 'sync-request';
 
 import * as utils from './utils';
 import * as yamls from './yamls';
-import { IScope } from './types';
+import { IScope, IPkt } from './types';
 
 _.templateSettings = {
     interpolate: /\<\<\<\=(.+?)\>\>\>/g,
@@ -80,8 +80,4 @@ export function globs(scope: IScope, uri: string) {
 
     const list = glob.sync(uri);
     return list;
-}
-
-export function xx() {
-    console.log('xxxxx')
 }

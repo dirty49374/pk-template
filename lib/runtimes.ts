@@ -8,7 +8,7 @@ import scopes from './scopes';
 import * as loaders from './loaders';
 import selectors from './selectors';
 import * as evaluators from './evaluators';
-import { IScope, IValues, IObject } from './types';
+import { IScope, IValues, IObject, IPkt, IConfig, IStatement, IUserdata } from './types';
 
 const ajv = new Ajv({ allErrors: true });
 
@@ -93,7 +93,7 @@ const statements = {
         if (!stmt.jsonpath) return false;
         scope.objects.forEach(o => {
             const nodes = jsonpath.nodes(o, stmt.jsonpath.query);
-            nodes.forEach(node => {
+            nodes.forEach((node: any) => {
                 scope.child({}, cscope => {
                     cscope.object = o;
                     // XXX: ??

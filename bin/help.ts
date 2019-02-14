@@ -21,8 +21,24 @@ function help(args: any): void {
     console.log('   -v           : version');
     console.log('   -x           : generate shell script');
     console.log('   -d           : show nodejs errors and callstack');
+    console.log();
     console.log('   -i           : load yamls from stdin as initial objects');
-    console.log('   --name value : assign value to name');
+    console.log();
+    console.log('   -x           : shell script output');
+    console.log('   -A           : bash script output');
+    console.log('   -j           : json output');
+    console.log('   -P           : pkt output');
+    console.log();
+    console.log('   -u yamlpath  : test changes for yaml files previously build');
+    console.log('   -U           : write changes');
+    console.log();
+    console.log('   -K path      : write kubeconfig path inside yaml file as comment');
+    console.log('   -C name      : write cluster name inside yaml file as comment');
+    console.log('   -X name      : write context name path inside yaml file as comment');
+    console.log('   -N namespace : write namespace name inside yaml file as comment');
+
+    console.log();
+    console.log('   --name value : assign value to name, ex) --image nginx');
     console.log('   --name path@ : assign yaml content to name');
     console.log();
 

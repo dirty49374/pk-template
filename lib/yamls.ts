@@ -1,7 +1,8 @@
 import jsyaml from 'js-yaml';
-import liveScript from 'livescript';
-import coffeeScript from 'coffeescript';
+import liveScript = require('livescript');
+import coffeeScript = require('coffeescript');
 import * as utils from './utils';
+
 
 interface TagData {
     type: string;

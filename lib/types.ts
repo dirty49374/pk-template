@@ -1,3 +1,9 @@
+export type IConfig = any;
+export type IPkt = any;
+
+export type IStatement = any;
+export type IUserdata = any;
+
 export interface IValues {
     [ id: string ]: any;
 }
@@ -7,6 +13,8 @@ export interface IObject {
 }
 
 export interface IOptions {
+    argv: string[];
+    cwd: string;
     stdin?: boolean;
     help?: boolean;
     version?: boolean;
@@ -16,7 +24,8 @@ export interface IOptions {
     json1?: boolean;
     pkt?: boolean;
     indent?: boolean;
-    save?: string;
+    update?: string;
+    update_write?: boolean;
     kubeconfig?: string;
     kubecluster?: string;
     kubecontext?: string;

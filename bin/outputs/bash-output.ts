@@ -38,29 +38,23 @@ export class BashOutput implements IOutput {
 
         return g;
     }
-    writeStringOption(varName: string, optionName: string, optionValue: string | undefined): any {
+    stringOption(varName: string, optionName: string, optionValue: string | undefined): any {
         const option = optionValue
             ? `--${optionName} ${optionValue} `
             : '';
-        console.log(`${varName}="${option}" `);
+        return `${varName}="${option}" `;
     }
-    writeBooleanOption(varName: string, optionName: string, optionValue: boolean): any {
-        const option = optionValue
-            ? `--${optionName}`
-            : '';
-        console.log(`${varName}="${option}" `);
-    }    
-    write(objects: IObject[]) {
+    *write(objects: IObject[]): Iterator<string> {
 
-        console.log(`#!/bin/sh`);
-        console.log();
+        yield `#!/bin/sh`
+        yield ''
 
-        this.writeStringOption('KUBE_CONFIG', 'kubeconfig', this.options.kubeconfig);
-        this.writeStringOption('KUBE_CONTEXT', 'context', this.options.kubecontext);
-        this.writeStringOption('KUBE_CLUSTER', 'cluster', this.options.kubecluster);
-        this.writeStringOption('KUBE_NAMESPACE', 'namespace', this.options.kubenamespace);
+        yield this.stringOption('KUBE_CONFIG', 'kubeconfig', this.options.kubeconfig);
+        yield this.stringOption('KUBE_CONTEXT', 'context', this.options.kubecontext);
+        yield this.stringOption('KUBE_CLUSTER', 'cluster', this.options.kubecluster);
+        yield this.stringOption('KUBE_NAMESPACE', 'namespace', this.options.kubenamespace);
 
-        console.log(`
+        yield `
 CMD=""
 NEEDS_CONFIRM="yes"
 
@@ -129,73 +123,45 @@ confirm "to use these options"
 echo "---"
 
 echo
-`);
+`;
 
-        console.log('')
-        console.log();
+        yield ''
+        yield ''
 
         const steps = this.buildSteps(objects);
-        steps.forEach((step: ApplyStep, no: number) => {
-            console.log(`########################################`);
-            console.log(`## STEP: ${step.name}`);
-            console.log(`########################################`);
-            console.log();
+        for (let no = 0; no < steps.length; ++no) {
+            const step = steps[no];
+            yield `########################################`
+            yield `## STEP: ${step.name}`
+            yield `########################################`
+            yield ''
 
             if (step.objects.length == 0) {
-                console.log(`# nothing to apply in this step`);
-                return;
+                yield `# nothing to apply in this step`;
+                continue;
             }
 
-            console.log(`echo`);
-            console.log(`echo "### STEP ${no + 1}) ${step.name}"`);
+            yield `echo`
+            yield `echo "### STEP ${no + 1}) ${step.name}"`
 
-            console.log(`if [ "$CMD" != "show" ]; then`);
-            console.log(`   echo "#   $COMMAND <<'EOF' {${step.objects.length} objects} EOF"`);
-            console.log(`   confirm "to apply ${step.name} step"`)
+            yield `if [ "$CMD" != "show" ]; then`
+            yield `   echo "#   $COMMAND <<'EOF' {${step.objects.length} objects} EOF"`
+            yield `   confirm "to apply ${step.name} step"`
             //console.log(`else`);
             //console.log(`   echo "###"`);
-            console.log(`fi`);
-            console.log(`echo`);
-            console.log();
-            console.log(`echo "---"`);
-            console.log();
+            yield `fi`
+            yield `echo`
+            yield ''
+            yield `echo "---"`
+            yield ''
 
-            console.log(`$COMMAND <<'EOF'`);
+            yield `$COMMAND <<'EOF'`
             const yaml = step.objects.map(o => jsyaml.dump(o)).join('---\n');
-            console.log(yaml + 'EOF');
-            console.log('echo "---"');
+            yield yaml + 'EOF'
+            yield 'echo "---"'
 
-            console.log();
-        });
-        steps.forEach((step: ApplyStep, no: number) => {
-            console.log(`########################################`);
-            console.log(`## STEP: ${step.name}`);
-            console.log(`########################################`);
-            console.log();
-
-            if (step.objects.length == 0) {
-                console.log(`# nothing to apply in this step`);
-                return;
-            }
-
-            console.log(`echo "\n### STEP ${no + 1}) ${step.name}"`);
-
-            console.log(`if [ "$CMD" != "show" ]; then`);
-            console.log(`   echo "#   $COMMAND <<'EOF' {${step.objects.length} objects} EOF"`);
-            console.log(`   confirm "to apply ${step.name} step"`)
-            //console.log(`else`);
-            //console.log(`   echo "###"`);
-            console.log(`fi`);
-            console.log(`echo`);
-            console.log(`echo "---"`);
-
-            console.log(`$COMMAND <<'EOF'`);
-            const yaml = step.objects.map(o => jsyaml.dump(o)).join('---\n');
-            console.log(yaml + 'EOF');
-            console.log('echo "---"');
-
-            console.log();
-        });
+            yield ''
+        }
     }
 
 }

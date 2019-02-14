@@ -4,4 +4,6 @@ tmp/
 examples/
 quickstarts/
 src/
+bin/
 lib/
+/eval.js

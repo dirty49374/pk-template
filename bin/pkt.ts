@@ -4,35 +4,24 @@ import help from './help';
 import chalk from 'chalk';
 import jsyaml from 'js-yaml';
 import process from 'process';
-import { outputFactory } from './genout';
 import version from './version';
-import { ArgsBuilder } from './args';
-import { runtimes, configs, IValues } from '../lib';
+import { buildOutput } from './build-output';
+import { ArgsBuilder, IArgs } from './args';
+import { runtimes, configs, IValues, IConfig } from '../lib';
 import { IObject, IOptions } from '../lib';
+import { readStdin } from '../lib/readStdin';
+import { diffObjects } from './diff-objects';
 
-function readStdinUntilEnd(cb: (text: string)=> void) {
-    const chunks: any[] = [];
-
-    process.stdin.resume();
-    process.stdin.setEncoding('utf8');
-    process.stdin.on('data', function (chunk) {
-        chunks.push(chunk);
-    });
-
-    process.stdin.on('end', function () {
-        var all = chunks.join();
-        cb(all);
-    });
+interface Result {
+    objects: IObject[];
+    args: IArgs;
 }
 
-function run(objects: IObject[], values: IValues, files: string[], config: IConfig, options: IOptions) {
+function run(objects: IObject[], values: IValues, files: string[], config: IConfig, options: IOptions): IObject[] {
     objects = objects || [];
     try {
         const userdata = {};
-        const results = runtimes.exec(objects, values, files, config, userdata);
-        const module = outputFactory(options);
-
-        module.write(results);
+        return runtimes.exec(objects, values, files, config, userdata);
     } catch (e) {
         if (e.summary) {
             console.error(chalk.red('ERROR: ' + e.summary + ' in ' + e.uri));
@@ -44,44 +33,82 @@ function run(objects: IObject[], values: IValues, files: string[], config: IConf
             console.error(e);
         }
         process.exit(1);
+        return [];
     }
 }
 
-function main(argv: any) {
-    const config = configs.load();
+async function update(path: string, config: IConfig, args: IArgs) {
+    const original = fs.readFileSync(path, 'utf8');
+    if (!original.startsWith('# PKT=')) {
+        console.log(`${path} is not a valid pkt generated yaml.`);
+        process.exit(1);
+    }
 
+    const lineEnd = original.indexOf('\n');
+    const prevOpt = JSON.parse(original.substring(6, lineEnd));
+    
+    process.chdir(prevOpt.cwd);
+    console.log(`last command> pkt ${prevOpt.args.map((p: string) => p.includes(' ') ? `"${p}"` : p).join(' ')}`)
+    const result = await execute(prevOpt.args, false);
 
-    let args = new ArgsBuilder().build(argv, config);
-
-    if (args.options.save) {
-        const fn = args.options.save;
-        const optIndex = argv.indexOf('-S');
-        argv.splice(optIndex, 2);
-        argv.push('$@');
-
-        const txt = '#!/bin/sh\n\npkt ' + argv.join(' \\\n\t') + '\n';
-        fs.writeFileSync(fn, txt, { mode: 0o755, encoding: 'utf8' });
+    if (!result) {
+        console.log('unknown error');
+        process.exit(1);
         return;
-    } 
+    }
+
+    const prev = jsyaml.loadAll(original).filter((o: any) => o != null);
+    const curr = result.objects.filter((o: any) => o != null);
+
+    diffObjects(prev, curr);
+
+    if (args.options.update_write) {
+        const output = buildOutput(result.args.options, result.objects);
+        fs.writeFileSync(path, output, 'utf8');
+        console.log(`${path} updated !!!`);
+    }
+}
+
+async function generate(config: IConfig, args: IArgs): Promise<IObject[]> {
+    if (args.options.stdin) {
+        const text = await readStdin();
+        const objects = jsyaml.loadAll(text);
+        return run(objects, args.values, args.files, config, args.options);
+    } else {
+        return run([], args.values, args.files, config, args.options);
+    }
+}
+
+async function execute(argv: any, print: boolean): Promise<Result | null> {
+    const config = configs.load();
+    let args = new ArgsBuilder().build(argv, config);
 
     if (args.options.version) {
         version();
-        return;
+        return null;
     }
 
-    if (args.options.help || args.files.length == 0) {
+    if (args.options.help) {
         help(args);
-        return;
+        return null;
     }
 
-    if (args.options.stdin) {
-        readStdinUntilEnd((text: string): void => {
-            const objects = jsyaml.loadAll(text);
-            run(objects, args.values, args.files, config, args.options);
-        });
-    } else {
-        run([], args.values, args.files, config, args.options);
+    if (args.options.update) {
+        await update(args.options.update, config, args);
+        return null;
     }
+
+    if (args.options.argv.length == 0) {
+        help(args);
+        return null;
+    }
+
+    const objects = await generate(config, args);
+    if (print) {
+        const output = buildOutput(args.options, objects);
+        console.log(output);
+    }
+    return { objects, args };
 }
 
-main(process.argv.slice(2));
+execute(process.argv.slice(2), true);

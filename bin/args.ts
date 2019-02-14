@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import glob from 'glob';
-import { IValues, loaders, IOptions } from '../lib';
+import { IValues, loaders, IOptions, IConfig } from '../lib';
 
 
 export interface IArgs {
@@ -82,23 +82,31 @@ export class ArgsBuilder {
             .map((p: string) => this.expandLibPath(p))
     }
 
-    buildOptions(argv: any) {
-        const options: IOptions = {}
-        if ('i' in argv) options.stdin = !!argv.i;
-        if ('h' in argv) options.help = !!argv.h;
-        if ('v' in argv) options.version = !!argv.v;
-        if ('d' in argv) options.debug = !!argv.d;
-        if ('x' in argv) options.shellscript = !!argv.x;
-        if ('j' in argv) options.json = !!argv.j;
-        if ('J' in argv) options.json1 = !!argv.J;
-        if ('P' in argv) options.pkt = !!argv.P;
-        if ('n' in argv) options.indent = !!argv.n;
-        if ('S' in argv) options.save = argv.S;
-        if ('K' in argv) options.kubeconfig = argv.K;
-        if ('C' in argv) options.kubecluster = argv.C;
-        if ('X' in argv) options.kubecontext = argv.X;
-        if ('N' in argv) options.kubenamespace = argv.N;
-        if ('A' in argv) options.apply = !!argv.A;
+    buildOptions(argv: string[], yargv: any) {
+        const options: IOptions = { argv, cwd: process.cwd() };
+        if ('i' in yargv) options.stdin = !!yargv.i;
+        if ('h' in yargv) options.help = !!yargv.h;
+        if ('v' in yargv) options.version = !!yargv.v;
+        if ('d' in yargv) options.debug = !!yargv.d;
+        if ('x' in yargv) options.shellscript = !!yargv.x;
+        if ('j' in yargv) options.json = !!yargv.j;
+        if ('J' in yargv) options.json1 = !!yargv.J;
+        if ('P' in yargv) options.pkt = !!yargv.P;
+        if ('n' in yargv) options.indent = !!yargv.n;
+        if ('u' in yargv) {
+            options.update = yargv.u;
+            if (options.update_write !== true) {
+                options.update_write = false;
+            }
+        }
+        if ('U' in yargv) {
+            options.update_write = yargv.U;
+        }
+        if ('K' in yargv) options.kubeconfig = yargv.K;
+        if ('C' in yargv) options.kubecluster = yargv.C;
+        if ('X' in yargv) options.kubecontext = yargv.X;
+        if ('N' in yargv) options.kubenamespace = yargv.N;
+        if ('A' in yargv) options.apply = !!yargv.A;
         
         return options;
     }
@@ -107,12 +115,12 @@ export class ArgsBuilder {
         const yargv = require('yargs/yargs')(argv)
             .version(false)
             .help(false)
-            .boolean(['i', 'h', 'v', 'd', 'x', 'j', 'n', 'J', 'P' ])
+            .boolean(['i', 'h', 'v', 'd', 'x', 'j', 'n', 'J', 'P', 'U' ])
             .argv;
     
         const values = this.buildValues(config, yargv)
         const files = this.buildFiles(config, yargv)
-        const options = this.buildOptions(yargv)
+        const options = this.buildOptions(argv, yargv)
     
         return { options, values, files, };
     }

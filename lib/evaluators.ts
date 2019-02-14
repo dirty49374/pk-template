@@ -6,7 +6,7 @@ import * as yamls from './yamls';
 import * as loaders from './loaders';
 import { IScope } from './types';
 
-const evalWithValues = require('./eval');
+const evalWithValues = require('../eval');
 
 export function doEval(scope: IScope, script: string) {
     const $ = {

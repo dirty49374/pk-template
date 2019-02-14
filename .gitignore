@@ -62,4 +62,6 @@ typings/
 
 tmp/
 
+out/bin/
+out/lib/
 pkt_lib/
