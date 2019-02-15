@@ -1,13 +1,12 @@
 {
   "name": "pk-template",
-  "version": "0.1.26",
+  "version": "0.1.31",
   "description": "p template engine for kubernetes",
   "main": "out/lib/index.js",
   "scripts": {
     "start": "ts-node bin/pkt.ts",
     "watch": "tsc --watch",
     "build": "tsc --build",
-    "publish": "tsc --build && npm publish",
     "test": "mocha"
   },
   "bin": {

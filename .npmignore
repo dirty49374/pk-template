@@ -6,4 +6,5 @@ quickstarts/
 src/
 bin/
 lib/
+pkt_lib/
 /eval.js
