@@ -1,12 +1,13 @@
 {
   "name": "pk-template",
-  "version": "0.1.33",
+  "version": "0.1.34",
   "description": "p template engine for kubernetes",
   "main": "out/lib/index.js",
   "scripts": {
     "start": "ts-node bin/pkt.ts",
     "watch": "npm run distclean; cp src/eval.js dist/eval.js; tsc --watch",
     "build": "npm run distclean; webpack --config webpack.config.js",
+    "deploy": "npm run distclean; webpack --config webpack.config.js; npm publish",
     "distclean": "rm -rf dist/*",
     "test": "mocha"
   },
