@@ -27,8 +27,3 @@ routine:
         <<<_ if (command) { >>>
         command: <<<= JSON.stringify(typeof command == 'string' ? [ command ] : command) >>>
         <<<_ } >>>
-
-- patch:
-    op: replace
-    path: /apiVersion
-    value: apps/v2

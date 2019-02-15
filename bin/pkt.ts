@@ -114,16 +114,24 @@ async function execute(argv: any, print: boolean): Promise<Result | null> {
     if (args.options.pkt_package) {
         const buildSpec = (objects: IObject[]): IObject => {
             const objectList = objects
-                .map(o => `${o.kind}/${o.apiVersion}/${o.metadata.namespace || args.options.kubenamespace || ''}/${o.metadata.name}`)
+                .map(o => {
+                    const kind = o.kind;
+                    const avs = o.apiVersion.split('/');
+                    const apiGroup = avs.length == 2 ? avs[0] : '';
+                    const namespace = o.metadata.namespace || args.options.kubenamespace || '';
+                    const name = o.metadata.name;
+
+                    return `${kind}/${apiGroup}/${name}/${namespace}`;
+                })
                 .join('\n');
             return {
                 "apiVersion": "v1",
                 "kind": "ConfigMap",
                 "metadata": {
-                    "name": `pkt-package-${args.options.pkt_package}`,
+                    "name": `pkt-package-id-${args.options.pkt_package}`,
                     "namespace": "default",
                     "annotations": {
-                        "pkt.io/package-name": args.options.pkt_package,
+                        "pkt.io/package-id": args.options.pkt_package,
                     },
                 },
                 "data": {
