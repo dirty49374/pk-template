@@ -38,7 +38,7 @@ function run(objects: IObject[], values: IValues, files: string[], config: IConf
 }
 
 async function update(path: string, config: IConfig, args: IArgs) {
-    const original = fs.readFileSync(path, 'utf8');
+    const original = fs.readFileSync(`${path}.pka`, 'utf8');
     if (!original.startsWith('# PKT=')) {
         console.log(`${path} is not a valid pkt generated yaml.`);
         process.exit(1);
@@ -48,7 +48,9 @@ async function update(path: string, config: IConfig, args: IArgs) {
     const prevOpt = JSON.parse(original.substring(6, lineEnd));
     
     process.chdir(prevOpt.cwd);
-    console.log(`last command> pkt ${prevOpt.args.map((p: string) => p.includes(' ') ? `"${p}"` : p).join(' ')}`)
+    console.log(`previously command used:`);
+    console.log(`  $ pkt ${prevOpt.args.map((p: string) => p.includes(' ') ? `"${p}"` : p).join(' ')}`);
+    console.log();
     const result = await execute(prevOpt.args, false);
 
     if (!result) {
@@ -62,10 +64,12 @@ async function update(path: string, config: IConfig, args: IArgs) {
 
     diffObjects(prev, curr);
 
-    if (args.options.update_write) {
+    if (args.options.pkt_package_update_write) {
         const output = buildOutput(result.args.options, result.objects);
-        fs.writeFileSync(path, output, 'utf8');
-        console.log(`${path} updated !!!`);
+        fs.writeFileSync(`${path}.pka`, output, 'utf8');
+        console.log(`pkt-package file '${path}.pka' is updated !!!`);
+    } else {
+        console.log(`pkt-package file '${path}.pka' is not updated, (to update, add -W flasg)`);
     }
 }
 
@@ -93,8 +97,11 @@ async function execute(argv: any, print: boolean): Promise<Result | null> {
         return null;
     }
 
-    if (args.options.update) {
-        await update(args.options.update, config, args);
+    if (args.options.pkt_package_update) {
+        if (!args.options.pkt_package) {
+            throw new Error("unknown error: pkt-apply filename not set");
+        }
+        await update(args.options.pkt_package, config, args);
         return null;
     }
 
@@ -104,9 +111,37 @@ async function execute(argv: any, print: boolean): Promise<Result | null> {
     }
 
     const objects = await generate(config, args);
+    if (args.options.pkt_package) {
+        const buildSpec = (objects: IObject[]): IObject => {
+            const objectList = objects
+                .map(o => `${o.kind}/${o.apiVersion}/${o.metadata.namespace || args.options.kubenamespace || ''}/${o.metadata.name}`)
+                .join('\n');
+            return {
+                "apiVersion": "v1",
+                "kind": "ConfigMap",
+                "metadata": {
+                    "name": `pkt-package-${args.options.pkt_package}`,
+                    "namespace": "default",
+                    "annotations": {
+                        "pkt.io/package-name": args.options.pkt_package,
+                    },
+                },
+                "data": {
+                    "objects": objectList
+                },
+            }
+        }
+        objects.push(buildSpec(objects));
+    }
+
     if (print) {
         const output = buildOutput(args.options, objects);
-        console.log(output);
+        if (args.options.pkt_package) {
+            fs.writeFileSync(`${args.options.pkt_package}.pka`, output);
+            console.log(`pkt-package file '${args.options.pkt_package}.pka' created`);
+        } else {
+            console.log(output);
+        }
     }
     return { objects, args };
 }

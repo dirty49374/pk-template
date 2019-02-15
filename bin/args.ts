@@ -84,29 +84,47 @@ export class ArgsBuilder {
 
     buildOptions(argv: string[], yargv: any) {
         const options: IOptions = { argv, cwd: process.cwd() };
-        if ('i' in yargv) options.stdin = !!yargv.i;
-        if ('h' in yargv) options.help = !!yargv.h;
-        if ('v' in yargv) options.version = !!yargv.v;
-        if ('d' in yargv) options.debug = !!yargv.d;
-        if ('x' in yargv) options.shellscript = !!yargv.x;
-        if ('j' in yargv) options.json = !!yargv.j;
-        if ('J' in yargv) options.json1 = !!yargv.J;
-        if ('P' in yargv) options.pkt = !!yargv.P;
-        if ('n' in yargv) options.indent = !!yargv.n;
-        if ('u' in yargv) {
-            options.update = yargv.u;
-            if (options.update_write !== true) {
-                options.update_write = false;
+        if (yargv.h) options.help = true;
+        if (yargv.v) options.version = true;
+        if (yargv.d) options.debug = true;
+
+        if (yargv.i) options.stdin = true;
+
+        if (yargv.B) options.bash = true;
+        if (yargv.J) options.json = true;
+        if (yargv.T) options.pkt = true;
+        
+        // if ('1' in yargv) options.json1 = !!yargv.J;
+        // if ('n' in yargv) options.indent = !!yargv.n;
+
+        if (yargv.P) {
+            options.pkt_package = yargv.P as string;
+            if (options.pkt_package.includes('.') || options.pkt_package.includes('/')) {
+                console.error(`${options.pkt_package} is not valid pkt-apply-id`);
+                process.exit(1);
+                throw new Error("impossible");
             }
         }
-        if ('U' in yargv) {
-            options.update_write = yargv.U;
+        if (yargv.U) {
+            options.pkt_package = yargv.U as string;
+            if (options.pkt_package.includes('.') || options.pkt_package.includes('/')) {
+                console.error(`${options.pkt_package} is not valid pkt-apply-id`);
+                process.exit(1);
+                throw new Error("impossible");
+            }
+            options.pkt_package_update = true;
+            if (options.pkt_package_update_write !== true) {
+                options.pkt_package_update_write = false;
+            }
         }
-        if ('K' in yargv) options.kubeconfig = yargv.K;
-        if ('C' in yargv) options.kubecluster = yargv.C;
-        if ('X' in yargv) options.kubecontext = yargv.X;
-        if ('N' in yargv) options.kubenamespace = yargv.N;
-        if ('A' in yargv) options.apply = !!yargv.A;
+        if (yargv.W) {
+            options.pkt_package_update_write = yargv.W;
+        }
+
+        if (yargv.K) options.kubeconfig = yargv.K;
+        if (yargv.C) options.kubecluster = yargv.C;
+        if (yargv.X) options.kubecontext = yargv.X;
+        if (yargv.N) options.kubenamespace = yargv.N;
         
         return options;
     }
@@ -115,7 +133,12 @@ export class ArgsBuilder {
         const yargv = require('yargs/yargs')(argv)
             .version(false)
             .help(false)
-            .boolean(['i', 'h', 'v', 'd', 'x', 'j', 'n', 'J', 'P', 'U' ])
+            .boolean([
+                'h', 'v', 'd',
+                'i',
+                'S', 'J', 'T',
+                'W'
+            ])
             .argv;
     
         const values = this.buildValues(config, yargv)
