@@ -1,17 +1,18 @@
 {
   "name": "pk-template",
-  "version": "0.1.32",
+  "version": "0.1.33",
   "description": "p template engine for kubernetes",
   "main": "out/lib/index.js",
   "scripts": {
     "start": "ts-node bin/pkt.ts",
-    "watch": "tsc --watch",
-    "build": "tsc --build",
+    "watch": "npm run distclean; cp src/eval.js dist/eval.js; tsc --watch",
+    "build": "npm run distclean; webpack --config webpack.config.js",
+    "distclean": "rm -rf dist/*",
     "test": "mocha"
   },
   "bin": {
-    "pkt": "out/bin/pkt.js",
-    "pkt-apply": "out/bin/pkt-apply.js"
+    "pkt": "bin/pkt.js",
+    "pktctl": "bin/pktctl.js"
   },
   "repository": {
     "type": "git",
@@ -55,9 +56,13 @@
     "@types/js-yaml": "^3.12.0",
     "@types/json-patch": "0.0.30",
     "@types/jsonpath": "^0.2.0",
-    "@types/node": "^11.9.3",
+    "@types/node": "^11.9.4",
     "@types/underscore": "^1.8.9",
     "mocha": "^5.2.0",
-    "typescript": "^3.3.3"
+    "ts-loader": "^5.3.3",
+    "typescript": "^3.3.3",
+    "webpack": "^4.29.3",
+    "webpack-cli": "^3.2.3",
+    "webpack-node-externals": "^1.7.2"
   }
 }

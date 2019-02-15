@@ -61,7 +61,7 @@ typings/
 .next
 
 tmp/
-
-out/bin/
-out/lib/
+dist/*
 pkt_lib/
+
+*.pkz

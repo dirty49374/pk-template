@@ -7,6 +7,7 @@ input:
   label: app
   port: 0
   service: ClusterIP
+  namespace: default
   host: null
   path: /
 
@@ -53,3 +54,10 @@ routine:
   include: service.pkt
 - if: port && host
   include: ingress.pkt
+- apply: set-namespace.pkt
+- add:
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: !js namespace
+

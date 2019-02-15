@@ -1,0 +1,15 @@
+input:
+  namespace: null
+  
+schema:
+  title: set-namespace
+  description: set namespace for all objects
+  type: object
+  properties:
+    namespace:
+      description: namespace name to set
+      type: string
+
+routine:
+- each: |
+    $.object.{}metadata.namespace = namespace
