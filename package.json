@@ -5,10 +5,11 @@
   "main": "out/lib/index.js",
   "scripts": {
     "start": "ts-node bin/pkt.ts",
-    "watch": "npm run distclean; cp src/eval.js dist/eval.js; tsc --watch",
-    "build": "npm run distclean; webpack --config webpack.config.js",
-    "deploy": "npm run distclean; webpack --config webpack.config.js; npm publish",
-    "distclean": "rm -rf dist/*",
+    "watch": "npm run distclean && cp src/eval.js dist/eval.js && tsc --watch",
+    "build": "npm run distclean && webpack --config webpack.config.js",
+    "deploy": "npm run distclean && webpack --config webpack.config.js && npm publish",
+    "webpack": "webpack --config webpack.config.js",
+    "distclean": "rimraf dist/*",
     "test": "mocha"
   },
   "bin": {
