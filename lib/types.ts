@@ -24,13 +24,14 @@ export interface IOptions {
     json1?: boolean;
     pkt?: boolean;
     indent?: boolean;
-    update?: string;
-    update_write?: boolean;
     kubeconfig?: string;
     kubecluster?: string;
     kubecontext?: string;
     kubenamespace?: string;
-    apply?: boolean;
+    pkt_package?: string;
+    pkt_package_update?: boolean;
+    pkt_package_update_write?: boolean;
+    bash?: boolean;
 }
 
 export type IScopeHandler = (scope: IScope) => any;
