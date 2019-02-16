@@ -1,6 +1,6 @@
 import url from 'url';
 import jslib from './jslib';
-import { IScope, IValues, IConfig } from './types';
+import { IScope, IValues, IConfig, IStyleSheet } from './types';
 import { IObject } from '../common';
 
 const clone = (obj: any): any => JSON.parse(JSON.stringify(obj));
@@ -10,14 +10,16 @@ class Scope implements IScope {
     values: IValues;
     uri: string;
     parent: IScope;
+    styleSheet: IStyleSheet;
     config: IConfig;
     userdata: any;
     $buildLib: any;
-    constructor({ objects, values, uri, parent, config, userdata }: any) {
+    constructor({ objects, values, uri, parent, styleSheet, config, userdata }: any) {
         this.objects = objects;
         this.values = values;
         this.uri = uri;
         this.parent = parent;
+        this.styleSheet = styleSheet;
         this.config = config;
         this.userdata = userdata;
         this.$buildLib = jslib;
@@ -44,6 +46,7 @@ class Scope implements IScope {
             uri: uri || this.uri,
             config: this.config,
             parent: this,
+            styleSheet: this.styleSheet,
             userdata: this.userdata,
             $buildLib: jslib,
         });
@@ -53,11 +56,12 @@ class Scope implements IScope {
 }
 
 const scopes = {
-    create(values: IValues, uri: string, parent: IScope | null, config: IConfig, objects: IObject[], userdata: any): IScope {
+    create(values: IValues, uri: string, parent: IScope | null, config: IConfig, objects: IObject[], styleSheet: IStyleSheet, userdata: any): IScope {
         const scope = new Scope({
             objects: objects ? [...objects] : [],
             values: values ? clone(values) : {},
             uri: uri || '.',
+            styleSheet: styleSheet || (parent ? parent.styleSheet : null),
             parent: parent || null,
             config: config || {},
             userdata: userdata || {},

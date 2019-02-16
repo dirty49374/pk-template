@@ -7,7 +7,7 @@ interface PktError extends Error {
 }
 
 interface KvpType {
-    [ id: string ]: string
+    [id: string]: string
 }
 
 export const pktError = (scope: IScope | null, error: Error, message: string): PktError => {
@@ -18,7 +18,7 @@ export const pktError = (scope: IScope | null, error: Error, message: string): P
 }
 
 export class CustomYamlTag {
-    constructor(public type: string, public code: string) {}
+    constructor(public type: string, public code: string) { }
 }
 
 export const parseKvps = (value: string): KvpType => {
@@ -26,7 +26,7 @@ export const parseKvps = (value: string): KvpType => {
     const kvps: KvpType = {};
     value.split(';')
         .forEach(kvp => {
-            const [ key, value ] = kvp.split('=');
+            const [key, value] = kvp.split('=');
             kvps[key.trim()] = value.trim();
         });
     return kvps;
@@ -35,4 +35,21 @@ export const parseKvps = (value: string): KvpType => {
 export const parseList = (value: string): string[] => {
     if (!value) return [];
     return value.split(';').map(p => p.trim());
+}
+
+const _setValue = (node: any, pathes: string[], value: any) => {
+    if (true) {
+        const key = pathes[0];
+        if (pathes.length == 1) {
+            node[key] = value;
+        } else {
+            const child = key in node ? node[key] : (node[key] = {});
+            pathes.shift();
+            _setValue(child, pathes, value);
+        }
+    }
+}
+
+export const setValue = (node: any, path: string, value: any) => {
+    _setValue(node, path.split('.'), value);
 }

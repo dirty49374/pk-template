@@ -41,8 +41,13 @@ export interface IOptions {
 
 export type IScopeHandler = (scope: IScope) => any;
 
+export interface IStyle extends Array<{ k: string, v: string }> {
+    name: string;
+}
+
+
 export interface IStyleSheet {
-    expandClass(scope: IScope, object: IObject, parent: object, styleName: string, params: any): boolean;
+    applyStyles(scope: IScope, object: IObject, parent: object, styleType: string, styles: any): boolean;
 }
 
 export interface IScope {
@@ -51,9 +56,9 @@ export interface IScope {
     values: IValues;
     uri: string;
     parent: IScope;
+    styleSheet: IStyleSheet;
     config: IConfig;
     userdata: any;
-    ss: IStyleSheet;
     $buildLib: any;
 
     resolve(relpath: string): string;

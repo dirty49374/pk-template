@@ -7,12 +7,14 @@ export class YamlOutput implements IOutput {
     constructor(private options: IOptions) { }
 
     *write(objects: IObject[]): Iterator<string> {
-        for (const o of objects) {
-            yield '---';
+        for (let i = 0; i < objects.length; ++i) {
+            const o = objects[i];
             if (o == null) {
                 continue;
             }
             yield jsyaml.dump(o);
+            if (i + 1 != objects.length)
+                yield '---';
         }
         yield '';
     }

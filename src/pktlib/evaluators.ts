@@ -1,20 +1,17 @@
 import * as utils from './utils';
 import * as yamls from './yamls';
 import * as loaders from './loaders';
-import { IScope } from './types';
+import { IScope, IStyleSheet } from './types';
 import { getCoffeeScript, getLiveScript, getUnderscore } from './lazy';
 import { IObject } from '../common';
-import { StyleSheet } from './stylesheet';
 
 const evalWithValues = require('../eval');
-
-
 
 export class PkYamlEvaluator {
 
     private object: object | null = null;
-    constructor(private scope: IScope,
-        private styler: StyleSheet) {
+
+    constructor(private scope: IScope) {
     }
 
     evaluateCustomTag(node: any): any {
@@ -32,6 +29,7 @@ export class PkYamlEvaluator {
         }
         return node;
     }
+
     private setValue(node: any, pathes: string[], value: any) {
         if (true) {
             const key = pathes[0];
@@ -75,8 +73,9 @@ export class PkYamlEvaluator {
             for (const key of Object.keys(node)) {
                 const value = node[key];
                 if (key.endsWith('^')) {
-                    this.styler.expandClass(this.scope, this.object as object, key.substr(0, key.length - 1), value, node);
                     delete node[key];
+                    this.scope.styleSheet.applyStyles(
+                        this.scope, this.object as object, node, key.substr(0, key.length - 1), value);
                     updated = true;
                 } else {
                     updated = updated || this.processStyle(value);
@@ -94,6 +93,7 @@ export class PkYamlEvaluator {
         return this.object;
     }
 }
+
 export function doEval(scope: IScope, script: string) {
     const $ = {
         ...scope,
@@ -103,7 +103,7 @@ export function doEval(scope: IScope, script: string) {
 }
 
 export function deep(scope: IScope, object: any): any {
-    return new PkYamlEvaluator(scope, new StyleSheet()).evaluate(object);
+    return new PkYamlEvaluator(scope).evaluate(object);
 }
 
 export function javaScript(scope: IScope, javascript: string): any {

@@ -8,7 +8,7 @@ import * as evaluators from './evaluators';
 import { IScope, IValues, IPkt, IConfig, IStatement, IUserdata } from './types';
 import { getJsonPath, getJsonPatch } from './lazy';
 import { IObject } from '../common';
-import { StyleSheet } from './stylesheet';
+import { StyleSheet } from './styleSheet';
 
 const ajv = new Ajv({ allErrors: true });
 
@@ -255,10 +255,11 @@ export function run(file: IPkt, parentScope: IScope, uri: string, withObject: bo
 
     parentScope.child({ uri }, scope => {
         // 0. Class
-        const ss = new StyleSheet(parentScope.ss);
+        const styleSheet = new StyleSheet(parentScope.styleSheet);
         if (file.style) {
-            ss.load(file.style);
+            styleSheet.load(file.style);
         }
+        scope.styleSheet = styleSheet;
 
         // 1. bind objects
         if (withObject)
@@ -290,7 +291,7 @@ export function run(file: IPkt, parentScope: IScope, uri: string, withObject: bo
 }
 
 export function exec(objects: IObject[], values: IValues, files: string[], config: IConfig, userdata: IUserdata): IObject[] {
-    const scope = scopes.create(values, '.', null, config, objects, userdata || {});
+    const scope = scopes.create(values, '.', null, config, objects, new StyleSheet(null), userdata || {});
     files.forEach(path => statements.apply(scope, { apply: path }));
 
     return scope.objects;

@@ -8,13 +8,13 @@ interface TagData {
     code: string;
 }
 
-const createCustomTag = (name: string, compile: (text: string)=>TagData) => {
+const createCustomTag = (name: string, compile: (text: string) => TagData) => {
     return new jsyaml.Type(`!${name}`, {
         kind: 'scalar',
         resolve: (data: any) =>
-                typeof data === 'string' ||
-                typeof data === 'number' ||
-                typeof data === null,
+            typeof data === 'string' ||
+            typeof data === 'number' ||
+            typeof data === null,
         construct: (data: any) => {
             const compiled = compile(data);
             return new utils.CustomYamlTag(compiled.type, compiled.code);
@@ -24,12 +24,29 @@ const createCustomTag = (name: string, compile: (text: string)=>TagData) => {
     });
 }
 
+const compileCoffee = (data: string): string => {
+    try {
+        return getCoffeeScript().compile(data, { bare: true });
+    } catch (e) {
+        console.log('failed to compile coffee script');
+        throw e;
+    }
+}
+
+const compileLive = (data: string): string => {
+    try {
+        return getLiveScript().compile(data, { bare: true });
+    } catch (e) {
+        console.log('failed to compile live script');
+        throw e;
+    }
+}
 
 const PKT_SCHEMA = jsyaml.Schema.create([
-    createCustomTag('cs', (data: string) => ({ type: 'js', code: getCoffeeScript().compile(data, { bare: true }) })),
-    createCustomTag('coffeeScript', (data: string) => ({ type: 'js', code: getCoffeeScript().compile(data, { bare: true }) })),
-    createCustomTag('ls', (data: string) => ({ type: 'js', code: getLiveScript().compile(data, { bare: true }) })),
-    createCustomTag('liveScript', (data: string) => ({ type: 'js', code: getLiveScript().compile(data, { bare: true }) })),
+    createCustomTag('cs', (data: string) => ({ type: 'js', code: compileCoffee(data) })),
+    createCustomTag('coffeeScript', (data: string) => ({ type: 'js', code: compileCoffee(data) })),
+    createCustomTag('ls', (data: string) => ({ type: 'js', code: compileLive(data) })),
+    createCustomTag('liveScript', (data: string) => ({ type: 'js', code: compileLive(data) })),
     createCustomTag('js', (data: string) => ({ type: 'js', code: data })),
     createCustomTag('javaScript', (data: string) => ({ type: 'js', code: data })),
     createCustomTag('file', (data: string) => ({ type: 'file', code: data })),
