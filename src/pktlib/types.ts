@@ -1,7 +1,13 @@
 import { IObject } from "../common";
 
 export type IConfig = any;
-export type IPkt = any;
+export interface IPkt {
+    input: any
+    schema: any
+    style: any
+    assign: any
+    routine: any
+}
 
 export type IStatement = any;
 export type IUserdata = any;
@@ -35,6 +41,10 @@ export interface IOptions {
 
 export type IScopeHandler = (scope: IScope) => any;
 
+export interface IStyleSheet {
+    expandClass(scope: IScope, object: IObject, parent: object, styleName: string, params: any): boolean;
+}
+
 export interface IScope {
     objects: IObject[];
     object: IObject | null;
@@ -43,6 +53,7 @@ export interface IScope {
     parent: IScope;
     config: IConfig;
     userdata: any;
+    ss: IStyleSheet;
     $buildLib: any;
 
     resolve(relpath: string): string;

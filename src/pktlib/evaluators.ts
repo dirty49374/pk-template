@@ -3,9 +3,97 @@ import * as yamls from './yamls';
 import * as loaders from './loaders';
 import { IScope } from './types';
 import { getCoffeeScript, getLiveScript, getUnderscore } from './lazy';
+import { IObject } from '../common';
+import { StyleSheet } from './stylesheet';
 
 const evalWithValues = require('../eval');
 
+
+
+export class PkYamlEvaluator {
+
+    private object: object | null = null;
+    constructor(private scope: IScope,
+        private styler: StyleSheet) {
+    }
+
+    evaluateCustomTag(node: any): any {
+        if (node instanceof utils.CustomYamlTag) {
+            return javaScriptCode(this.scope, node);
+        } else if (Array.isArray(node)) {
+            return node.map(item => this.evaluateCustomTag(item));
+        } else if (typeof node === 'object') {
+            if (node === null) return node;
+
+            const clone: any = {};
+            Object.keys(node)
+                .forEach((key: string) => clone[key] = this.evaluateCustomTag(node[key]));
+            return clone;
+        }
+        return node;
+    }
+    private setValue(node: any, pathes: string[], value: any) {
+        if (true) {
+            const key = pathes[0];
+            if (pathes.length == 1) {
+                node[key] = value;
+            } else {
+                const child = key in node ? node[key] : (node[key] = {});
+                pathes.shift();
+                this.setValue(child, pathes, value);
+            }
+        }
+    }
+
+    processDotPath(node: any) {
+        if (Array.isArray(node)) {
+            for (const item of node) {
+                this.processDotPath(item);
+            }
+        } else if (typeof node === 'object') {
+            if (node === null) { return; }
+            for (const key of Object.keys(node)) {
+                const value = node[key];
+                if (key.startsWith('^')) {
+                    delete node[key];
+                    const pathes = key.substr(1).split('.');
+                    this.setValue(node, pathes, value)
+                }
+                this.processDotPath(value);
+            }
+        }
+    }
+
+    processStyle(node: any): boolean {
+        let updated = false;
+        if (Array.isArray(node)) {
+            for (const item of node) {
+                updated = updated || this.processStyle(item);
+            }
+        } else if (typeof node === 'object') {
+            if (node === null) { return false; }
+            for (const key of Object.keys(node)) {
+                const value = node[key];
+                if (key.endsWith('^')) {
+                    this.styler.expandClass(this.scope, this.object as object, key.substr(0, key.length - 1), value, node);
+                    delete node[key];
+                    updated = true;
+                } else {
+                    updated = updated || this.processStyle(value);
+                }
+            }
+        }
+        return updated;
+    }
+
+    evaluate(object: IObject) {
+        this.object = this.evaluateCustomTag(object);
+        this.processDotPath(this.object);
+        while (this.processStyle(this.object))
+            ;
+        return this.object;
+    }
+}
 export function doEval(scope: IScope, script: string) {
     const $ = {
         ...scope,
@@ -15,23 +103,7 @@ export function doEval(scope: IScope, script: string) {
 }
 
 export function deep(scope: IScope, object: any): any {
-    if (object instanceof utils.CustomYamlTag) {
-        return javaScriptCode(scope, object);
-    }
-
-    if (Array.isArray(object)) {
-        return object.map(item => deep(scope, item));
-    }
-
-    if (typeof object === 'object') {
-        if (object === null) return object;
-
-        const clone: any = {};
-        Object.keys(object)
-            .forEach(key => clone[key] = deep(scope, object[key]));
-        return clone;
-    }
-    return object;
+    return new PkYamlEvaluator(scope, new StyleSheet()).evaluate(object);
 }
 
 export function javaScript(scope: IScope, javascript: string): any {

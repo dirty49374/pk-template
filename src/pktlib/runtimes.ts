@@ -8,6 +8,7 @@ import * as evaluators from './evaluators';
 import { IScope, IValues, IPkt, IConfig, IStatement, IUserdata } from './types';
 import { getJsonPath, getJsonPatch } from './lazy';
 import { IObject } from '../common';
+import { StyleSheet } from './stylesheet';
 
 const ajv = new Ajv({ allErrors: true });
 
@@ -253,6 +254,12 @@ export function run(file: IPkt, parentScope: IScope, uri: string, withObject: bo
     uri = uri || '.';
 
     parentScope.child({ uri }, scope => {
+        // 0. Class
+        const ss = new StyleSheet(parentScope.ss);
+        if (file.style) {
+            ss.load(file.style);
+        }
+
         // 1. bind objects
         if (withObject)
             scope.objects = [...parentScope.objects];
