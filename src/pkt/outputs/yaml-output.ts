@@ -12,7 +12,7 @@ export class YamlOutput implements IOutput {
             if (o == null) {
                 continue;
             }
-            yield jsyaml.dump(o);
+            yield jsyaml.dump(o, { sortKeys: true });
             if (i + 1 != objects.length)
                 yield '---';
         }
