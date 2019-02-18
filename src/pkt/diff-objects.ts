@@ -46,22 +46,24 @@ export function diffObjects(prev: IObject[], curr: IObject[]) {
     let same = true;
     for (const key in prevmap) {
         if (key in currmap) {
-            const prevYaml = pkyaml.dumpYaml(prevmap[key]);
-            const currYaml = pkyaml.dumpYaml(currmap[key]);
+            const prevYaml = pkyaml.dumpYamlSortedKey(prevmap[key]);
+            const currYaml = pkyaml.dumpYamlSortedKey(currmap[key]);
             if (prevYaml !== currYaml) {
                 diffObject(key, prevYaml, currYaml);
                 same = false;
             }
         } else {
-            diffObject(key, pkyaml.dumpYaml(prevmap[key]), '');
+            console.log(chalk.red('  - ', 'object', key, 'deleted'));
+            //diffObject(key, pkyaml.dumpYamlSortedKey(prevmap[key]), '');
             same = false;
         }
     }
     for (const key in currmap) {
-        if (key in currmap) {
+        if (key in prevmap) {
             continue;
         } else {
-            diffObject(key, '', pkyaml.dumpYaml(currmap[key]));
+            console.log(chalk.red('  + ', 'object', key, 'created'));
+            // diffObject(key, '', pkyaml.dumpYamlSortedKey(currmap[key]));
             same = false;
         }
     }
