@@ -18,13 +18,7 @@ export class PktPackageOutput implements IOutput {
         yield `# KUBE_CLUSTER=${this.options.kubecluster || ""}`
         yield `# KUBE_NAMESPACE=${this.options.kubenamespace || ""}`
 
-        for (const o of objects) {
-            yield '---';
-            if (o == null) {
-                continue;
-            }
-            yield pkyaml.dumpYaml(o);
-        }
+        yield pkyaml.dumpYamlAll(objects);
         yield '';
     }
 }

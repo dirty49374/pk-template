@@ -45,7 +45,22 @@ export class PkYamlEvaluator {
     compileStyle(object: any) {
         forEachTreeObjectKey(object, (node: any, key: string, value: any): boolean => {
             if (key.endsWith('^')) {
-                node[key] = parseStyle(value);
+                const _ = getUnderscore();
+                if (Array.isArray(value)) {
+                    const styles = value
+                        .map(v => _.template(v))
+                        .map(tpl => tpl({
+                            ...this.scope.values,
+                            $: this.scope
+                        }));
+                    node[key] = parseStyle(styles);
+                } else {
+                    const styles = _.template(value)({
+                        ...this.scope.values,
+                        $: this.scope
+                    });
+                    node[key] = parseStyle(styles);
+                }
             }
             return true;
         });
