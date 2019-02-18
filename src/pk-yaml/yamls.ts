@@ -1,5 +1,5 @@
 import jsyaml from 'js-yaml';
-import { getLiveScript, getCoffeeScript } from './lazy';
+import { getLiveScript, getCoffeeScript } from '../pk-lib/lazy';
 import { CustomYamlTag } from './types';
 
 
@@ -43,17 +43,27 @@ const compileLive = (data: string): string => {
 }
 
 const PKT_SCHEMA = jsyaml.Schema.create([
-    createCustomTag('cs', (data: string) => ({ type: 'js', code: compileCoffee(data) })),
-    createCustomTag('coffeeScript', (data: string) => ({ type: 'js', code: compileCoffee(data) })),
-    createCustomTag('ls', (data: string) => ({ type: 'js', code: compileLive(data) })),
-    createCustomTag('liveScript', (data: string) => ({ type: 'js', code: compileLive(data) })),
-    createCustomTag('js', (data: string) => ({ type: 'js', code: data })),
-    createCustomTag('javaScript', (data: string) => ({ type: 'js', code: data })),
-    createCustomTag('file', (data: string) => ({ type: 'file', code: data })),
+    createCustomTag(
+        'cs',
+        (data: string) => ({ type: 'js', code: compileCoffee(data) })),
+    createCustomTag(
+        'coffeeScript',
+        (data: string) => ({ type: 'js', code: compileCoffee(data) })),
+    createCustomTag(
+        'ls',
+        (data: string) => ({ type: 'js', code: compileLive(data) })),
+    createCustomTag(
+        'liveScript',
+        (data: string) => ({ type: 'js', code: compileLive(data) })),
+    createCustomTag(
+        'js',
+        (data: string) => ({ type: 'js', code: data })),
+    createCustomTag(
+        'javaScript',
+        (data: string) => ({ type: 'js', code: data })),
+    createCustomTag(
+        'file',
+        (data: string) => ({ type: 'file', code: data })),
 ]);
 
-const pktYamlOption = { schema: PKT_SCHEMA };
-
-export const load = (text: string): any => jsyaml.load(text);
-export const loadAll = (text: string): any[] => jsyaml.loadAll(text);
-export const loadAsPkt = (text: string): any => jsyaml.load(text, pktYamlOption);
+export const pktYamlOption = { schema: PKT_SCHEMA };

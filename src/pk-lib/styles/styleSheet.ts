@@ -1,5 +1,6 @@
-import { IObject, forEachTreeObjectKey } from "../common";
-import { IScope, IStyleSheet, IStyle, CustomYamlTag } from "./types";
+import { IObject, forEachTreeObjectKey } from "../../common";
+import { IScope, IStyleSheet, IStyle } from "../types";
+import { CustomYamlTag } from '../../pk-yaml';
 import { StyleApply } from "./styleApply";
 
 export class StyleSheet implements IStyleSheet {

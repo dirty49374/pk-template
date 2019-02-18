@@ -1,6 +1,6 @@
-import jsyaml from 'js-yaml';
+import * as pkyaml from '../../pk-yaml';
 import { IOutput } from "./output";
-import { IOptions } from "../../pktlib";
+import { IOptions } from "../../pk-lib";
 import { IObject } from '../../common';
 
 interface ApplyStep {
@@ -157,7 +157,7 @@ echo
             yield ''
 
             yield `$COMMAND <<'EOF'`
-            const yaml = step.objects.map(o => jsyaml.dump(o)).join('---\n');
+            const yaml = pkyaml.dumpYamlAll(step.objects);
             yield yaml + 'EOF'
             yield 'echo "---"'
 

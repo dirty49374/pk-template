@@ -1,5 +1,5 @@
-import { IOptions } from "../../pktlib/types";
-import jsyaml from "js-yaml";
+import { IOptions } from "../../pk-lib/types";
+import * as pkyaml from '../../pk-yaml';
 import { IOutput } from "./output";
 import { IObject } from "../../common";
 
@@ -10,7 +10,7 @@ export class PktOutput implements IOutput {
         var pkt = {
             routine: objects.map(o => ({ add: o }))
         }
-        const yaml = jsyaml.dump(pkt);
+        const yaml = pkyaml.dumpYaml(pkt);
         yield yaml;
     }
 }

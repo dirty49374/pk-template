@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { IValues, loaders, IOptions, IConfig } from '../pktlib';
-import { getGlob } from '../pktlib/lazy';
+import { IValues, loaders, IOptions, IConfig } from '../pk-lib';
+import { getGlob } from '../pk-lib/lazy';
 
 
 export interface IArgs {
@@ -16,14 +16,14 @@ export class ArgsBuilder {
             if (k.endsWith('@')) {
                 const path = values[k]
                 const value = loaders.yaml(null, path)
-    
+
                 delete values[k]
-                values[k.substr(0, k.length-1)] = value
+                values[k.substr(0, k.length - 1)] = value
             }
         });
         return values;
     }
-    
+
     private filterValues(argv: any): any {
         const values: IValues = {}
         Object.keys(argv).forEach(k => {
@@ -33,22 +33,22 @@ export class ArgsBuilder {
         });
         return values
     }
-    
+
     private buildValues(config: IConfig, argv: any): any {
         return this.expandValues(this.filterValues(argv));
     }
-    
+
     private expandLibPath(p: string): string {
         if (p.length === 0 || p[0] !== '@') {
             return p;
         }
-    
+
         p = p.substr(1)
-    
+
         if (fs.existsSync(p)) {
             return p;
         }
-    
+
         let cur = process.cwd();
         while (true) {
             const libdir = path.join(cur, "pkt_lib");
@@ -57,7 +57,7 @@ export class ArgsBuilder {
                 if (fs.existsSync(rpath))
                     return rpath;
             }
-    
+
             const parent = path.dirname(cur)
             if (parent == cur)
                 return p;
@@ -65,19 +65,8 @@ export class ArgsBuilder {
         }
     }
 
-    private expandGlobs(path: string): string[] {
-        if (path.toLowerCase().startsWith('http://') ||
-            path.toLowerCase().startsWith('https://') ||
-            path[0] == ':')
-            return [ path ];
-        if (path.includes('?') || path.includes('*') || path.includes('+'))
-            return getGlob().sync(path);
-        return [ path ];
-    }
-    
     private buildFiles(config: IConfig, argv: any): string[] {
-        return argv._.map(this.expandGlobs)
-            .reduce((sum: string[], list: string[]) => sum.concat(list), [])
+        return argv._.reduce((sum: string[], list: string[]) => sum.concat(list), [])
             .map((p: string) => config.resolve(p))
             .map((p: string) => this.expandLibPath(p))
     }
@@ -93,7 +82,7 @@ export class ArgsBuilder {
         if (yargv.B) options.bash = true;
         if (yargv.J) options.json = true;
         if (yargv.T) options.pkt = true;
-        
+
         // if ('1' in yargv) options.json1 = !!yargv.J;
         // if ('n' in yargv) options.indent = !!yargv.n;
 
@@ -125,10 +114,10 @@ export class ArgsBuilder {
         if (yargv.C) options.kubecluster = yargv.C;
         if (yargv.X) options.kubecontext = yargv.X;
         if (yargv.N) options.kubenamespace = yargv.N;
-        
+
         return options;
     }
-    
+
     build(argv: string[], config: IConfig): IArgs {
         const yargv = require('yargs/yargs')(argv)
             .version(false)
@@ -140,11 +129,11 @@ export class ArgsBuilder {
                 'W'
             ])
             .argv;
-    
+
         const values = this.buildValues(config, yargv)
         const files = this.buildFiles(config, yargv)
         const options = this.buildOptions(argv, yargv)
-    
+
         return { options, values, files, };
     }
 }

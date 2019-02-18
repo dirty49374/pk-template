@@ -1,4 +1,4 @@
-import { IOptions } from '../pktlib/types';
+import { IOptions } from '../pk-lib/types';
 import { JsonOutput } from './outputs/json-output';
 import { PktOutput } from './outputs/pkt-output';
 import { YamlOutput } from './outputs/yaml-output';

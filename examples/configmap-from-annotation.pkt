@@ -1,15 +1,15 @@
-schema:
-  title: create configmap from directory
+# schema:
+#   title: create configmap from directory
 
-routine:
-- select: ConfigMap !pkt/configmap-from=*
-  each: |
-    anno = $.annotation 'pkt/configmap-from'
-    globs = anno.split(',').map((p) -> p.trim())
+# routine:
+# - select: ConfigMap !pkt/configmap-from=*
+#   each: |
+#     anno = $.annotation 'pkt/configmap-from'
+#     globs = anno.split(',').map((p) -> p.trim())
 
-    data = $.object.{}data
+#     data = $.object.{}data
 
-    for glob in globs
-      for path in $.globs(glob)
-        key = $.basename path
-        data[key] = $.loadText(path, true).replace(/\r/g, "")
+#     for glob in globs
+#       for path in $.globs(glob)
+#         key = $.basename path
+#         data[key] = $.loadText(path, true).replace(/\r/g, "")

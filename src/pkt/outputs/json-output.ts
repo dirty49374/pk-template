@@ -1,4 +1,4 @@
-import { IOptions } from "../../pktlib/types";
+import { IOptions } from "../../pk-lib/types";
 import { IOutput } from "./output";
 import { IObject } from "../../common";
 

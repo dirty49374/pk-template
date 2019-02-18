@@ -1,4 +1,4 @@
-import jsyaml from "js-yaml";
+import * as pkyaml from '../pk-yaml';
 import chalk from "chalk";
 import Diff = require("diff");
 import { IObject } from "../common";
@@ -46,14 +46,14 @@ export function diffObjects(prev: IObject[], curr: IObject[]) {
     let same = true;
     for (const key in prevmap) {
         if (key in currmap) {
-            const prevYaml = jsyaml.dump(prevmap[key]);
-            const currYaml = jsyaml.dump(currmap[key]);
+            const prevYaml = pkyaml.dumpYaml(prevmap[key]);
+            const currYaml = pkyaml.dumpYaml(currmap[key]);
             if (prevYaml !== currYaml) {
                 diffObject(key, prevYaml, currYaml);
                 same = false;
             }
         } else {
-            diffObject(key, jsyaml.dump(prevmap[key]), '');
+            diffObject(key, pkyaml.dumpYaml(prevmap[key]), '');
             same = false;
         }
     }
@@ -61,7 +61,7 @@ export function diffObjects(prev: IObject[], curr: IObject[]) {
         if (key in currmap) {
             continue;
         } else {
-            diffObject(key, '', jsyaml.dump(currmap[key]));
+            diffObject(key, '', pkyaml.dumpYaml(currmap[key]));
             same = false;
         }
     }

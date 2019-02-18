@@ -1,12 +1,12 @@
-import jsyaml from 'js-yaml';
-import { loaders } from '../pktlib';
+import pkyaml from 'js-yaml';
+import { loaders } from '../pk-lib';
 
 function helpPkt(url: string): void {
     console.log('- url:', url);
     const yaml = loaders.yaml(null, url);
     const schema = yaml.schema;
     if (!schema) return;
-    const props = jsyaml.dump(schema).split('\n')
+    const props = pkyaml.dump(schema).split('\n')
         .map(line => '  ' + line)
         .join('\n');
     console.log(props);

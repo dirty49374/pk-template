@@ -1,7 +1,8 @@
-import { IObject } from "../common";
-import { pktError } from "./utils";
-import { IScope, IStyle, CustomYamlTag } from "./types";
-const evalWithValues = require('../eval');
+import { IObject } from "../../common";
+import { pktError } from "../utils";
+import { IScope, IStyle } from "../types";
+import { CustomYamlTag } from '../../pk-yaml';
+const evalWithValues = require('../../eval');
 
 export class StyleApply {
     constructor(

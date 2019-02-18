@@ -1,15 +1,15 @@
 import { IProgress, IKubeCtlConfig, IObject } from "../common";
 import { execPipeSync, execStdin } from "./exec";
-import jsyaml from "js-yaml";
+import * as pkyaml from '../pk-yaml';
 
 export class KubeCtl {
     constructor(
         protected config: IKubeCtlConfig,
-        protected ui: IProgress) {
+        protected progress: IProgress) {
     }
 
     async applyRaw(objects: IObject[], alloption: string) {
-        const yaml = objects.map(o => jsyaml.dump(o)).filter(o => o != null).join('---\n');
+        const yaml = objects.map(o => pkyaml.dumpYaml(o)).filter(o => o != null).join('---\n');
         const command = `kubectl apply${alloption} -f -`;
 
         process.stdout.write('    ');
@@ -25,10 +25,10 @@ export class KubeCtl {
             : `kubectl delete ${kind} ${name} --namespace ${namespace}`;
 
         if (this.config.kube_dryrun_option) {
-            this.ui.verbose('    skipped');
+            this.progress.verbose('    skipped');
         } else {
             const result = execPipeSync(command, '(NotFound)');
-            this.ui.verbose(`    ${result}`);
+            this.progress.verbose(`    ${result}`);
         }
     }
 }

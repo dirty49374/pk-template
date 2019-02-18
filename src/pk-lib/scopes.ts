@@ -14,6 +14,7 @@ class Scope implements IScope {
     config: IConfig;
     userdata: any;
     $buildLib: any;
+
     constructor({ objects, values, uri, parent, styleSheet, config, userdata }: any) {
         this.objects = objects;
         this.values = values;

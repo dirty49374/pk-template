@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { ApplyConfig } from "./types";
-import jsyaml from 'js-yaml';
-import { getChalk } from '../pktlib/lazy';
+import * as pkyaml from '../pk-yaml';
+import { getChalk } from '../pk-lib/lazy';
 import { Progress } from './progress';
 import { PkzKube } from './pkt-kube';
 import { IResourceKey, IObject, delay } from '../common';
@@ -35,7 +35,7 @@ export class PkgApply extends Progress {
                 const namespaced = this.kube.isNamespacedObject(o);
                 if (namespaced) {
                     this.error(`namespace is missing on (kind=${o.kind}, name=${o.metadata.name})`);
-                    this.verbose(jsyaml.dump(o));
+                    this.verbose(pkyaml.dumpYaml(o));
                     process.exit(1);
                 }
             }
@@ -155,7 +155,7 @@ export class PkgApply extends Progress {
                 console.log('.. START !!!');
             }
         }
-        const objects = jsyaml.loadAll(content).filter(o => o);
+        const objects = pkyaml.loadYamlAll(content).filter(o => o);
         const steps = this.buildApplySteps(objects);
 
         this.precheckStep(objects, steps);

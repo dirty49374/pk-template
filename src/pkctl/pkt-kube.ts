@@ -1,18 +1,14 @@
-import jsyaml from "js-yaml";
-import { execSync } from "child_process";
-import { ApplyConfig } from "./types";
-import { execPipeSync } from "../kubectl/exec";
-import { IResourceType, IResourceKey, IProgress, IKubeCtlConfig, IObject, ISet } from "../common";
-import { getChalk } from "../pktlib/lazy";
-import { KubeCtl } from "../kubectl/kubectl";
+import { execPipeSync } from "../pk-kubectl/exec";
+import { IResourceKey, IProgress, IKubeCtlConfig, IObject, ISet } from "../common";
+import { KubeCtl } from "../pk-kubectl/kubectl";
 
 export class PkzKube extends KubeCtl {
 
     private unnamespacables: ISet | undefined;
     constructor(
         config: IKubeCtlConfig,
-        ui: IProgress) {
-        super(config, ui);
+        progress: IProgress) {
+        super(config, progress);
     }
 
     queryUnnamespacables() {
@@ -36,16 +32,16 @@ export class PkzKube extends KubeCtl {
 
     getPkzSpecOrDefault(name: string): IObject {
         const command = `kubectl get configmap ${name} ${this.config.kube_option} --namespace default -ojson`;
-        // this.ui.log(`--- ${command}`);
+        // this.progress.log(`--- ${command}`);
         const result = execPipeSync(command, '(NotFound)');
         if (result) {
             const configmap = JSON.parse(result);
-            // this.ui.log(configmap.data.objects);
-            // this.ui.log('---');
+            // this.progress.log(configmap.data.objects);
+            // this.progress.log('---');
             return configmap;
         }
-        // this.ui.log('notfound');
-        // this.ui.log('---');
+        // this.progress.log('notfound');
+        // this.progress.log('---');
 
         return { metadata: { name }, data: { objects: '' } };
     }
@@ -71,11 +67,11 @@ export class PkzKube extends KubeCtl {
         for (const key of keys) {
             const namespaced = this.isNamespacedType(key.apiGroup, key.kind);
             if (namespaced && !key.namespace) {
-                this.ui.error(`!!! cannot determine object to delete (kind=${key.kind}, name=${key.name}), namespace is missing`);
+                this.progress.error(`!!! cannot determine object to delete (kind=${key.kind}, name=${key.name}), namespace is missing`);
                 continue;
             }
 
-            this.ui.confirm(`delete ${key.kind} ${namespaced ? key.namespace + '/' : ''}${key.name}`);
+            this.progress.confirm(`delete ${key.kind} ${namespaced ? key.namespace + '/' : ''}${key.name}`);
 
             if (namespaced) {
                 this.deleteRaw(key.kind, key.name, key.namespace);

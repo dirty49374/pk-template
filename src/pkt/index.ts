@@ -1,15 +1,15 @@
 import fs from 'fs';
 import help from './help';
-import jsyaml from 'js-yaml';
+import * as pkyaml from '../pk-yaml';
 import process from 'process';
 import version from './version';
 import { buildOutput } from './build-output';
 import { ArgsBuilder, IArgs } from './args';
-import { runtimes, configs, IValues, IConfig } from '../pktlib';
-import { IOptions } from '../pktlib';
-import { readStdin } from '../pktlib/readStdin';
+import { runtimes, configs, IValues, IConfig } from '../pk-lib';
+import { IOptions } from '../pk-lib';
+import { readStdin } from '../pk-lib/readStdin';
 import { diffObjects } from './diff-objects';
-import { getChalk } from '../pktlib/lazy';
+import { getChalk } from '../pk-lib/lazy';
 import { IObject } from '../common';
 
 interface Result {
@@ -60,7 +60,7 @@ async function update(path: string, config: IConfig, args: IArgs) {
         return;
     }
 
-    const prev = jsyaml.loadAll(original).filter((o: any) => o != null);
+    const prev = pkyaml.loadYamlAll(original).filter((o: any) => o != null);
     const curr = result.objects.filter((o: any) => o != null);
 
     diffObjects(prev, curr);
@@ -77,7 +77,7 @@ async function update(path: string, config: IConfig, args: IArgs) {
 async function generate(config: IConfig, args: IArgs): Promise<IObject[]> {
     if (args.options.stdin) {
         const text = await readStdin();
-        const objects = jsyaml.loadAll(text);
+        const objects = pkyaml.loadYamlAll(text);
         return run(objects, args.values, args.files, config, args.options);
     } else {
         return run([], args.values, args.files, config, args.options);

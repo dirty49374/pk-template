@@ -8,7 +8,6 @@ const jslib = (scope: IScope) => {
     const lib = {
         // disabled ( causing circular dependency )
         // expand: path => runtimes.statements.include(scope, { include: path }),
-        globs: (path: string) => loaders.globs(scope, scope.resolve(path)),
         files: (path: string) => loaders.files(scope, scope.resolve(path)),
         loadText: (path: string) => loaders.loadText(scope, scope.resolve(path)),
         loadPkt: (path: string) => loaders.pkt(scope, scope.resolve(path)),

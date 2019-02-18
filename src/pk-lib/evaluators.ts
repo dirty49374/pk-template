@@ -1,10 +1,10 @@
 import * as utils from './utils';
-import * as yamls from './yamls';
 import * as loaders from './loaders';
-import { IScope, CustomYamlTag } from './types';
+import { IScope } from './types';
 import { getCoffeeScript, getLiveScript, getUnderscore } from './lazy';
 import { IObject, forEachTreeObjectKey } from '../common';
-import { parseStyle } from './styleParser';
+import { parseStyle } from './styles/styleParser';
+import { CustomYamlTag, loadYamlAll } from '../pk-yaml';
 
 const evalWithValues = require('../eval');
 
@@ -114,7 +114,7 @@ export function template(scope: IScope, text: string): any[] {
             ...scope.values,
             $: scope
         });
-        const objects = yamls.loadAll(yaml);
+        const objects = loadYamlAll(yaml);
         return objects;
     } catch (e) {
         throw utils.pktError(scope, e, 'failed to parse template');

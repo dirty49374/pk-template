@@ -8,7 +8,7 @@ import * as evaluators from './evaluators';
 import { IScope, IValues, IPkt, IConfig, IStatement, IUserdata } from './types';
 import { getJsonPath, getJsonPatch } from './lazy';
 import { IObject } from '../common';
-import { StyleSheet } from './styleSheet';
+import { StyleSheet } from './styles/styleSheet';
 
 const ajv = new Ajv({ allErrors: true });
 

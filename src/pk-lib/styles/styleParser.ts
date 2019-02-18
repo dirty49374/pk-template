@@ -1,4 +1,4 @@
-import { IStyle } from "./types";
+import { IStyle } from "../types";
 
 function* parseStyleString(s: string): Iterator<IStyle> {
 
