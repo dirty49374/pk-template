@@ -44,3 +44,19 @@ export interface ISet {
 
 export const delay = (ms: number): Promise<any> =>
     new Promise(resolve => setTimeout(() => resolve(), ms));
+
+
+export const forEachTreeObjectKey = (object: any, cb: (object: object, key: string, value: any) => boolean): boolean => {
+    let check = false;
+    if (Array.isArray(object)) {
+        for (const item of object) {
+            check = forEachTreeObjectKey(item, cb) || check;
+        }
+    } else if (typeof object === 'object') {
+        if (object === null) { return false; }
+        for (const key of Object.keys(object)) {
+            check = cb(object, key, object[key]) || check;
+        }
+    }
+    return check;
+}

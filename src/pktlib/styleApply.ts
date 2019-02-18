@@ -5,64 +5,45 @@ import { parseStyle } from "./styleParser";
 const evalWithValues = require('../eval');
 
 export class StyleApply {
-    constructor(private tag: CustomYamlTag) {
+    constructor(
+        private name: string,
+        private tag: CustomYamlTag) {
         if (tag.type !== 'js') {
             throw new Error(`style type is not script`);
         }
     }
 
-    private parseStyles(scope: IScope, rawStyles: any) {
-        try {
-            return parseStyle(rawStyles);
-        } catch (e) {
-            throw pktError(scope, e, `error in parsing style '${rawStyles}'`);
-        }
-    }
-
     private applyStyle(scope: IScope, object: IObject, parent: object, style: IStyle) {
         try {
+            let success = true;
             const $ = {
                 ...scope,
                 ...scope.$buildLib(scope),
                 object,
                 style,
                 node: parent,
+                skip: () => success = false,
             };
-            const pass = evalWithValues($, this.tag.code, scope.values);
-            return pass !== 'pass';
+            evalWithValues($, this.tag.code, scope.values);
+            return success;
         } catch (e) {
             console.log(e);
-            throw pktError(scope, e, `error in applying style '${style}'`);
+            throw pktError(scope, e, `error in applying style ${this.name}: ${style}`);
         }
     }
 
-    private applyStyles(scope: IScope, object: IObject, parent: object, styles: IStyle[]): IStyle[] {
+    apply(scope: IScope, object: IObject, styles: IStyle[], parent: object): IStyle[] {
+
+        console.log('!!!', styles)
         const leftOvers: IStyle[] = [];
         for (let style of styles) {
             if (!this.applyStyle(scope, object, parent, style)) {
+                console.log('skip 1', this.name)
                 leftOvers.push(style);
+            } else {
+                console.log('accept 1', this.name)
             }
         }
         return leftOvers;
-    }
-
-    apply(scope: IScope, object: IObject, rawStyles: any, parent: object) {
-
-        let styles: IStyle[] = this.parseStyles(scope, rawStyles);
-
-        while (true) {
-            if (styles.length == 0)
-                return;
-
-            const leftovers = this.applyStyles(scope, object, parent, styles);
-            if (styles.length === leftovers.length) {
-                for (const style of leftovers) {
-                    console.log(`cannot process style ${style.name}`)
-                }
-                throw pktError(scope, new Error(), `cannot process style`);
-            }
-
-            styles = leftovers;
-        }
     }
 }

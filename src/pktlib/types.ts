@@ -2,11 +2,12 @@ import { IObject } from "../common";
 
 export type IConfig = any;
 export interface IPkt {
-    input: any
-    schema: any
-    style: any
-    assign: any
-    routine: any
+    input: any;
+    schema: any;
+    import?: string[] | string;
+    style: object[];
+    assign: any;
+    routine: any;
 }
 
 export type IStatement = any;
@@ -47,7 +48,9 @@ export interface IStyle extends Array<{ k: string, v: string }> {
 
 
 export interface IStyleSheet {
-    applyStyles(scope: IScope, object: IObject, parent: object, styleType: string, styles: any): boolean;
+    applyStyles(scope: IScope, object: IObject, parent: object, styleType: string, styles: IStyle[]): IStyle[];
+    apply(scope: IScope, orject: any): void;
+    load(styles: object[]): void;
 }
 
 export interface IScope {

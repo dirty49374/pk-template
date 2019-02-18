@@ -3,9 +3,11 @@ import * as yamls from './yamls';
 import * as loaders from './loaders';
 import { IScope, IStyleSheet } from './types';
 import { getCoffeeScript, getLiveScript, getUnderscore } from './lazy';
-import { IObject } from '../common';
+import { IObject, forEachTreeObjectKey } from '../common';
+import { parseStyle } from './styleParser';
 
 const evalWithValues = require('../eval');
+
 
 export class PkYamlEvaluator {
 
@@ -44,52 +46,31 @@ export class PkYamlEvaluator {
     }
 
     processDotPath(node: any) {
-        if (Array.isArray(node)) {
-            for (const item of node) {
-                this.processDotPath(item);
+        forEachTreeObjectKey(node, (object: any, key: string, value: any): boolean => {
+            if (key.startsWith('^')) {
+                delete object[key];
+                const pathes = key.substr(1).split('.');
+                this.setValue(object, pathes, value);
             }
-        } else if (typeof node === 'object') {
-            if (node === null) { return; }
-            for (const key of Object.keys(node)) {
-                const value = node[key];
-                if (key.startsWith('^')) {
-                    delete node[key];
-                    const pathes = key.substr(1).split('.');
-                    this.setValue(node, pathes, value)
-                }
-                this.processDotPath(value);
-            }
-        }
+            return true;
+        });
     }
 
-    processStyle(node: any): boolean {
-        let updated = false;
-        if (Array.isArray(node)) {
-            for (const item of node) {
-                updated = updated || this.processStyle(item);
+    compileStyle(node: any) {
+        forEachTreeObjectKey(node, (object: any, key: string, value: any): boolean => {
+            if (key.endsWith('^')) {
+                node[key] = parseStyle(value);
             }
-        } else if (typeof node === 'object') {
-            if (node === null) { return false; }
-            for (const key of Object.keys(node)) {
-                const value = node[key];
-                if (key.endsWith('^')) {
-                    delete node[key];
-                    this.scope.styleSheet.applyStyles(
-                        this.scope, this.object as object, node, key.substr(0, key.length - 1), value);
-                    updated = true;
-                } else {
-                    updated = updated || this.processStyle(value);
-                }
-            }
-        }
-        return updated;
+            return true;
+        });
     }
 
     evaluate(object: IObject) {
         this.object = this.evaluateCustomTag(object);
         this.processDotPath(this.object);
-        while (this.processStyle(this.object))
-            ;
+        this.compileStyle(this.object);
+        this.scope.styleSheet.apply(this.scope, this.object)
+
         return this.object;
     }
 }

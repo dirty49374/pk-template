@@ -259,6 +259,26 @@ export function run(file: IPkt, parentScope: IScope, uri: string, withObject: bo
         if (file.style) {
             styleSheet.load(file.style);
         }
+        if (file.import) {
+            const _importSs = (path: string) => {
+                const uri = scope.resolve(path);
+                if (uri.toLowerCase().endsWith(".pkt")) {
+                    const file = loaders.pkt(scope, uri);
+                    if (file.style) {
+                        scope.styleSheet.load(file.style);
+                    }
+                }
+                return true;
+            };
+            if (Array.isArray(file.import)) {
+                for (let path of file.import) {
+                    _importSs(path);
+                }
+            } else {
+                _importSs(file.import);
+            }
+        }
+
         scope.styleSheet = styleSheet;
 
         // 1. bind objects
