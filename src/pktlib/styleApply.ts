@@ -1,7 +1,6 @@
 import { IObject } from "../common";
-import { CustomYamlTag, pktError } from "./utils";
-import { IScope, IStyleSheet, IStyle } from "./types";
-import { parseStyle } from "./styleParser";
+import { pktError } from "./utils";
+import { IScope, IStyle, CustomYamlTag } from "./types";
 const evalWithValues = require('../eval');
 
 export class StyleApply {
@@ -13,7 +12,7 @@ export class StyleApply {
         }
     }
 
-    private applyStyle(scope: IScope, object: IObject, parent: object, style: IStyle) {
+    private applyStyle(scope: IScope, object: IObject, node: object, style: IStyle) {
         try {
             let success = true;
             const $ = {
@@ -21,7 +20,7 @@ export class StyleApply {
                 ...scope.$buildLib(scope),
                 object,
                 style,
-                node: parent,
+                node,
                 skip: () => success = false,
             };
             evalWithValues($, this.tag.code, scope.values);
@@ -32,18 +31,15 @@ export class StyleApply {
         }
     }
 
-    apply(scope: IScope, object: IObject, styles: IStyle[], parent: object): IStyle[] {
+    apply(scope: IScope, object: IObject, node: object, styleType: string, styles: IStyle[]): IStyle[] {
 
-        console.log('!!!', styles)
         const leftOvers: IStyle[] = [];
         for (let style of styles) {
-            if (!this.applyStyle(scope, object, parent, style)) {
-                console.log('skip 1', this.name)
+            if (!this.applyStyle(scope, object, node, style)) {
                 leftOvers.push(style);
-            } else {
-                console.log('accept 1', this.name)
             }
         }
+
         return leftOvers;
     }
 }

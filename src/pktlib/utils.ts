@@ -1,6 +1,5 @@
 import { IScope } from './types';
 
-
 interface PktError extends Error {
     summary: string;
     uri: string;
@@ -15,10 +14,6 @@ export const pktError = (scope: IScope | null, error: Error, message: string): P
     pe.summary = message;
     pe.uri = scope ? scope.uri : '.';
     return pe;
-}
-
-export class CustomYamlTag {
-    constructor(public type: string, public code: string) { }
 }
 
 export const parseKvps = (value: string): KvpType => {

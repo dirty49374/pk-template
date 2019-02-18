@@ -1,7 +1,7 @@
 import * as utils from './utils';
 import * as yamls from './yamls';
 import * as loaders from './loaders';
-import { IScope, IStyleSheet } from './types';
+import { IScope, CustomYamlTag } from './types';
 import { getCoffeeScript, getLiveScript, getUnderscore } from './lazy';
 import { IObject, forEachTreeObjectKey } from '../common';
 import { parseStyle } from './styleParser';
@@ -17,7 +17,7 @@ export class PkYamlEvaluator {
     }
 
     evaluateCustomTag(node: any): any {
-        if (node instanceof utils.CustomYamlTag) {
+        if (node instanceof CustomYamlTag) {
             return javaScriptCode(this.scope, node);
         } else if (Array.isArray(node)) {
             return node.map(item => this.evaluateCustomTag(item));
@@ -32,32 +32,18 @@ export class PkYamlEvaluator {
         return node;
     }
 
-    private setValue(node: any, pathes: string[], value: any) {
-        if (true) {
-            const key = pathes[0];
-            if (pathes.length == 1) {
-                node[key] = value;
-            } else {
-                const child = key in node ? node[key] : (node[key] = {});
-                pathes.shift();
-                this.setValue(child, pathes, value);
-            }
-        }
-    }
-
-    processDotPath(node: any) {
-        forEachTreeObjectKey(node, (object: any, key: string, value: any): boolean => {
+    processDotPath(object: any) {
+        forEachTreeObjectKey(object, (node: any, key: string, value: any): boolean => {
             if (key.startsWith('^')) {
-                delete object[key];
-                const pathes = key.substr(1).split('.');
-                this.setValue(object, pathes, value);
+                delete node[key];
+                utils.setValue(node, key.substr(1), value);
             }
             return true;
         });
     }
 
-    compileStyle(node: any) {
-        forEachTreeObjectKey(node, (object: any, key: string, value: any): boolean => {
+    compileStyle(object: any) {
+        forEachTreeObjectKey(object, (node: any, key: string, value: any): boolean => {
             if (key.endsWith('^')) {
                 node[key] = parseStyle(value);
             }
@@ -91,7 +77,7 @@ export function javaScript(scope: IScope, javascript: string): any {
     return doEval(scope, javascript);
 }
 
-export function javaScriptCode(scope: IScope, code: utils.CustomYamlTag) {
+export function javaScriptCode(scope: IScope, code: CustomYamlTag) {
     switch (code.type) {
         case 'js':
             return javaScript(scope, code.code);
@@ -111,9 +97,9 @@ export function liveScript(scope: IScope, livescript: string): any {
     return javaScript(scope, javascript);
 }
 
-export function script(scope: IScope, script: utils.CustomYamlTag | string): any {
+export function script(scope: IScope, script: CustomYamlTag | string): any {
     try {
-        if (script instanceof utils.CustomYamlTag)
+        if (script instanceof CustomYamlTag)
             return javaScriptCode(scope, script);
         return liveScript(scope, script);
     } catch (e) {

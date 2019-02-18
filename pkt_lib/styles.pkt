@@ -1,0 +1,73 @@
+style:
+- k8s: !ls |
+    words = $.style.name.split '/'
+    $.object.{}metadata.name = words[0]
+
+    if words.length > 1
+      $.object.{}metadata.namespace = words[1]
+
+    $.object.{}metadata.{}labels['name'] = words[0]
+
+    $.object.apiVersion = $.style[0].k
+    $.object.kind = $.style[1].k
+
+    switch $.style[1].k
+      case 'Deployment'
+        ssml = $.object.{}spec.{}selector.{}matchLabels
+        if !ssml.name
+          ssml.name = words[0]
+        stml = $.object.{}spec.{}template.{}metadata.{}labels
+        if !stml.name
+          stml.name = words[0]
+
+- container: !ls |
+    $.node.name = $.style.name
+    for KV in $.style
+      if KV.k == 'image' || KV.k == 'i'
+        $.node.image = $.style[0].v
+      else if KV.k == 'port' || KV.k == 'p'
+        $.node.ports = $.toNumbers KV.v
+          .map (p) -> containerPort: p
+
+- containerPorts: !ls |
+    port =
+      containerPort: Number $.style.name
+    for KV in $.style
+      port[KV.k] = KV.v
+    $.node.[]ports.push port
+
+- env: !ls |
+    for KV in $.style
+      $.node.[]env.push {
+        name: KV.k
+        value: KV.v
+      }
+
+- volumes: !ls |
+    switch $.style.name.toLowerCase()
+      case 'configmap'
+        [head, ...tail] = $.style
+        volume =
+          name: head.k
+          configMap:
+            name: head.v || head.k
+        for KV in tail
+          volume.[]items.push {
+            key: KV.k
+            path: KV.v || KV.k
+          }
+        $.node.[]volumes.push volume
+      case 'emptydir'
+        $.node.[]volumes.push {
+          name: $.style[0].k
+          emptyDir: {}
+        }
+
+- volumeMounts: !ls |
+    nameSubPath = $.style.name.split('/', 2)
+    mount =
+      name: nameSubPath[0]
+      mountPath: $.style[0].k
+    if nameSubPath.length > 1
+      mount.subPath = nameSubPath[1]
+    $.node.[]volumeMounts.push mount

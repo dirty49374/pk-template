@@ -17,6 +17,9 @@ export interface IValues {
     [id: string]: any;
 }
 
+export class CustomYamlTag {
+    constructor(public type: string, public code: string) { }
+}
 
 export interface IOptions {
     argv: string[];
