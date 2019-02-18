@@ -3,12 +3,12 @@ import { getLiveScript, getCoffeeScript } from '../pk-lib/lazy';
 import { CustomYamlTag } from './types';
 
 
-interface TagData {
+interface ITagData {
     type: string;
     code: string;
 }
 
-const createCustomTag = (name: string, compile: (text: string) => TagData) => {
+const createCustomTag = (name: string, compile: (text: string) => ITagData) => {
     return new jsyaml.Type(`!${name}`, {
         kind: 'scalar',
         resolve: (data: any) =>

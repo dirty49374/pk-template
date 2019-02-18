@@ -4,7 +4,7 @@ import { PktOutput } from './outputs/pkt-output';
 import { YamlOutput } from './outputs/yaml-output';
 import { BashOutput } from './outputs/bash-output';
 import { IOutput } from './outputs/output';
-import { PktPackageOutput } from './outputs/pkt-package-output';
+import { PktPackageOutput } from './outputs/pkz-output';
 import { IObject } from '../common';
 
 export function outputFactory(options: IOptions): IOutput {

@@ -1,24 +1,24 @@
 import { IScope } from './types';
 
-interface PktError extends Error {
+interface IPktError extends Error {
     summary: string;
     uri: string;
 }
 
-interface KvpType {
+interface IKvpType {
     [id: string]: string
 }
 
-export const pktError = (scope: IScope | null, error: Error, message: string): PktError => {
-    const pe = error as PktError;
+export const pktError = (scope: IScope | null, error: Error, message: string): IPktError => {
+    const pe = error as IPktError;
     pe.summary = message;
     pe.uri = scope ? scope.uri : '.';
     return pe;
 }
 
-export const parseKvps = (value: string): KvpType => {
+export const parseKvps = (value: string): IKvpType => {
     if (!value) return {};
-    const kvps: KvpType = {};
+    const kvps: IKvpType = {};
     value.split(';')
         .forEach(kvp => {
             const [key, value] = kvp.split('=');

@@ -3,7 +3,7 @@ import { IOutput } from "./output";
 import { IOptions } from "../../pk-lib";
 import { IObject } from '../../common';
 
-interface ApplyStep {
+interface IApplyStep {
     name: string;
     objects: IObject[];
 }
@@ -12,8 +12,8 @@ export class BashOutput implements IOutput {
     constructor(private options: IOptions) {
     }
 
-    private buildSteps(objects: IObject[]): ApplyStep[] {
-        const g: ApplyStep[] = [
+    private buildSteps(objects: IObject[]): IApplyStep[] {
+        const g: IApplyStep[] = [
             { name: 'Namespaces', objects: [] },
             { name: 'Resources', objects: [] },
             { name: 'Deployments', objects: [] },

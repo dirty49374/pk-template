@@ -4,8 +4,8 @@ const nodeExternals = require('webpack-node-externals');
 module.exports = {
     entry: {
         pkt: './src/pkt/index.ts',
-        pkttl: './src/pkctl/index.ts',
-        pktlib: './src/pktlib/index.ts',
+        pkctl: './src/pkctl/index.ts',
+        ['pk-lib']: './src/pk-lib/index.ts',
     },
     //devtool: 'inline-source-map',
     target: 'node',

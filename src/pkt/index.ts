@@ -12,7 +12,7 @@ import { diffObjects } from './diff-objects';
 import { getChalk } from '../pk-lib/lazy';
 import { IObject } from '../common';
 
-interface Result {
+interface IResult {
     objects: IObject[];
     args: IArgs;
 }
@@ -67,10 +67,13 @@ async function update(path: string, config: IConfig, args: IArgs) {
 
     if (args.options.pkt_package_update_write) {
         const output = buildOutput(result.args.options, result.objects);
+        console.log();
+        console.log(`writing '${path}.pkz' ...`);
         fs.writeFileSync(`${path}.pkz`, output, 'utf8');
-        console.log(`pkt-package file '${path}.pkz' is updated !!!`);
+        console.log(`'${path}.pkz' updated`);
     } else {
-        console.log(`pkt-package file '${path}.pkz' is not updated, (to update, add -W flasg)`);
+        console.log();
+        console.log(`skip writing '${path}.pkz'. (to update, add -W flag)`);
     }
 }
 
@@ -84,7 +87,7 @@ async function generate(config: IConfig, args: IArgs): Promise<IObject[]> {
     }
 }
 
-async function execute(argv: any, print: boolean): Promise<Result | null> {
+async function execute(argv: any, print: boolean): Promise<IResult | null> {
     const config = configs.load();
     let args = new ArgsBuilder().build(argv, config);
 
@@ -129,10 +132,10 @@ async function execute(argv: any, print: boolean): Promise<Result | null> {
                 "apiVersion": "v1",
                 "kind": "ConfigMap",
                 "metadata": {
-                    "name": `pkt-package-id-${args.options.pkt_package}`,
-                    "namespace": "default",
+                    "name": args.options.pkt_package,
+                    "namespace": "pk-packages",
                     "annotations": {
-                        "pkt.io/package-id": args.options.pkt_package,
+                        "pkt.io/pkz-id": args.options.pkt_package,
                     },
                 },
                 "data": {

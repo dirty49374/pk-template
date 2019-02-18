@@ -8,7 +8,7 @@ import { IResourceKey, IObject, delay } from '../common';
 import { PkzSpec } from './spec';
 import pkzheader from './pkz-header';
 
-interface ApplyStep {
+interface IApplyStep {
     name: string;
     objects: IObject[];
     final: boolean;
@@ -22,8 +22,8 @@ export class PkgApply extends Progress {
         this.kube = new PkzKube(config, this);
     }
 
-    private buildApplySteps(objects: IObject[]): ApplyStep[] {
-        const g: ApplyStep[] = [
+    private buildApplySteps(objects: IObject[]): IApplyStep[] {
+        const g: IApplyStep[] = [
             { name: 'Namespaces', objects: [], final: false },
             { name: 'Resources', objects: [], final: false },
             { name: 'Deployments', objects: [], final: false },
@@ -55,8 +55,8 @@ export class PkgApply extends Progress {
                 default:
                     if (o.kind == 'ConfigMap') {
                         const name = o.metadata.name;
-                        const pkgid = o.metadata.annotations && o.metadata.annotations['pkt.io/package-id'];
-                        if (name === `pkt-package-id-${pkgid}`) {
+                        const pkgid = o.metadata.annotations && o.metadata.annotations['pkt.io/pkz-id'];
+                        if (name === pkgid) {
                             g[3].objects.push(o);
                         } else {
                             g[1].objects.push(o);
@@ -78,7 +78,7 @@ export class PkgApply extends Progress {
         return prevSpec.subtract(currSpec);
     }
 
-    private precheckStep(objects: IObject[], steps: ApplyStep[]) {
+    private precheckStep(objects: IObject[], steps: IApplyStep[]) {
         this.header('pre-check');
         const chalk = getChalk().yellowBright;
         this.output(`    target deployment : ${chalk(this.config.target)}`);
@@ -97,11 +97,11 @@ export class PkgApply extends Progress {
         this.confirm("proceed");
     }
 
-    private async deleteStep(step: ApplyStep) {
+    private async deleteStep(step: IApplyStep) {
         this.header(`Delete step`);
 
         const deleteList = this.findDisappearedObjects(step.objects[0]);
-        const targets = deleteList.map(o => `${o.kind}/${o.name}`).join(', ');
+        const targets = deleteList.map(o => `${o.kind}/${o.namespace}/${o.name}`).join(', ');
         if (targets.length == 0) {
             this.verbose('  - targets: none');
             this.info();
@@ -117,7 +117,7 @@ export class PkgApply extends Progress {
         }
     }
 
-    private async applyStep(step: ApplyStep) {
+    private async applyStep(step: IApplyStep) {
         this.header(`${step.name} step`);
 
         if (step.objects.length == 0) {
@@ -128,7 +128,7 @@ export class PkgApply extends Progress {
             return;
         }
 
-        const targets = step.objects.map(o => `${o.kind}/${o.metadata.name}`).join(', ');
+        const targets = step.objects.map(o => `${o.kind}/${o.metadata.namespace || ''}/${o.metadata.name}`).join(', ');
         this.verbose(`  - targets: ${targets}`);
         this.verbose()
         this.confirm(`apply these ${step.objects.length} objects`);
