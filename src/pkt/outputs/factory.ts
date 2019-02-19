@@ -1,11 +1,11 @@
-import { IOptions } from '../pk-lib/types';
-import { JsonOutput } from './outputs/json-output';
-import { PktOutput } from './outputs/pkt-output';
-import { YamlOutput } from './outputs/yaml-output';
-import { BashOutput } from './outputs/bash-output';
-import { IOutput } from './outputs/output';
-import { PktPackageOutput } from './outputs/pkz-output';
-import { IObject } from '../common';
+import { IOptions } from '../../pk-lib/types';
+import { JsonOutput } from './json-output';
+import { PktOutput } from './pkt-output';
+import { YamlOutput } from './yaml-output';
+import { BashOutput } from './bash-output';
+import { IOutput } from './output';
+import { PktPackageOutput } from './pkz-output';
+import { IObject } from '../../common';
 
 export function outputFactory(options: IOptions): IOutput {
     if (options.json || options.json1) {

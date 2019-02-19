@@ -41,16 +41,42 @@ export interface IOptions {
 
 export type IScopeHandler = (scope: IScope) => any;
 
-export interface IStyle extends Array<{ k: string, v: string }> {
+export interface IStyle extends Array<{ k: string, v: string, kv: string }> {
+    type: string;
     name: string;
+}
+
+export class CustomYamlTag {
+    constructor(public type: string, public code: string) { }
 }
 
 
 export interface IStyleSheet {
-    applyStyle(scope: IScope, object: IObject, parent: object, styleType: string, styles: IStyle): boolean;
-    applyStyles(scope: IScope, object: IObject, parent: object, styleType: string, styles: IStyle[]): IStyle[];
+    applyStyle(scope: IScope, object: IObject, parent: object, styles: IStyle): boolean;
     apply(scope: IScope, orject: any): void;
     load(styles: object[]): void;
+}
+
+export interface ILoader {
+    loadText(uri: string): { uri: string, data: string };
+    loadYaml(uri: string): { uri: string, data: any };
+    loadYamlAll(uri: string): { uri: string, data: any[] };
+
+    loadPkt(uri: string): { uri: string, data: IPkt };
+    loadTemplate(uri: string): { uri: string, data: string };
+    listFiles(uri: string): { uri: string, data: string[] };
+}
+
+export interface IEvaluator {
+    evalTemplate(tpl: string): string;
+    evalTemplateAll(text: string): any[];
+
+    evalCustomYamlTag(code: CustomYamlTag): any;
+    evalScript(script: CustomYamlTag | string): any;
+
+    evalAllCustomTags(node: any): any;
+    expandCaretPath(object: any): void;
+    evalObject(object: any): any;
 }
 
 export interface IScope {
@@ -59,10 +85,13 @@ export interface IScope {
     values: IValues;
     uri: string;
     parent: IScope;
-    styleSheet: IStyleSheet;
     config: IConfig;
     userdata: any;
     $buildLib: any;
+
+    evaluator: IEvaluator;
+    loader: ILoader;
+    styleSheet: IStyleSheet;
 
     resolve(relpath: string): string;
     add(object: any): void;

@@ -1,6 +1,31 @@
 import { IStyle } from "../types";
 
-function* parseStyleString(s: string): Iterator<IStyle> {
+const createEmptyStyle = (type: string): IStyle => {
+    const style: any = [];
+    style.name = null;
+    style.type = type;
+
+    style.toMap = function () {
+        return this.reduce((sum: any, kv: any) => { sum[kv.k] = kv.v; return sum; }, {});
+    };
+    style.toMMap = function () {
+        return this.reduce((sum: any, kv: any) => { sum[kv.k] = (sum[kv.k] || []).push(kv.v); return sum; }, {});
+    };
+    style.parseName = function () {
+        const [names, type] = this.name.split('#', 2);
+        const [w1, w2] = names.split('/', 2);
+
+        return {
+            name: w2 ? w2 : w1,
+            namespace: w2 ? (w1 || null) : null,
+            type,
+        }
+    };
+
+    return style;
+}
+
+function* parseStyleString(styleType: string, s: string): Iterator<IStyle> {
 
     let i = 0;
 
@@ -50,7 +75,7 @@ function* parseStyleString(s: string): Iterator<IStyle> {
         if (!skipws())
             return;
 
-        const style: any = [];
+        const style: IStyle = createEmptyStyle(styleType);
         style.name = getWordL();
 
         if (!skipws()) {
@@ -86,29 +111,37 @@ function* parseStyleString(s: string): Iterator<IStyle> {
     }
 }
 
-export function parseStyle(style: any): IStyle[] {
+export function parseParametericStyle(styleType: string, style: any): IStyle[] {
     const styles: IStyle[] = []
     if (Array.isArray(style)) {
         for (const line of style) {
-            const it = parseStyleString(line.toString());
+            const it = parseStyleString(styleType, line.toString());
             while (true) {
                 const r = it.next();
                 if (r.done) {
                     break;
                 }
+                r.value.type = styleType;
                 styles.push(r.value);
             }
         }
     } else {
-        const it = parseStyleString(style.toString());
+        const it = parseStyleString(styleType, style.toString());
         while (true) {
             const r = it.next();
             if (r.done) {
                 break;
             }
+            r.value.type = styleType;
             styles.push(r.value);
         }
     }
 
     return styles;
+}
+
+export const parseEmptyStyles = (line: string): IStyle[] => {
+    return line.split(/\s+/)
+        .filter((p: string) => p)
+        .map(createEmptyStyle);
 }

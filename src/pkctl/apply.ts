@@ -155,7 +155,7 @@ export class PkgApply extends Progress {
                 console.log('.. START !!!');
             }
         }
-        const objects = pkyaml.loadYamlAll(content).filter(o => o);
+        const objects = pkyaml.parseYamlAll(content).filter(o => o);
         const steps = this.buildApplySteps(objects);
 
         this.precheckStep(objects, steps);

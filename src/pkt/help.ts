@@ -1,9 +1,9 @@
 import pkyaml from 'js-yaml';
-import { loaders } from '../pk-lib';
+import { loadYamlFile } from '../pk-yaml';
 
 function helpPkt(url: string): void {
     console.log('- url:', url);
-    const yaml = loaders.yaml(null, url);
+    const yaml = loadYamlFile(url);
     const schema = yaml.schema;
     if (!schema) return;
     const props = pkyaml.dump(schema).split('\n')

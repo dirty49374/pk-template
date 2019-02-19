@@ -1,10 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-import { IValues, loaders, IOptions, IConfig } from '../pk-lib';
-import { getGlob } from '../pk-lib/lazy';
+import { IValues, IOptions, IConfig } from '../pk-lib';
+import { loadYamlFile } from '../pk-yaml';
 
 
-export interface IArgs {
+export interface IPktArgs {
     options: IOptions;
     files: string[];
     values: IValues;
@@ -14,11 +14,11 @@ export class ArgsBuilder {
     private expandValues(values: IValues): any {
         Object.keys(values).forEach(k => {
             if (k.endsWith('@')) {
-                const path = values[k]
-                const value = loaders.yaml(null, path)
+                const path = values[k];
+                const value = loadYamlFile(path);
 
-                delete values[k]
-                values[k.substr(0, k.length - 1)] = value
+                delete values[k];
+                values[k.substr(0, k.length - 1)] = value;
             }
         });
         return values;
@@ -34,7 +34,7 @@ export class ArgsBuilder {
         return values
     }
 
-    private buildValues(config: IConfig, argv: any): any {
+    private buildValues(argv: any): any {
         return this.expandValues(this.filterValues(argv));
     }
 
@@ -118,7 +118,7 @@ export class ArgsBuilder {
         return options;
     }
 
-    build(argv: string[], config: IConfig): IArgs {
+    build(argv: string[], config: IConfig): IPktArgs {
         const yargv = require('yargs/yargs')(argv)
             .version(false)
             .help(false)
@@ -130,7 +130,7 @@ export class ArgsBuilder {
             ])
             .argv;
 
-        const values = this.buildValues(config, yargv)
+        const values = this.buildValues(yargv)
         const files = this.buildFiles(config, yargv)
         const options = this.buildOptions(argv, yargv)
 

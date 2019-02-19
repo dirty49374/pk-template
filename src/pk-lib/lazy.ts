@@ -9,11 +9,6 @@ export function getCoffeeScript() {
     return _coffeescript || (_coffeescript = require('coffeescript'));
 }
 
-let _glob: any = null;
-export function getGlob() {
-    return _glob || (_glob = require('glob'));
-}
-
 let _jsonpath: any = null;
 export function getJsonPath() {
     return _jsonpath || (_jsonpath = require('jsonpath'));

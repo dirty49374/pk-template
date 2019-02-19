@@ -1,10 +1,8 @@
 import Ajv from 'ajv';
 
 import * as utils from './utils';
-import scopes from './scopes';
-import * as loaders from './loaders';
+import { Scope } from './scope';
 import selectors from './selectors';
-import * as evaluators from './evaluators';
 import { IScope, IValues, IPkt, IConfig, IStatement, IUserdata } from './types';
 import { getJsonPath, getJsonPatch } from './lazy';
 import { IObject } from '../common';
@@ -13,20 +11,20 @@ import { StyleSheet } from './styles/styleSheet';
 const ajv = new Ajv({ allErrors: true });
 
 const statements = {
-    break(scope: IScope, stmt: IStatement) {
+    break(stmt: IStatement) {
         if (!stmt.break) return false;
         return true;
     },
     script(scope: IScope, stmt: IStatement) {
         if (!stmt.script) return false;
-        evaluators.script(scope, stmt.script);
+        scope.evaluator.evalScript(stmt.script);
         return true;
     },
     each(scope: IScope, stmt: IStatement) {
         if (!stmt.each) return false;
         scope.objects.forEach(o => {
             scope.object = o;
-            evaluators.script(scope, stmt.each);
+            scope.evaluator.evalScript(stmt.each);
         });
         delete scope.object;
         return true;
@@ -36,7 +34,7 @@ const statements = {
 
         const values = typeof stmt.assign == 'string'
             ? utils.parseKvps(stmt.assign)
-            : evaluators.deep(scope, stmt.assign || {});
+            : scope.evaluator.evalObject(stmt.assign || {});
         scope.values = {
             ...scope.values,
             ...values,
@@ -45,20 +43,20 @@ const statements = {
     },
     add(scope: IScope, stmt: IStatement) {
         if (!stmt.add) return false;
-        const object = evaluators.deep(scope, stmt.add);
+        const object = scope.evaluator.evalObject(stmt.add);
         scope.add(object);
         return true;
     },
     include(scope: IScope, stmt: IStatement) {
         if (!stmt.include) return false;
 
-        const uri = scope.resolve(stmt.include);
-        if (uri.toLowerCase().endsWith(".pkt")) {
-            const file = loaders.pkt(scope, uri);
-            run(file, scope, uri);
+        const rpath = stmt.include;
+        if (rpath.toLowerCase().endsWith(".pkt")) {
+            const { uri, data } = scope.loader.loadPkt(rpath);
+            run(data, scope, uri);
         } else {
-            const tpl = loaders.loadText(scope, uri);
-            const objects = evaluators.template(scope, tpl);
+            const { uri, data } = scope.loader.loadText(rpath);
+            const objects = scope.evaluator.evalTemplateAll(data);
             objects.forEach(object => scope.add(object));
         }
         return true;
@@ -66,7 +64,7 @@ const statements = {
     includeWith(scope: IScope, stmt: IStatement) {
         if (!stmt.includeWith) return false;
         const idx = stmt.includeWith.indexOf(' ')
-        const path = idx >= 0
+        const rpath = idx >= 0
             ? stmt.includeWith.substring(0, idx)
             : stmt.includeWith;
         const kvps = idx >= 0
@@ -75,14 +73,13 @@ const statements = {
         const values = utils.parseKvps(kvps);
         scope.child({}, (cscope: IScope) => {
             cscope.values = { ...scope.values, ...values };
-            const uri = scope.resolve(path);
 
-            if (uri.toLowerCase().endsWith(".pkt")) {
-                const file = loaders.pkt(cscope, uri);
-                run(file, cscope, uri);
+            if (rpath.toLowerCase().endsWith(".pkt")) {
+                const { uri, data } = cscope.loader.loadPkt(rpath);
+                run(data, cscope, uri);
             } else {
-                const tpl = loaders.loadText(cscope, uri);
-                const objects = evaluators.template(cscope, tpl);
+                const { uri, data } = cscope.loader.loadText(rpath);
+                const objects = cscope.evaluator.evalTemplateAll(data);
                 objects.forEach(object => cscope.add(object));
             }
         });
@@ -102,16 +99,16 @@ const statements = {
                     // cscope.value = node.value;
 
                     if (stmt.jsonpath.apply) {
-                        const value = evaluators.deep(cscope, stmt.jsonpath.apply);
+                        const value = cscope.evaluator.evalObject(stmt.jsonpath.apply);
                         jsonpath.apply(o, jsonpath.stringify(node.path), () => value);
                     }
                     if (stmt.jsonpath.merge) {
-                        const value = evaluators.deep(cscope, stmt.jsonpath.merge);
+                        const value = cscope.evaluator.evalObject(stmt.jsonpath.merge);
                         const merged = { ...node.value, ...value };
                         jsonpath.apply(o, jsonpath.stringify(node.path), () => merged);
                     }
                     if (stmt.jsonpath.exec) {
-                        evaluators.script(cscope, stmt.jsonpath.exec);
+                        cscope.evaluator.evalScript(stmt.jsonpath.exec);
                     }
                 });
             })
@@ -120,13 +117,13 @@ const statements = {
     apply(scope: IScope, stmt: IStatement) {
         if (!stmt.apply) return false;
 
-        const uri = scope.resolve(stmt.apply);
-        if (uri.toLowerCase().endsWith(".pkt")) {
-            const file = loaders.pkt(scope, uri);
-            run(file, scope, uri, true);
+        const rpath = stmt.apply;
+        if (rpath.toLowerCase().endsWith(".pkt")) {
+            const { uri, data } = scope.loader.loadPkt(rpath);
+            run(data, scope, uri, true);
         } else {
-            const tpl = loaders.loadText(scope, uri);
-            const objects = evaluators.template(scope, tpl);
+            const { uri, data } = scope.loader.loadText(rpath);
+            const objects = scope.evaluator.evalTemplateAll(data);
             scope.objects.push(...objects);
         }
         return true;
@@ -134,7 +131,7 @@ const statements = {
     applyWith(scope: IScope, stmt: IStatement) {
         if (!stmt.applyWith) return false;
         const idx = stmt.applyWith.indexOf(' ')
-        const path = idx >= 0
+        const rpath = idx >= 0
             ? stmt.applyWith.substring(0, idx)
             : stmt.applyWith;
         const kvps = idx >= 0
@@ -143,15 +140,14 @@ const statements = {
         const values = utils.parseKvps(kvps);
         scope.child({ objects: scope.objects }, cscope => {
             cscope.values = { ...scope.values, ...values };
-            const uri = scope.resolve(path);
 
-            if (uri.toLowerCase().endsWith(".pkt")) {
-                const file = loaders.pkt(cscope, uri);
-                run(file, cscope, uri, true);
+            if (rpath.toLowerCase().endsWith(".pkt")) {
+                const { uri, data } = scope.loader.loadPkt(rpath);
+                run(data, scope, uri, true);
             } else {
-                const tpl = loaders.loadText(cscope, uri);
-                const objects = evaluators.template(cscope, tpl);
-                cscope.objects.push(...objects);
+                const { uri, data } = scope.loader.loadText(rpath);
+                const objects = scope.evaluator.evalTemplateAll(data);
+                scope.objects.push(...objects);
             }
         });
         return true;
@@ -162,7 +158,7 @@ const statements = {
         const patch = Array.isArray(stmt.patch) ? stmt.patch : [stmt.patch];
         scope.objects.forEach(o => {
             scope.object = o;
-            const p = evaluators.deep(scope, patch);
+            const p = scope.evaluator.evalObject(patch);
             jsonpatch.apply(o, p);
             delete scope.object;
         });
@@ -185,12 +181,12 @@ const statements = {
     },
     kubeconfig(scope: IScope, stmt: IStatement) {
         if (!stmt.kubeconfig) return false;
-        scope.userdata.kubeconfig = evaluators.deep(scope, stmt.kubeconfig);
+        scope.userdata.kubeconfig = scope.evaluator.evalObject(stmt.kubeconfig);
         return true;
     },
     template(scope: IScope, stmt: IStatement) {
         if (!stmt.template) return false;
-        const objects = evaluators.template(scope, stmt.template);
+        const objects = scope.evaluator.evalTemplateAll(stmt.template);
         objects.forEach(object => scope.add(object));
         return true;
     },
@@ -218,7 +214,7 @@ export function routine(scope: IScope, routine: IStatement) {
         return;
 
     for (const stmt of routine) {
-        if (stmt.if && !evaluators.script(scope, stmt.if)) {
+        if (stmt.if && !scope.evaluator.evalScript(stmt.if)) {
             continue;
         }
         if (stmt.select) {
@@ -231,7 +227,7 @@ export function routine(scope: IScope, routine: IStatement) {
             statement(scope, stmt)
         }
 
-        if (statements.break(scope, stmt))
+        if (statements.break(stmt))
             return;
     }
 }
@@ -260,12 +256,11 @@ export function run(file: IPkt, parentScope: IScope, uri: string, withObject: bo
             styleSheet.load(file.style);
         }
         if (file.import) {
-            const _importSs = (path: string) => {
-                const uri = scope.resolve(path);
+            const _importSs = (rpath: string) => {
                 if (uri.toLowerCase().endsWith(".pkt")) {
-                    const file = loaders.pkt(scope, uri);
-                    if (file.style) {
-                        scope.styleSheet.load(file.style);
+                    const { uri, data } = scope.loader.loadPkt(rpath);
+                    if (data.style) {
+                        scope.styleSheet.load(data.style);
                     }
                 }
                 return true;
@@ -301,7 +296,7 @@ export function run(file: IPkt, parentScope: IScope, uri: string, withObject: bo
         // 4. build values
         scope.values = {
             ...scope.values,
-            ...evaluators.deep(scope, file.assign || {}),
+            ...scope.evaluator.evalObject(file.assign || {}),
         };
 
         // 5. run routine
@@ -311,7 +306,7 @@ export function run(file: IPkt, parentScope: IScope, uri: string, withObject: bo
 }
 
 export function exec(objects: IObject[], values: IValues, files: string[], config: IConfig, userdata: IUserdata): IObject[] {
-    const scope = scopes.create(values, '.', null, config, objects, new StyleSheet(null), userdata || {});
+    const scope = Scope.Create(values, '.', null, config, objects, new StyleSheet(null), userdata || {});
     files.forEach(path => statements.apply(scope, { apply: path }));
 
     return scope.objects;

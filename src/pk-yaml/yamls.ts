@@ -1,6 +1,6 @@
 import jsyaml from 'js-yaml';
 import { getLiveScript, getCoffeeScript } from '../pk-lib/lazy';
-import { CustomYamlTag } from './types';
+import { CustomYamlTag } from '../pk-lib/types';
 
 
 interface ITagData {

@@ -1,8 +1,8 @@
 import path from 'path';
-import { loaders } from '../pk-lib';
+import { loadYamlFile } from '../pk-yaml';
 
 function version() {
-    const pkg = loaders.yaml(null, path.join(__dirname, '../package.json'));
+    const pkg = loadYamlFile(path.join(__dirname, '../package.json'));
     console.log(pkg.version);
 }
 

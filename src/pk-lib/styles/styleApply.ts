@@ -1,7 +1,6 @@
 import { IObject } from "../../common";
 import { pktError } from "../utils";
-import { IScope, IStyle } from "../types";
-import { CustomYamlTag } from '../../pk-yaml';
+import { IScope, IStyle, CustomYamlTag } from "../types";
 const evalWithValues = require('../../eval');
 
 export class StyleApply {
@@ -30,17 +29,5 @@ export class StyleApply {
             console.log(e);
             throw pktError(scope, e, `error in applying style ${this.name}: ${style}`);
         }
-    }
-
-    apply(scope: IScope, object: IObject, node: object, styleType: string, styles: IStyle[]): IStyle[] {
-
-        const leftOvers: IStyle[] = [];
-        for (let style of styles) {
-            if (!this.applyStyle(scope, object, node, style)) {
-                leftOvers.push(style);
-            }
-        }
-
-        return leftOvers;
     }
 }

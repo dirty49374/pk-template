@@ -1,19 +1,19 @@
 import path from 'path';
-import * as loaders from './loaders';
-// const runtimes = require('./runtimes');
 import { parseKvps, parseList, pktError } from './utils';
 import { IScope } from './types';
+import { log } from './logger';
 
 const jslib = (scope: IScope) => {
     const lib = {
         // disabled ( causing circular dependency )
         // expand: path => runtimes.statements.include(scope, { include: path }),
-        files: (path: string) => loaders.files(scope, scope.resolve(path)),
-        loadText: (path: string) => loaders.loadText(scope, scope.resolve(path)),
-        loadPkt: (path: string) => loaders.pkt(scope, scope.resolve(path)),
-        loadYaml: (path: string) => loaders.yaml(scope, scope.resolve(path)),
-        loadYamlAll: (path: string) => loaders.yamlAll(scope, scope.resolve(path)),
-        loadTemplate: (path: string) => loaders.template(scope, scope.resolve(path)),
+        log: (...msg: any[]) => log(...msg),
+        files: (path: string) => scope.loader.listFiles(path),
+        loadText: (path: string) => scope.loader.loadText(path),
+        loadPkt: (path: string) => scope.loader.loadPkt(path),
+        loadYaml: (path: string) => scope.loader.loadYaml(path),
+        loadYamlAll: (path: string) => scope.loader.loadYamlAll(path),
+        loadTemplate: (path: string) => scope.loader.loadTemplate(path),
         basename: (p: string) => path.basename(p),
         label: (object: any | string, name: string | null) => {
             if (name === null) {

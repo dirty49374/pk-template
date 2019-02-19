@@ -1,8 +1,8 @@
-import * as loaders from './loaders';
 import path from 'path';
 import { IConfig } from './types';
+import { loadYamlFile } from '../pk-yaml';
 
-class Config {
+export class Config {
     repositories: any;
     constructor({ repositories }: any) {
         this.repositories = repositories || {};
@@ -18,16 +18,16 @@ class Config {
         }
         return uri;
     }
-}
 
-export function load(): IConfig {
-    try {
-        const home = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE || "";
-        const confPath = path.join(home, 'pkt.conf');
-        let config = loaders.yaml(null, confPath);
-        if (!config) config = {};
-        return new Config(config);
-    } catch (e) {
-        return new Config({ repositories: null });
+    static Load(): IConfig {
+        try {
+            const home = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE || "";
+            const confPath = path.join(home, 'pkt.conf');
+            let config = loadYamlFile(confPath);
+            if (!config) config = {};
+            return new Config(config);
+        } catch (e) {
+            return new Config({ repositories: null });
+        }
     }
 }
