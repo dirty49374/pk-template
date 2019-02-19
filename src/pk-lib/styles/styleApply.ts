@@ -13,7 +13,7 @@ export class StyleApply {
         }
     }
 
-    private applyStyle(scope: IScope, object: IObject, node: object, style: IStyle) {
+    applyStyle(scope: IScope, object: IObject, node: object, style: IStyle) {
         try {
             let success = true;
             const $ = {

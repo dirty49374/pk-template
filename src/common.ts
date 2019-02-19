@@ -46,9 +46,9 @@ export const delay = (ms: number): Promise<any> =>
     new Promise(resolve => setTimeout(() => resolve(), ms));
 
 
-export type TreeNodeVisitor = (object: any, key: string, value: any) => void;
+export type TreeNodeKeyVisitor = (object: any, key: string, value: any) => void;
 
-export const forEachTreeObjectKey = (object: any, cb: TreeNodeVisitor) => {
+export const forEachTreeObjectKey = (object: any, cb: TreeNodeKeyVisitor) => {
     if (Array.isArray(object)) {
         for (const item of object) {
             forEachTreeObjectKey(item, cb);
@@ -61,5 +61,21 @@ export const forEachTreeObjectKey = (object: any, cb: TreeNodeVisitor) => {
             forEachTreeObjectKey(value, cb);
             cb(object, key, value);
         }
+    }
+}
+
+export type TreeNodeVisitor = (object: any) => void;
+export const forEachTreeObject = (object: any, cb: TreeNodeVisitor) => {
+    if (Array.isArray(object)) {
+        for (const item of object) {
+            forEachTreeObject(item, cb);
+        }
+    } else if (typeof object === 'object') {
+        for (const key of Object.keys(object)) {
+            const value = object[key];
+
+            forEachTreeObject(value, cb);
+        }
+        cb(object);
     }
 }

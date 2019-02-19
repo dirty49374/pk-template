@@ -78,6 +78,7 @@ const jslib = (scope: IScope) => {
         toWords: (value: string) => value.split(/\s+/).filter(p => p.length !== 0),
         toNumbers: (value: string) => lib.toWords(value).map(p => Number(p)),
         toList: (o: any, cb: any) => Object.keys(o).map(k => cb(k, o[k])),
+        styleMap: (list: any[]) => list.reduce((sum: any, kv: any) => { sum[kv.k] = kv.v; return sum; }, {}),
     };
     return lib;
 };

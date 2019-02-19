@@ -69,8 +69,8 @@ function* parseStyleString(s: string): Iterator<IStyle> {
                 if (end()) {
                     throw new Error(`malformed style 2 '${s}'`);
                 }
-                const [k, v] = w.split('=', 2);
-                style.push({ k, v, kv: w });
+                const sp = w.split('=', 2);
+                style.push({ k: sp[0], v: sp.length == 1 ? sp[0] : sp[1], kv: w });
                 if (s[i++] === ')') {
                     break;
                 }
@@ -90,10 +90,6 @@ export function parseStyle(style: any): IStyle[] {
     const styles: IStyle[] = []
     if (Array.isArray(style)) {
         for (const line of style) {
-            // const type = typeof line;
-            // if (type !== 'string') {
-            //     throw new Error('malformed style ${type} type args');
-            // }
             const it = parseStyleString(line.toString());
             while (true) {
                 const r = it.next();
@@ -104,10 +100,6 @@ export function parseStyle(style: any): IStyle[] {
             }
         }
     } else {
-        // const type = typeof style;
-        // if (type !== 'string') {
-        //     throw new Error(`malformed style ${type} type args`);
-        // }
         const it = parseStyleString(style.toString());
         while (true) {
             const r = it.next();

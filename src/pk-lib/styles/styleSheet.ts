@@ -34,6 +34,17 @@ export class StyleSheet implements IStyleSheet {
         return styles;
     }
 
+    applyStyle(scope: IScope, object: IObject, node: object, styleType: string, style: IStyle): boolean {
+        const styleApply = this.styleSheets[styleType];
+        if (styleApply) {
+            return styleApply.applyStyle(scope, object, node, style);
+        }
+        if (this.parent) {
+            return this.parent.applyStyle(scope, object, node, styleType, style);
+        }
+        return false;
+    }
+
     apply(scope: IScope, object: any) {
         while (true) {
             let hasLeftOver = false;
@@ -41,31 +52,55 @@ export class StyleSheet implements IStyleSheet {
 
             forEachTreeObjectKey(object, (node: any, key: string, styles: any) => {
                 if (key.endsWith('^')) {
-                    if (styles.length === 0) {
-                        delete node[key];
-                        return;
-                    }
+                    if (key.length === 1) {
+                        if (styles.length === 0) {
+                            delete node[key];
+                            return;
+                        }
 
-                    const styleName = key.substr(0, key.length - 1);
-                    const leftOver = this.applyStyles(
-                        scope, object,
-                        node, styleName,
-                        styles);
-                    if (leftOver.length === 0) {
+                        const leftOver: any[] = [];
+                        for (const st of styles) {
+                            const styleType = st.type;
+                            const style = st.style;
+
+                            const applied = this.applyStyle(scope, object, node, styleType, style);
+                            if (!applied) {
+                                leftOver.push(st);
+                                hasLeftOver = true;
+                            } else {
+                                updated = true;
+                            }
+                        }
+                        if (leftOver.length == 0) {
+                            delete node[key];
+                        } else {
+                            node[key] = leftOver;
+                        }
+                    } else {
+                        if (styles.length === 0) {
+                            delete node[key];
+                            return;
+                        }
+
+                        const styleName = key.substr(0, key.length - 1);
+                        const leftOver = this.applyStyles(
+                            scope, object,
+                            node, styleName,
+                            styles);
+                        if (leftOver.length === 0) {
+                            updated = true;
+                            delete node[key];
+                            return;
+                        }
+
+                        hasLeftOver = true;
+
+                        if (leftOver.length === styles.length) {
+                            node[key] = leftOver;
+                            return;
+                        }
                         updated = true;
-                        delete node[key];
-                        return;
                     }
-
-                    hasLeftOver = true;
-
-                    if (leftOver.length === styles.length) {
-                        node[key] = leftOver;
-                        return;
-                    }
-                    updated = true;
-
-                    return;
                 }
             });
 

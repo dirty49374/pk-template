@@ -47,6 +47,7 @@ export interface IStyle extends Array<{ k: string, v: string }> {
 
 
 export interface IStyleSheet {
+    applyStyle(scope: IScope, object: IObject, parent: object, styleType: string, styles: IStyle): boolean;
     applyStyles(scope: IScope, object: IObject, parent: object, styleType: string, styles: IStyle[]): IStyle[];
     apply(scope: IScope, orject: any): void;
     load(styles: object[]): void;

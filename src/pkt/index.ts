@@ -115,37 +115,6 @@ async function execute(argv: any, print: boolean): Promise<IResult | null> {
     }
 
     const objects = await generate(config, args);
-    if (args.options.pkt_package) {
-        const buildSpec = (objects: IObject[]): IObject => {
-            const objectList = objects
-                .map(o => {
-                    const kind = o.kind;
-                    const avs = o.apiVersion.split('/');
-                    const apiGroup = avs.length == 2 ? avs[0] : '';
-                    const namespace = o.metadata.namespace || args.options.kubenamespace || '';
-                    const name = o.metadata.name;
-
-                    return `${kind}/${apiGroup}/${name}/${namespace}`;
-                })
-                .join('\n');
-            return {
-                "apiVersion": "v1",
-                "kind": "ConfigMap",
-                "metadata": {
-                    "name": args.options.pkt_package,
-                    "namespace": "pk-packages",
-                    "annotations": {
-                        "pkt.io/pkz-id": args.options.pkt_package,
-                    },
-                },
-                "data": {
-                    "objects": objectList
-                },
-            }
-        }
-        objects.push(buildSpec(objects));
-    }
-
     if (print) {
         const output = buildOutput(args.options, objects);
         if (args.options.pkt_package) {

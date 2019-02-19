@@ -1,8 +1,8 @@
 import * as utils from './utils';
 import * as loaders from './loaders';
-import { IScope } from './types';
+import { IScope, IStyle } from './types';
 import { getCoffeeScript, getLiveScript, getUnderscore } from './lazy';
-import { IObject, forEachTreeObjectKey } from '../common';
+import { IObject, forEachTreeObjectKey, forEachTreeObject } from '../common';
 import { parseStyle } from './styles/styleParser';
 import { CustomYamlTag, loadYamlAll } from '../pk-yaml';
 
@@ -12,8 +12,10 @@ const evalWithValues = require('../eval');
 export class PkYamlEvaluator {
 
     private object: object | null = null;
-
+    private emptyStyle: IStyle[];
     constructor(private scope: IScope) {
+        this.emptyStyle = [];
+        (this.emptyStyle as any).name = '';
     }
 
     evaluateCustomTag(node: any): any {
@@ -34,7 +36,7 @@ export class PkYamlEvaluator {
 
     processDotPath(object: any) {
         forEachTreeObjectKey(object, (node: any, key: string, value: any): boolean => {
-            if (key.startsWith('^')) {
+            if (key.startsWith('^') && key.length > 1) {
                 delete node[key];
                 utils.setValue(node, key.substr(1), value);
             }
@@ -43,26 +45,53 @@ export class PkYamlEvaluator {
     }
 
     compileStyle(object: any) {
-        forEachTreeObjectKey(object, (node: any, key: string, value: any): boolean => {
-            if (key.endsWith('^')) {
-                const _ = getUnderscore();
-                if (Array.isArray(value)) {
-                    const styles = value
-                        .map(v => _.template(v))
-                        .map(tpl => tpl({
-                            ...this.scope.values,
-                            $: this.scope
-                        }));
-                    node[key] = parseStyle(styles);
-                } else {
-                    const styles = _.template(value)({
-                        ...this.scope.values,
-                        $: this.scope
-                    });
-                    node[key] = parseStyle(styles);
+        const _ = getUnderscore();
+        forEachTreeObject(object, (node: any) => {
+
+            const styles: any = [];
+            for (const key of Object.keys(node)) {
+                if (key.endsWith('^')) {
+                    const value = node[key];
+                    if (value == null) {
+                        delete node[key];
+                        continue;
+                    }
+                    if (key.length === 1) {
+                        if (Array.isArray(value)) {
+                            for (const v of value) {
+                                const list = v.split(/\s+/)
+                                    .filter((p: string) => p)
+                                    .map((t: string) => ({ type: t, style: this.emptyStyle }));
+                                styles.push(...list);
+                            }
+                        } else {
+                            const list = value.split(/\s+/)
+                                .filter((p: string) => p)
+                                .map((t: string) => ({ type: t, style: this.emptyStyle }));
+                            styles.push(...list);
+                        }
+                    } else {
+                        if (Array.isArray(value)) {
+                            for (const vv of value) {
+                                const list = vv
+                                    .map((v: string) => _.template(v))
+                                    .map((tpl: any) => tpl({ ...this.scope.values, $: this.scope }));
+                                styles.push(...parseStyle(list).map(s => ({ type: key.substr(0, key.length - 1), style: s })));
+                            }
+                        } else {
+                            const list = _.template(value)({
+                                ...this.scope.values,
+                                $: this.scope
+                            });
+                            styles.push(...parseStyle(list).map(s => ({ type: key.substr(0, key.length - 1), style: s })));
+                        }
+                    }
+                    delete node[key];
                 }
             }
-            return true;
+            if (styles.length != 0) {
+                node['^'] = styles;
+            }
         });
     }
 

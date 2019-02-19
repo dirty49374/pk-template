@@ -40,8 +40,12 @@ export function diffObject(key: string, prev: string, curr: string) {
 }
 
 export function diffObjects(prev: IObject[], curr: IObject[]) {
-    const prevmap: any = prev.reduce((sum, o) => ({ ...sum, [`${o.metadata.namespace || ''}/${o.metadata.name}/${o.apiVersion}/${o.kind}`]: o }), {});
-    const currmap: any = curr.reduce((sum, o) => ({ ...sum, [`${o.metadata.namespace || ''}/${o.metadata.name}/${o.apiVersion}/${o.kind}`]: o }), {});
+    const keyMapreducer = (sum: IObject, o: IObject) => ({ ...sum, [`${o.metadata.namespace || ''}/${o.metadata.name}/${o.apiVersion}/${o.kind}`]: o });
+    const nonPkzFilter = (o: IObject) =>
+        (o.kind !== 'ConfigMap' || o.metadata.namespace !== 'pk-packages') &&
+        (o.kind !== 'Namespace' || o.metadata.name !== 'pk-packages');
+    const prevmap: any = prev.filter(nonPkzFilter).reduce(keyMapreducer, {});
+    const currmap: any = curr.filter(nonPkzFilter).reduce(keyMapreducer, {});
 
     let same = true;
     for (const key in prevmap) {
@@ -53,7 +57,8 @@ export function diffObjects(prev: IObject[], curr: IObject[]) {
                 same = false;
             }
         } else {
-            console.log(chalk.red('  - ', 'object', key, 'deleted'));
+            console.log('*', key + ':');
+            console.log(chalk.red('  - ', 'deleted'));
             //diffObject(key, pkyaml.dumpYamlSortedKey(prevmap[key]), '');
             same = false;
         }
@@ -62,7 +67,8 @@ export function diffObjects(prev: IObject[], curr: IObject[]) {
         if (key in prevmap) {
             continue;
         } else {
-            console.log(chalk.red('  + ', 'object', key, 'created'));
+            console.log('*', key + ':');
+            console.log(chalk.red('  + ', 'created'));
             // diffObject(key, '', pkyaml.dumpYamlSortedKey(currmap[key]));
             same = false;
         }
