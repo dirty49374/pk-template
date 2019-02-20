@@ -28,10 +28,10 @@ export const compileStyle = (scope: IScope, object: any) => {
                     const styleType = key.substr(0, key.length - 1);
                     if (Array.isArray(value)) {
                         for (const item of value) {
-                            styles.push(...parseParametericStyles(styleType, scope.evaluator.evalTemplate(item)));
+                            styles.push(...parseParametericStyles(styleType, scope.evalTemplate(item)));
                         }
                     } else {
-                        styles.push(...parseParametericStyles(styleType, scope.evaluator.evalTemplate(value)));
+                        styles.push(...parseParametericStyles(styleType, scope.evalTemplate(value)));
                     }
                 }
                 delete node[key];

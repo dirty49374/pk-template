@@ -5,7 +5,7 @@ import process from 'process';
 import version from './version';
 import { buildOutput } from './outputs/factory';
 import { ArgsBuilder, IPktArgs } from './args';
-import { runtimes, IValues, IConfig } from '../pk-lib';
+import { Runtime, IValues, IConfig } from '../pk-lib';
 import { IOptions } from '../pk-lib';
 import { diffObjects } from '../pk-diff/diff-objects';
 import { getChalk } from '../pk-lib/lazy';
@@ -13,7 +13,7 @@ import { IObject } from '../common';
 import { readStdin } from '../pk-lib/utils';
 import { Config } from '../pk-lib/configs';
 
-interface IResult {
+export interface IResult {
     objects: IObject[];
     args: IPktArgs;
 }
@@ -23,7 +23,7 @@ function run(objects: IObject[], values: IValues, files: string[], config: IConf
     objects = objects || [];
     try {
         const userdata = {};
-        return runtimes.exec(objects, values, files, config, userdata);
+        return Runtime.Exec(objects, values, files, config, userdata);
     } catch (e) {
         if (e.summary) {
             console.error(chalk.red('ERROR: ' + e.summary + ' in ' + e.uri));

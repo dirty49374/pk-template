@@ -36,7 +36,7 @@ export class Evaluator {
             case 'js':
                 return this.evalJavaScript(code.code);
             case 'file':
-                return this.scope.loader.loadText(code.code);
+                return this.scope.loadText(code.code);
         }
     }
 
@@ -98,6 +98,6 @@ export class Evaluator {
     }
 
     expandStyleSheet(object: any): void {
-        this.scope.styleSheet.apply(this.scope, object);
+        this.scope.expandStyle(object);
     }
 }

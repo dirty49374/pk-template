@@ -1,6 +1,6 @@
 import url from 'url';
 import jslib from './jslib';
-import { IScope, IValues, IConfig, IStyleSheet } from './types';
+import { IScope, IValues, IConfig, IStyleSheet, IPkt, CustomYamlTag, IStyle } from './types';
 import { IObject } from '../common';
 import { Evaluator } from './evaluator';
 import { Loader } from './loader';
@@ -14,13 +14,13 @@ export class Scope implements IScope {
     values: IValues;
     uri: string;
     parent: IScope;
-    styleSheet: IStyleSheet;
     config: IConfig;
     userdata: any;
     $buildLib: any;
 
-    evaluator: Evaluator;
-    loader: Loader;
+    styleSheet: IStyleSheet;
+    private evaluator: Evaluator;
+    private loader: Loader;
 
     constructor({ objects, values, uri, parent, styleSheet, config, userdata }: any) {
         this.objects = objects;
@@ -63,6 +63,28 @@ export class Scope implements IScope {
 
         return handler(scope);
     }
+
+    loadText = (uri: string): { uri: string, data: string } => this.loader.loadText(uri);
+    loadYaml = (uri: string): { uri: string, data: any } => this.loader.loadYaml(uri);
+    loadYamlAll = (uri: string): { uri: string, data: any[] } => this.loader.loadYamlAll(uri);
+
+    loadPkt = (uri: string): { uri: string, data: IPkt } => this.loader.loadPkt(uri);
+    loadTemplate = (uri: string): { uri: string, data: string } => this.loader.loadTemplate(uri);
+    listFiles = (uri: string): { uri: string, data: string[] } => this.loader.listFiles(uri);
+
+    // evaluater
+    evalTemplate = (tpl: string): string => this.evaluator.evalTemplate(tpl);
+    evalTemplateAll = (text: string): any[] => this.evaluator.evalTemplateAll(text);
+
+    evalCustomYamlTag = (code: CustomYamlTag): any => this.evaluator.evalCustomYamlTag(code);
+    evalScript = (script: CustomYamlTag | string): any => this.evaluator.evalScript(script);
+
+    evalAllCustomTags = (node: any): any => this.evaluator.evalAllCustomTags(node);
+    expandCaretPath = (object: any): void => this.evaluator.expandCaretPath(object);
+    evalObject = (object: any): any => this.evaluator.evalObject(object);
+
+    // style
+    expandStyle = (object: any): void => this.styleSheet.apply(this, object);
 
     static Create(values: IValues, uri: string, parent: IScope | null, config: IConfig, objects: IObject[], styleSheet: IStyleSheet, userdata: any): IScope {
         const scope = new Scope({

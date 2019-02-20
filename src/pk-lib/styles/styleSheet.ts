@@ -1,5 +1,5 @@
 import { IObject, forEachTreeObjectKey } from "../../common";
-import { IScope, IStyleSheet, IStyle, CustomYamlTag } from "../types";
+import { IScope, IStyleSheet, IStyle, CustomYamlTag, IPkt } from "../types";
 import { StyleApply } from "./styleApply";
 import { compileStyle } from "./styleCompile";
 
@@ -10,7 +10,7 @@ export class StyleSheet implements IStyleSheet {
         this.styleSheets = {};
     }
 
-    load(styles: object[]): any {
+    private loadStyles(styles: object[]): any {
         for (const map of styles) {
             for (const key of Object.keys(map)) {
                 const code = (map as any)[key];
@@ -20,6 +20,28 @@ export class StyleSheet implements IStyleSheet {
                     throw new Error(`invalid style definition ${key}`)
                 }
             }
+        }
+    }
+
+    private import(scope: IScope, rpath: string) {
+        const { uri, data } = scope.loadPkt(rpath);
+        scope.child({ uri }, cscope => {
+            this.load(cscope, data);
+        });
+    }
+
+    load(scope: IScope, pkt: IPkt) {
+        if (pkt.import) {
+            if (Array.isArray(pkt.import)) {
+                for (let path of pkt.import) {
+                    this.import(scope, path);
+                }
+            } else {
+                this.import(scope, pkt.import);
+            }
+        }
+        if (pkt.style) {
+            this.loadStyles(pkt.style);
         }
     }
 
@@ -75,5 +97,12 @@ export class StyleSheet implements IStyleSheet {
         compileStyle(scope, object);
         while (this.applyTree(scope, object))
             ;
+    }
+
+    static Build(scope: IScope, pkt: IPkt): StyleSheet {
+        const styleSheet = new StyleSheet(scope.parent.styleSheet);
+        styleSheet.load(scope, pkt);
+
+        return styleSheet;
     }
 }

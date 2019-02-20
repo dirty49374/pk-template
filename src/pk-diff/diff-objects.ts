@@ -68,7 +68,7 @@ export function diffObjects(prev: IObject[], curr: IObject[]) {
             continue;
         } else {
             console.log('*', key + ':');
-            console.log(chalk.red('  + ', 'created'));
+            console.log(chalk.green('  + ', 'created'));
             // diffObject(key, '', pkyaml.dumpYamlSortedKey(currmap[key]));
             same = false;
         }

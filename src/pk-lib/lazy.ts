@@ -52,3 +52,13 @@ export function getUnderscore() {
 
     return _underscore;
 }
+
+let _ajv: any = null;
+export function getAjv() {
+    if (_ajv) {
+        return _ajv;
+    }
+    const Ajv = require("ajv");
+    _ajv = new Ajv({ allErrors: true });
+    return _ajv;
+}

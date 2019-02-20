@@ -8,12 +8,12 @@ const jslib = (scope: IScope) => {
         // disabled ( causing circular dependency )
         // expand: path => runtimes.statements.include(scope, { include: path }),
         log: (...msg: any[]) => log(...msg),
-        files: (path: string) => scope.loader.listFiles(path),
-        loadText: (path: string) => scope.loader.loadText(path),
-        loadPkt: (path: string) => scope.loader.loadPkt(path),
-        loadYaml: (path: string) => scope.loader.loadYaml(path),
-        loadYamlAll: (path: string) => scope.loader.loadYamlAll(path),
-        loadTemplate: (path: string) => scope.loader.loadTemplate(path),
+        files: (path: string) => scope.listFiles(path),
+        loadText: (path: string) => scope.loadText(path),
+        loadPkt: (path: string) => scope.loadPkt(path),
+        loadYaml: (path: string) => scope.loadYaml(path),
+        loadYamlAll: (path: string) => scope.loadYamlAll(path),
+        loadTemplate: (path: string) => scope.loadTemplate(path),
         basename: (p: string) => path.basename(p),
         label: (object: any | string, name: string | null) => {
             if (name === null) {

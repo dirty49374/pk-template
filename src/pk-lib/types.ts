@@ -54,7 +54,7 @@ export class CustomYamlTag {
 export interface IStyleSheet {
     applyStyle(scope: IScope, object: IObject, parent: object, styles: IStyle): boolean;
     apply(scope: IScope, orject: any): void;
-    load(styles: object[]): void;
+    //   loadStyles(styles: object[]): void;
 }
 
 export interface ILoader {
@@ -88,12 +88,41 @@ export interface IScope {
     config: IConfig;
     userdata: any;
     $buildLib: any;
-
-    evaluator: IEvaluator;
-    loader: ILoader;
     styleSheet: IStyleSheet;
 
     resolve(relpath: string): string;
     add(object: any): void;
     child({ uri, objects, values }: any, handler: IScopeHandler): any;
+
+    // loader
+    loadText(uri: string): { uri: string, data: string };
+    loadYaml(uri: string): { uri: string, data: any };
+    loadYamlAll(uri: string): { uri: string, data: any[] };
+
+    loadPkt(uri: string): { uri: string, data: IPkt };
+    loadTemplate(uri: string): { uri: string, data: string };
+    listFiles(uri: string): { uri: string, data: string[] };
+
+    // evaluater
+    evalTemplate(tpl: string): string;
+    evalTemplateAll(text: string): any[];
+
+    evalCustomYamlTag(code: CustomYamlTag): any;
+    evalScript(script: CustomYamlTag | string): any;
+
+    evalAllCustomTags(node: any): any;
+    expandCaretPath(object: any): void;
+    evalObject(object: any): any;
+
+    // style
+    expandStyle(orject: any): void;
+}
+
+export interface IPkz {
+    name: string;
+    args: string[];
+    kubeconfig: string;
+    context: string;
+    cluster: string;
+    objects: IObject[];
 }
