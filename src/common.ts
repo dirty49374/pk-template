@@ -54,10 +54,9 @@ export const forEachTreeObjectKey = (object: any, cb: TreeNodeKeyVisitor) => {
             forEachTreeObjectKey(item, cb);
         }
     } else if (typeof object === 'object') {
-        if (object === null) { return false; }
+        if (object === null) return;
         for (const key of Object.keys(object)) {
             const value = object[key];
-
             forEachTreeObjectKey(value, cb);
             cb(object, key, value);
         }
@@ -71,9 +70,9 @@ export const forEachTreeObject = (object: any, cb: TreeNodeVisitor) => {
             forEachTreeObject(item, cb);
         }
     } else if (typeof object === 'object') {
+        if (object === null) return;
         for (const key of Object.keys(object)) {
             const value = object[key];
-
             forEachTreeObject(value, cb);
         }
         cb(object);

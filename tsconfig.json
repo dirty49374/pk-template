@@ -57,7 +57,6 @@
   "exclude": [
     "webpack.config.js",
     "dist",
-    "src/eval.js",
     "src/test",
     "src/testcases",
     "bin",
