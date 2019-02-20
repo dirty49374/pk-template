@@ -35,7 +35,7 @@ function run(objects: IObject[], values: IValues, files: string[], config: IConf
             console.error(chalk.red('ERROR: ' + e.summary + ' in ' + e.uri));
             console.error(chalk.red('       ' + e.message));
             if (e.pos) {
-                console.error(chalk.red('       ' + e.message));
+                console.error(chalk.red('       ' + e.pos));
             }
         } else {
             console.error(chalk.red(e.message));

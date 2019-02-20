@@ -21,6 +21,6 @@ export class Trace implements ITrace {
     }
 
     pos() {
-        return this.locs.slice(0, this.depth + 1).join('>');
+        return this.locs.slice(0, this.depth + 1).join(' > ');
     }
 }
