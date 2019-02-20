@@ -30,7 +30,7 @@ export class Evaluator {
             case 'js':
                 return this.evalJavaScript(code.code, code.uri);
             case 'file':
-                return this.scope.loadText(code.code);
+                return this.scope.loadText(code.code).data;
         }
     }
 
