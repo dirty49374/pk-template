@@ -1,8 +1,9 @@
 import { IScope } from './types';
 
-interface IPktError extends Error {
+export interface IPktError extends Error {
     summary: string;
     uri: string;
+    pos: string | null;
 }
 
 interface IKvpType {
@@ -13,6 +14,7 @@ export const pktError = (scope: IScope | null, error: Error, message: string): I
     const pe = error as IPktError;
     pe.summary = message;
     pe.uri = scope ? scope.uri : '.';
+    pe.pos = (scope && scope.trace) ? scope.trace.pos() : null;
     return pe;
 }
 

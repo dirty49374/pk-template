@@ -5,7 +5,7 @@
     "main": "dist/pk-lib/index.js",
     "scripts": {
         "start": "ts-node bin/pkt.ts",
-        "watch": "npm run distclean && cp src/eval.js dist/eval.js && tsc --watch",
+        "watch": "npm run distclean && tsc --watch",
         "build": "npm run distclean && webpack --config webpack.config.js",
         "deploy": "npm run distclean && webpack --config webpack.config.js && npm publish",
         "webpack": "webpack --config webpack.config.js",

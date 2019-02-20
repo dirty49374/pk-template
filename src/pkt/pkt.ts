@@ -12,6 +12,7 @@ import { getChalk } from '../pk-lib/lazy';
 import { IObject } from '../common';
 import { readStdin } from '../pk-lib/utils';
 import { Config } from '../pk-lib/configs';
+import { Scope } from '../pk-lib/scope';
 
 export interface IResult {
     objects: IObject[];
@@ -23,11 +24,19 @@ function run(objects: IObject[], values: IValues, files: string[], config: IConf
     objects = objects || [];
     try {
         const userdata = {};
-        return Runtime.Exec(objects, values, files, config, userdata);
+        const scope = Scope.CreateRoot(objects, values, config, options, userdata);
+        for (const path of files) {
+            Runtime.Run(scope, path);
+        }
+
+        return scope.objects;
     } catch (e) {
         if (e.summary) {
             console.error(chalk.red('ERROR: ' + e.summary + ' in ' + e.uri));
             console.error(chalk.red('       ' + e.message));
+            if (e.pos) {
+                console.error(chalk.red('       ' + e.message));
+            }
         } else {
             console.error(chalk.red(e.message));
         }

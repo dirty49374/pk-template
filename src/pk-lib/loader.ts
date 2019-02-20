@@ -56,7 +56,7 @@ export class Loader implements ILoader {
         try {
             return {
                 uri: rst.uri,
-                data: parseYamlAsPkt(rst.data),
+                data: parseYamlAsPkt(rst.data, rst.uri),
             };
         } catch (e) {
             throw utils.pktError(this.scope, e, `failed to parse yaml ${uri}`);

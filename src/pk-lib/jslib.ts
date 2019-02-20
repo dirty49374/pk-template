@@ -36,8 +36,8 @@ const jslib = (scope: IScope) => {
             if (!object.metadata.labels) object.metadata.labels = {};
             object.metadata.labels[name] = value;
         },
-        annotation: (object: any, name: string | null) => {
-            if (name === null) {
+        annotation: (object: any, name: string | undefined) => {
+            if (name == null) {
                 name = object as string;
                 object = scope.object;
             }
@@ -46,7 +46,7 @@ const jslib = (scope: IScope) => {
             if (!object.metadata.annotations) return undefined;
             return object.metadata.annotations[name];
         },
-        setannotation: (object: any, name: string, value: string | null) => {
+        setannotation: (object: any, name: string, value: string | undefined) => {
             if (typeof object === 'string') {
                 value = name
                 name = object
@@ -72,6 +72,7 @@ const jslib = (scope: IScope) => {
             }
             _setValue(node, path.split('.'), value);
         },
+        add: (object: any) => scope.add(object),
         arraify: (value: any) => Array.isArray(value) ? value : [value],
         parseKvps,
         parseList,

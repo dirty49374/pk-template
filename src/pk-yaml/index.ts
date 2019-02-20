@@ -22,7 +22,7 @@ const loadFile = (uri: string): string => {
 export const loadYamlFile = (file: string): any => jsyaml.load(loadFile(file));
 export const parseYaml = (text: string): any => jsyaml.load(text);
 export const parseYamlAll = (text: string): any[] => jsyaml.loadAll(text);
-export const parseYamlAsPkt = (text: string): any => jsyaml.load(text, pktYamlOption);
+export const parseYamlAsPkt = (text: string, uri: string): any => jsyaml.load(text, pktYamlOption(uri));
 
 export const dumpYaml = (o: any) => jsyaml.dump(o);
 export const dumpYamlSortedKey = (o: any) => jsyaml.dump(o, { sortKeys: true });

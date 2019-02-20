@@ -1,7 +1,6 @@
 import { IObject } from "../../common";
 import { pktError } from "../utils";
 import { IScope, IStyle, CustomYamlTag } from "../types";
-const evalWithValues = require('../../eval');
 
 export class StyleApply {
     constructor(
@@ -15,15 +14,12 @@ export class StyleApply {
     applyStyle(scope: IScope, object: IObject, node: object, style: IStyle) {
         try {
             let success = true;
-            const $ = {
-                ...scope,
-                ...scope.$buildLib(scope),
+            scope.eval(this.tag.code, this.tag.uri, {
                 object,
                 style,
                 node,
                 skip: () => success = false,
-            };
-            evalWithValues($, this.tag.code, scope.values);
+            });
             return success;
         } catch (e) {
             console.log(e);

@@ -4,8 +4,6 @@ import { parseYamlAll } from "../pk-yaml";
 import { forEachTreeObjectKey } from "../common";
 import * as utils from './utils';
 
-const evalWithValues = require('../eval');
-
 export class Evaluator {
 
     constructor(private scope: IScope) { }
@@ -18,23 +16,19 @@ export class Evaluator {
         });
     }
 
-    private evalJavaScript(script: string): any {
-        const $ = {
-            ...this.scope,
-            ...this.scope.$buildLib(this.scope)
-        };
-        return evalWithValues($, script, this.scope.values);
+    private evalJavaScript(script: string, uri: string): any {
+        return this.scope.eval(script, uri);
     }
 
-    private evalLiveScript(script: string): any {
+    private evalLiveScript(script: string, uri: string): any {
         const javascript = getLiveScript().compile(script, { bare: true });
-        return this.evalJavaScript(javascript);
+        return this.evalJavaScript(javascript, uri);
     }
 
     evalCustomYamlTag(code: CustomYamlTag): any {
         switch (code.type) {
             case 'js':
-                return this.evalJavaScript(code.code);
+                return this.evalJavaScript(code.code, code.uri);
             case 'file':
                 return this.scope.loadText(code.code);
         }
@@ -44,7 +38,7 @@ export class Evaluator {
         try {
             if (script instanceof CustomYamlTag)
                 return this.evalCustomYamlTag(script);
-            return this.evalLiveScript(script);
+            return this.evalLiveScript(script, this.scope.uri);
         } catch (e) {
             throw utils.pktError(this.scope, e, `failed to evalute`);
         }

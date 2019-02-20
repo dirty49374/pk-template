@@ -47,7 +47,7 @@ export interface IStyle extends Array<{ k: string, v: string, kv: string }> {
 }
 
 export class CustomYamlTag {
-    constructor(public type: string, public code: string) { }
+    constructor(public type: string, public code: string, public uri: string) { }
 }
 
 
@@ -79,6 +79,12 @@ export interface IEvaluator {
     evalObject(object: any): any;
 }
 
+export interface ITrace {
+    into<T>(stepCb: () => T): T;
+    step(name: string | number): void;
+    pos(): string;
+}
+
 export interface IScope {
     objects: IObject[];
     object: IObject | null;
@@ -89,10 +95,12 @@ export interface IScope {
     userdata: any;
     $buildLib: any;
     styleSheet: IStyleSheet;
+    trace?: ITrace;
 
     resolve(relpath: string): string;
     add(object: any): void;
     child({ uri, objects, values }: any, handler: IScopeHandler): any;
+    eval(src: string, uri?: string, additionalValues?: any): any;
 
     // loader
     loadText(uri: string): { uri: string, data: string };
