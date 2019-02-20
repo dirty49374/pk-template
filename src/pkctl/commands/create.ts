@@ -3,6 +3,7 @@ import { IObject } from "../../common";
 import { IPktCreateOptions } from "../types";
 import { Pkz } from '../../pk-lib/pkz';
 import { getChalk, getReadlineSync } from '../../pk-lib/lazy';
+import * as pkyaml from '../../pk-yaml';
 
 export class CreateCommand {
     private args: string[];
@@ -15,6 +16,12 @@ export class CreateCommand {
             : this.options.packageName + '.pkz';
     }
 
+    private objectError(object: IObject, err: string) {
+        console.log(pkyaml.dumpYaml(object));
+        console.error(getChalk().red('ERROR: ' + err));
+        process.exit(1);
+
+    }
     private package(objects: IObject[]): Pkz {
         const newList = objects.map(o => o);
 
@@ -25,6 +32,21 @@ export class CreateCommand {
                 name: "pk-packages",
             },
         });
+
+        for (const o of newList) {
+            if (!o.metadata) {
+                this.objectError(o, 'object does not have metadata');
+            }
+            if (!o.kind) {
+                this.objectError(o, 'object does not have kind');
+            }
+            if (!o.apiVersion) {
+                this.objectError(o, 'object does not have apiVersion');
+            }
+            if (!o.metadata.name) {
+                this.objectError(o, 'object does not have name');
+            }
+        }
 
         const objectList = objects
             .map(o => {
