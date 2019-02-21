@@ -10,7 +10,8 @@
         "deploy": "npm run distclean && webpack --config webpack.config.js && npm publish",
         "webpack": "webpack --config webpack.config.js",
         "distclean": "rimraf dist/*",
-        "test": "true"
+        "test": "true",
+        "release": "release-it"
     },
     "bin": {
         "pkt": "bin/pkt.js",
@@ -59,10 +60,16 @@
         "@types/node": "^11.9.4",
         "@types/underscore": "^1.8.9",
         "mocha": "^5.2.0",
+        "release-it": "*",
         "ts-loader": "^5.3.3",
         "typescript": "^3.3.3",
         "webpack": "^4.29.3",
         "webpack-cli": "^3.2.3",
         "webpack-node-externals": "^1.7.2"
+    },
+    "release-it": {
+        "git": {
+            "tagName": "v${version}"
+        }
     }
 }
