@@ -1,0 +1,3 @@
+#!/bin/bash
+
+release-it patch --no-npm.publish --commit -n
