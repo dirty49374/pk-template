@@ -2,6 +2,7 @@
     "editor.formatOnSave": true,
     "editor.insertSpaces": true,
     "editor.trimAutoWhitespace": true,
+    "editor.detectIndentation": false,
     "files.trimTrailingWhitespace": true,
     "files.trimFinalNewlines": true,
     "files.insertFinalNewline": true,

@@ -2,14 +2,13 @@ import fs from 'fs';
 import help from './help';
 import * as pkyaml from '../pk-yaml';
 import process from 'process';
-import version from './version';
 import { buildOutput } from './outputs/factory';
 import { ArgsBuilder, IPktArgs } from './args';
 import { Runtime, IValues, IConfig } from '../pk-lib';
 import { IOptions } from '../pk-lib';
 import { diffObjects } from '../pk-diff/diff-objects';
 import { getChalk } from '../pk-lib/lazy';
-import { IObject } from '../common';
+import { IObject, version } from '../common';
 import { readStdin } from '../pk-lib/utils';
 import { Config } from '../pk-lib/configs';
 import { Scope } from '../pk-lib/scope';
@@ -102,7 +101,7 @@ export async function execute(argv: any, print: boolean): Promise<IResult | null
     let args = new ArgsBuilder().build(argv, config);
 
     if (args.options.version) {
-        version();
+        console.log(version());
         return null;
     }
 

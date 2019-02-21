@@ -78,3 +78,5 @@ export const forEachTreeObject = (object: any, cb: TreeNodeVisitor) => {
         cb(object);
     }
 }
+
+export const version = () => require(__dirname + '/../package.json').version;

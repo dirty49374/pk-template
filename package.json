@@ -10,7 +10,7 @@
         "deploy": "npm run distclean && webpack --config webpack.config.js && npm publish",
         "webpack": "webpack --config webpack.config.js",
         "distclean": "rimraf dist/*",
-        "test": "mocha"
+        "test": "true"
     },
     "bin": {
         "pkt": "bin/pkt.js",
