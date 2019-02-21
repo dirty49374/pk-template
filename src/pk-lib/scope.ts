@@ -5,7 +5,7 @@ import { IScope, IValues, IConfig, IStyleSheet, IPkt, CustomYamlTag, IStyle, IOp
 import { IObject } from '../common';
 import { Evaluator } from './evaluator';
 import { Loader } from './loader';
-import { getChalk } from './lazy';
+import { getChalk, getSourceMap } from './lazy';
 import { StyleSheet } from './styles/styleSheet';
 
 const clone = (obj: any): any => JSON.parse(JSON.stringify(obj));
@@ -67,34 +67,8 @@ export class Scope implements IScope {
         return handler(scope);
     }
 
-    private showErrorLocation(e: Error, src: string) {
-        //@ts-ignore
-        const match = e.stack.match(/<anonymous>:(\d+):(\d+)/);
-        if (match) {
-            const [_, sline, scol] = match;
-            const line = Number(sline)
-            const col = Number(scol)
 
-            const lines = src.split('\n');
-            const from = Math.max(0, line - 4);
-            const to = Math.min(line + 5, lines.length);
-
-            const grey = getChalk().grey;
-            const red = getChalk().red;
-
-            for (let i = from; i < to; ++i) {
-                const ln = `${i + 1} |`.padStart(6, ' ');
-                console.log(grey(ln) + lines[i]);
-                if (i + 1 == line) {
-                    console.log(grey('     |') + "".padStart(col - 1, ' ') + '^------------ ' + red(e.message));
-                }
-            }
-        } else {
-            console.log(e.stack);
-        }
-    }
-
-    eval(src: string, uri?: string, additionalValues?: any) {
+    eval(src: string, original: string, uri?: string, additionalValues?: any) {
         try {
             const $ = additionalValues
                 ? { ...this, ...this.$buildLib(this), ...additionalValues }
@@ -109,17 +83,8 @@ export class Scope implements IScope {
                 displayErrors: true,
             });
         } catch (e) {
-            console.log('SCRIPT ERROR:', getChalk().red(e.message));
-            console.log('  scope  : ', this.uri)
-            if (uri) {
-                console.log('  code   : ', uri)
-            }
-            if (this.trace) {
-                console.log('  pos    : ', this.trace.pos());
-            }
-
-            this.showErrorLocation(e, src);
-            process.exit(1);
+            e.source = src;
+            throw e;
         }
     }
 

@@ -39,6 +39,11 @@ export function getChalk() {
     return _chalk || (_chalk = require('chalk'));
 }
 
+let _sourceMap: any = null;
+export function getSourceMap(): any {
+    return _sourceMap || (_sourceMap = require('source-map'));
+}
+
 let _underscore: any = null;
 export function getUnderscore() {
     if (_underscore) {

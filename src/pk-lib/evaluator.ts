@@ -20,9 +20,9 @@ export class Evaluator {
         return this.scope.eval(script, uri);
     }
 
-    private evalLiveScript(script: string, uri: string): any {
-        const javascript = getLiveScript().compile(script, { bare: true });
-        return this.evalJavaScript(javascript, uri);
+    private evalLiveScript(src: string, uri: string): any {
+        const data = getLiveScript().compile(src, { bare: true, map: 'embedded' });
+        return this.evalJavaScript(data.code, uri);
     }
 
     evalCustomYamlTag(code: CustomYamlTag): any {
