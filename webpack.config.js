@@ -7,7 +7,7 @@ module.exports = {
         pkctl: './src/pkctl/index.ts',
         ['pk-lib']: './src/pk-lib/index.ts',
     },
-    //devtool: 'inline-source-map',
+    devtool: 'inline-source-map',
     target: 'node',
     module: {
         rules: [

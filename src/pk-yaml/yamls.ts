@@ -6,6 +6,7 @@ import { CustomYamlTag } from '../pk-lib/types';
 interface ITagData {
     type: string;
     data: string;
+    src: string;
     uri: string;
 }
 
@@ -36,34 +37,37 @@ const compileCoffee = (data: string): string => {
 
 const compileLive = (data: string): string => {
     try {
-        return getLiveScript().compile(data, { bare: true });
+        const bin = getLiveScript().compile(data, { bare: true, map: 'embedded' });
+        return bin.code;
+
     } catch (e) {
         console.log('failed to compile live script');
         throw e;
     }
 }
+
 export const pktYamlOption = (uri: string) => ({
     schema: jsyaml.Schema.create([
         createCustomTag(
             'cs',
-            (data: string) => ({ type: 'js', uri, data: compileCoffee(data) })),
+            (data: string) => ({ type: 'js', uri, data: compileCoffee(data), src: data })),
         createCustomTag(
             'coffeeScript',
-            (data: string) => ({ type: 'js', uri, data: compileCoffee(data) })),
+            (data: string) => ({ type: 'js', uri, data: compileCoffee(data), src: data })),
         createCustomTag(
             'ls',
-            (data: string) => ({ type: 'js', uri, data: compileLive(data) })),
+            (data: string) => ({ type: 'js', uri, data: compileLive(data), src: data })),
         createCustomTag(
             'liveScript',
-            (data: string) => ({ type: 'js', uri, data: compileLive(data) })),
+            (data: string) => ({ type: 'js', uri, data: compileLive(data), src: data })),
         createCustomTag(
             'js',
-            (data: string) => ({ type: 'js', uri, data })),
+            (data: string) => ({ type: 'js', uri, data, src: data })),
         createCustomTag(
             'javaScript',
-            (data: string) => ({ type: 'js', uri, data })),
+            (data: string) => ({ type: 'js', uri, data, src: data })),
         createCustomTag(
             'file',
-            (data: string) => ({ type: 'file', uri, data })),
+            (data: string) => ({ type: 'file', uri, data, src: data })),
     ])
 });

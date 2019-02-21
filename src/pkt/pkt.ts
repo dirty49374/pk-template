@@ -7,11 +7,11 @@ import { ArgsBuilder, IPktArgs } from './args';
 import { Runtime, IValues, IConfig } from '../pk-lib';
 import { IOptions } from '../pk-lib';
 import { diffObjects } from '../pk-diff/diff-objects';
-import { getChalk } from '../pk-lib/lazy';
 import { IObject, version } from '../common';
 import { readStdin } from '../pk-lib/utils';
 import { Config } from '../pk-lib/configs';
 import { Scope } from '../pk-lib/scope';
+import { exceptionHandler } from './exception';
 
 export interface IResult {
     objects: IObject[];
@@ -19,32 +19,14 @@ export interface IResult {
 }
 
 function run(objects: IObject[], values: IValues, files: string[], config: IConfig, options: IOptions): IObject[] {
-    const chalk = getChalk();
     objects = objects || [];
-    try {
-        const userdata = {};
-        const scope = Scope.CreateRoot(objects, values, config, options, userdata);
-        for (const path of files) {
-            Runtime.Run(scope, path);
-        }
-
-        return scope.objects;
-    } catch (e) {
-        if (e.summary) {
-            console.error(chalk.red('ERROR: ' + e.summary + ' in ' + e.uri));
-            console.error(chalk.red('       ' + e.message));
-            if (e.pos) {
-                console.error(chalk.red('       ' + e.pos));
-            }
-        } else {
-            console.error(chalk.red(e.message));
-        }
-        if (options.debug) {
-            console.error(e);
-        }
-        process.exit(1);
-        return [];
+    const userdata = {};
+    const scope = Scope.CreateRoot(objects, values, config, options, userdata);
+    for (const path of files) {
+        Runtime.Run(scope, path);
     }
+
+    return scope.objects;
 }
 
 async function update(path: string, config: IConfig, args: IPktArgs) {
@@ -96,10 +78,7 @@ async function generate(config: IConfig, args: IPktArgs): Promise<IObject[]> {
     }
 }
 
-export async function execute(argv: any, print: boolean): Promise<IResult | null> {
-    const config = Config.Load();
-    let args = new ArgsBuilder().build(argv, config);
-
+export async function executeWithTryCatch(argv: any, args: IPktArgs, config: IConfig, print: boolean): Promise<IResult | null> {
     if (args.options.version) {
         console.log(version());
         return null;
@@ -134,4 +113,17 @@ export async function execute(argv: any, print: boolean): Promise<IResult | null
         }
     }
     return { objects, args };
+}
+
+export async function execute(argv: any, print: boolean): Promise<IResult | null> {
+    const config = Config.Load();
+    let args = new ArgsBuilder().build(argv, config);
+
+    try {
+        return await executeWithTryCatch(argv, args, config, print);
+    } catch (e) {
+        await exceptionHandler(e);
+
+        throw e;
+    }
 }
