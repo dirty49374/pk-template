@@ -3,7 +3,7 @@ import { Pkz } from '../../pk-lib/pkz';
 import { Progress } from "./progress";
 import { IObject, IKubeCtlConfig, IResourceKey, delay } from "../../common";
 import * as pkyaml from '../../pk-yaml';
-import { PkzKube } from "../pkt-kube";
+import { PkzKube } from "../../pk-kubectl/pkt-kube";
 import { PkzSpec } from "../spec";
 import { getChalk } from "../../pk-lib/lazy";
 import { applyPatch } from "diff";

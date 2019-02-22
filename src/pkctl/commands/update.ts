@@ -5,16 +5,15 @@ import { diffObjects } from '../../pk-diff/diff-objects';
 import { getReadlineSync, getChalk } from '../../pk-lib/lazy';
 
 export class UpdateCommand {
-    private packageName: string;
+    private packageNames: string[];
 
     constructor(private options: IPkctlUpdateOptions) {
-        this.packageName = this.options.packageName.endsWith('.pkz')
-            ? this.options.packageName
-            : this.options.packageName + '.pkz';
+        this.packageNames = this.options.packageNames
+            .map(n => n.endsWith('.pkz') ? n : n + '.pkz');
     }
 
-    async execute() {
-        const oldPkz = Pkz.Load(this.packageName);
+    async update(packageName: string) {
+        const oldPkz = Pkz.Load(packageName);
         const createCommand = new CreateCommand({
             packageName: oldPkz.name,
             kubeconfig: oldPkz.kubeconfig,
@@ -34,6 +33,12 @@ export class UpdateCommand {
 
             newPkz.save();
             console.log(`${newPkz.name} saved`)
+        }
+    }
+
+    async execute() {
+        for (const packageName of this.packageNames) {
+            await this.update(packageName);
         }
     }
 }

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { extractSourceMap } from '../pk-lib/sourceMap';
+import { extractSourceMap } from './sourceMap';
 
 import { getChalk, getSourceMap } from "../pk-lib/lazy";
 
@@ -11,7 +11,8 @@ const extractSourceAndLocation2 = async (name: string, file: string, line: numbe
         if (smap) {
             const consumer = await new (getSourceMap()).SourceMapConsumer(smap);
             const pos = consumer.originalPositionFor({ line, column })
-            return { name: pos.name, file: pos.source, line: pos.line, column: pos.column }
+            const f = path.isAbsolute(pos.source) ? pos.source : path.join(file, pos.source);
+            return { name: pos.name, file: f, line: pos.line, column: pos.column }
         }
         return { name, file, line, column };
     } catch (e) {

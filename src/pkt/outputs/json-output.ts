@@ -1,9 +1,9 @@
-import { IOptions } from "../../pk-lib/types";
+import { IPktOptions } from "../../pk-lib/types";
 import { IOutput } from "./output";
 import { IObject } from "../../common";
 
 export class JsonOutput implements IOutput {
-    constructor(private options: IOptions) { }
+    constructor(private options: IPktOptions) { }
 
     *write(objects: IObject[]): Iterator<string> {
         if (this.options.json) {

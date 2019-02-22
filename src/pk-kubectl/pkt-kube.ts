@@ -1,6 +1,6 @@
-import { execPipeSync } from "../pk-kubectl/exec";
+import { execPipeSync } from "./exec";
 import { IResourceKey, IProgress, IKubeCtlConfig, IObject, ISet } from "../common";
-import { KubeCtl } from "../pk-kubectl/kubectl";
+import { KubeCtl } from "./kubectl";
 
 export class PkzKube extends KubeCtl {
 

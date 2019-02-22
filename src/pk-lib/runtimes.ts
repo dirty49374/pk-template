@@ -1,10 +1,8 @@
-import Ajv from 'ajv';
 
 import * as utils from './utils';
 import selectors from './selectors';
-import { IScope, IValues, IPkt, IConfig, IStatement, IUserdata } from './types';
+import { IScope, IValues, IPkt, IStatement } from './types';
 import { getJsonPath, getJsonPatch } from './lazy';
-import { IObject } from '../common';
 import { StyleSheet } from './styles/styleSheet';
 import { Schema } from './schema';
 import { Trace } from './trace';
@@ -25,7 +23,7 @@ export function buildInput(input: any, parentValues: IValues): any {
 export class Runtime {
 
     trace: Trace;
-    constructor(private uri: string) {
+    constructor(uri: string) {
         this.trace = new Trace(uri);
     }
 
@@ -86,7 +84,7 @@ export class Runtime {
             const { uri, data } = scope.loadPkt(rpath);
             this.execPkt(data, scope, uri);
         } else {
-            const { uri, data } = scope.loadText(rpath);
+            const { data } = scope.loadText(rpath);
             const objects = scope.evalTemplateAll(data);
             objects.forEach(object => scope.add(object));
         }
@@ -111,7 +109,7 @@ export class Runtime {
                 const { uri, data } = cscope.loadPkt(rpath);
                 this.execPkt(data, cscope, uri);
             } else {
-                const { uri, data } = cscope.loadText(rpath);
+                const { data } = cscope.loadText(rpath);
                 const objects = cscope.evalTemplateAll(data);
                 objects.forEach(object => cscope.add(object));
             }
@@ -176,7 +174,7 @@ export class Runtime {
                 const { uri, data } = scope.loadPkt(rpath);
                 this.execPkt(data, scope, uri, true);
             } else {
-                const { uri, data } = scope.loadText(rpath);
+                const { data } = scope.loadText(rpath);
                 const objects = scope.evalTemplateAll(data);
                 scope.objects.push(...objects);
             }
@@ -219,13 +217,6 @@ export class Runtime {
         });
         return true;
     }
-    kubeconfigStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt.kubeconfig) return false;
-        this.trace.step('kubeconfig');
-
-        scope.userdata.kubeconfig = scope.evalObject(stmt.kubeconfig);
-        return true;
-    }
     templateStatement(scope: IScope, stmt: IStatement) {
         if (!stmt.template) return false;
         this.trace.step('template');
@@ -248,7 +239,6 @@ export class Runtime {
             this.addStatement(scope, stmt);
             this.patchStatement(scope, stmt);
             this.templateStatement(scope, stmt);
-            this.kubeconfigStatement(scope, stmt);
             this.routineStatement(scope, stmt);
             this.routineWithStatement(scope, stmt);
         });
@@ -334,7 +324,7 @@ export class Runtime {
             const { uri, data } = scope.loadPkt(rpath);
             new Runtime(uri).execPkt(data, scope, uri, true);
         } else {
-            const { uri, data } = scope.loadText(rpath);
+            const { data } = scope.loadText(rpath);
             const objects = scope.evalTemplateAll(data);
             scope.objects.push(...objects);
         }

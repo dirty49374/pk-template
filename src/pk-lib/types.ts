@@ -17,26 +17,17 @@ export interface IValues {
     [id: string]: any;
 }
 
-export interface IOptions {
+export interface IPktOptions {
     argv: string[];
     cwd: string;
     stdin?: boolean;
     help?: boolean;
     version?: boolean;
     debug?: boolean;
-    shellscript?: boolean;
     json?: boolean;
     json1?: boolean;
     pkt?: boolean;
     indent?: boolean;
-    kubeconfig?: string;
-    kubecluster?: string;
-    kubecontext?: string;
-    kubenamespace?: string;
-    pkt_package?: string;
-    pkt_package_update?: boolean;
-    pkt_package_update_write?: boolean;
-    bash?: boolean;
 }
 
 export type IScopeHandler = (scope: IScope) => any;
@@ -91,8 +82,6 @@ export interface IScope {
     values: IValues;
     uri: string;
     parent: IScope;
-    config: IConfig;
-    userdata: any;
     $buildLib: any;
     styleSheet: IStyleSheet;
     trace?: ITrace;
@@ -133,4 +122,16 @@ export interface IPkz {
     context: string;
     cluster: string;
     objects: IObject[];
+}
+
+export const PKMODULE_FILE_NAME = 'pkt.json';
+export const PKTLIBS_DIR_NAME = 'pktlib';
+
+export interface IPktModuleLoaded {
+    module: IPktModule;
+    uri: string;
+}
+
+export interface IPktModule {
+    repositories: { [id: string]: string };
 }

@@ -1,2 +1,2 @@
-export { IValues, IOptions, IConfig } from './types';
+export { IValues, IPktOptions, IConfig } from './types';
 export { Runtime } from './runtimes';

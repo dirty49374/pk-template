@@ -66,6 +66,23 @@ export class Pkz implements IPkz {
         lines.push(`# KUBE_CONFIG=${this.kubeconfig || ""}`);
         lines.push(`# CONTEXT=${this.context || ""}`);
         lines.push(`# CLUSTER=${this.cluster || ""}`);
+
+        lines.push(`#`);
+        lines.push(`# APPLY:`);
+        lines.push(`# - pkctl   : $ pkctl apply ${this.name}`);
+
+        const options = []
+        if (this.kubeconfig) {
+            options.push(`--kubeconfig ${this.kubeconfig}`);
+        }
+        if (this.context) {
+            options.push(`--context ${this.context}`);
+        }
+        if (this.cluster) {
+            options.push(`--cluster ${this.cluster}`);
+        }
+        lines.push(`# - kubectl : $ kubectl apply ${options.join(' ')} -f ./${this.name}`);
+
         lines.push(pkyaml.dumpYamlAll(this.objects));
 
         return lines.join('\n');
