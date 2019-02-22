@@ -2,6 +2,8 @@ import { CreateCommand } from "./commands/create";
 import { UpdateCommand } from "./commands/update";
 import { DiffCommand } from "./commands/diff";
 import { ApplyCommand } from "./commands/apply";
+import { InitCommand } from "./commands/init";
+import { AddCommand } from "./commands/add";
 
 type Argv = any;
 
@@ -20,11 +22,11 @@ function run(argv: string[], help: boolean) {
                 new CreateCommand(argv).execute();
             })
         .command(
-            'update <package-name>',
+            'update <package-names..>',
             'update a package',
             (yargs: Argv) => yargs
                 .option('yes', { describe: 'overwrite without confirmation', boolean: true })
-                .positional('package-name', { describe: 'a package name', }),
+                .positional('package-names', { describe: 'list of packages to update', }),
             (argv: any) => {
                 new UpdateCommand(argv).execute();
             })
@@ -47,30 +49,37 @@ function run(argv: string[], help: boolean) {
             (argv: any) => {
                 new ApplyCommand(argv).execute();
             })
-        .demandCommand();
+        .command(
+            'init',
+            'init a module',
+            (yargs: Argv) => yargs,
+            (argv: any) => {
+                new InitCommand(argv).execute();
+            })
+        .command(
+            'add <repository-name> <repository-uri>',
+            'add a remote module',
+            (yargs: Argv) => yargs,
+            (argv: any) => {
+                new AddCommand(argv).execute();
+            })
+        .demandCommand()
     if (help) {
         yargs.showHelp();
     } else {
-        yargs.argv;
+        yargs.recommendCommands().strict().help('h').argv;
     }
 }
 
 async function main(argv: string[]) {
-    if (argv.length < 2) {
-        await run(argv, true);
-        return;
-    }
-
     switch (argv[0]) {
-        case 'diff':
         case 'apply':
-        case 'update':
-        case 'create':
-            await run(argv, false);
-            break;
-        default:
-            await run(argv, true);
+            if (argv.length < 2) {
+                await run(argv, true);
+                return;
+            }
     }
+    await run(argv, false);
 }
 
 main(process.argv.slice(2));

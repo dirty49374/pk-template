@@ -22,7 +22,6 @@ export class StyleApply {
             });
             return success;
         } catch (e) {
-            console.log(e);
             throw pktError(scope, e, `error in applying style ${this.name}: ${style}`);
         }
     }

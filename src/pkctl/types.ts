@@ -14,9 +14,18 @@ export interface IPktCreateOptions extends IPkctlOptions {
 }
 
 export interface IPkctlUpdateOptions extends IPkctlOptions {
+    packageNames: string[];
 }
 
 export interface IPkctlDiffOptions extends IPkctlOptions {
+}
+
+export interface IPkctlInitOptions extends IPkctlOptions {
+}
+
+export interface IPkctlAddOptions extends IPkctlOptions {
+    repositoryName: string;
+    repositoryUri: string;
 }
 
 export interface IPkctlApplyOptions extends IPkctlOptions {

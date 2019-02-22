@@ -1,47 +1,38 @@
 import * as vm from 'vm';
-import url from 'url';
 import jslib from './jslib';
-import { IScope, IValues, IConfig, IStyleSheet, IPkt, CustomYamlTag, IStyle, IOptions, ITrace } from './types';
+import { IScope, IValues, IStyleSheet, IPkt, CustomYamlTag, ITrace } from './types';
 import { IObject } from '../common';
 import { Evaluator } from './evaluator';
 import { Loader } from './loader';
-import { getChalk, getSourceMap } from './lazy';
 import { StyleSheet } from './styles/styleSheet';
+import { PktModule } from './module';
+import { PathResolver } from './pathResolver';
 
 const clone = (obj: any): any => JSON.parse(JSON.stringify(obj));
 
-export class Scope implements IScope {
+export class Scope extends PathResolver implements IScope {
     objects: IObject[];
     object: IObject | null = null;
     values: IValues;
-    uri: string;
     parent: IScope;
-    config: IConfig;
-    userdata: any;
     $buildLib: any;
     trace?: ITrace;
-
+    module?: PktModule;
     styleSheet: IStyleSheet;
     private evaluator: Evaluator;
     private loader: Loader;
 
-    constructor({ objects, values, uri, parent, styleSheet, config, userdata }: any) {
+    constructor({ objects, values, uri, parent, styleSheet }: any) {
+        super(uri);
+
         this.objects = objects;
         this.values = values;
         this.uri = uri;
         this.parent = parent;
         this.styleSheet = styleSheet;
-        this.config = config;
-        this.userdata = userdata;
         this.$buildLib = jslib;
         this.evaluator = new Evaluator(this);
         this.loader = new Loader(this);
-    }
-
-    resolve(path: string): string {
-        const p1 = this.config.resolve ? this.config.resolve(path) : path; // resolve @
-        const resolved = url.resolve(this.uri, p1);
-        return resolved || '.';
     }
 
     add(object: any): void {
@@ -57,10 +48,8 @@ export class Scope implements IScope {
             objects: objects || [],
             values: values || clone(this.values),
             uri: uri || this.uri,
-            config: this.config,
             parent: this,
             styleSheet: this.styleSheet,
-            userdata: this.userdata,
             $buildLib: jslib,
         });
 
@@ -68,12 +57,12 @@ export class Scope implements IScope {
     }
 
 
-    eval(src: string, original: string, uri?: string, additionalValues?: any) {
+    eval(src: string, uri?: string, additionalValues?: any) {
+        const $ = additionalValues
+            ? { ...this, ...this.$buildLib(this), ...additionalValues }
+            : { ...this, ...this.$buildLib(this) };
+        const sandbox = { $, console, ...this.values };
         try {
-            const $ = additionalValues
-                ? { ...this, ...this.$buildLib(this), ...additionalValues }
-                : { ...this, ...this.$buildLib(this) };
-            const sandbox = { $, console, ...this.values };
             const context = vm.createContext(sandbox);
             const script = new vm.Script(src);
 
@@ -84,6 +73,7 @@ export class Scope implements IScope {
             });
         } catch (e) {
             e.source = src;
+            e.sandbox = sandbox;
             throw e;
         }
     }
@@ -110,28 +100,24 @@ export class Scope implements IScope {
     // style
     expandStyle = (object: any): void => this.styleSheet.apply(this, object);
 
-    static Create(values: IValues, uri: string, parent: IScope | null, config: IConfig, objects: IObject[], styleSheet: IStyleSheet, userdata: any): IScope {
+    static Create(values: IValues, uri: string, parent: IScope | null, objects: IObject[], styleSheet: IStyleSheet): IScope {
         const scope = new Scope({
             objects: objects ? [...objects] : [],
             values: values ? clone(values) : {},
             uri: uri || '.',
             styleSheet: styleSheet || (parent ? parent.styleSheet : null),
             parent: parent || null,
-            config: config || {},
-            userdata: userdata || {},
         });
         return scope;
     }
 
-    static CreateRoot(objects: IObject[], values: IValues, config: IConfig, options: IOptions, userdata: any) {
+    static CreateRoot(objects: IObject[], values: IValues) {
         return Scope.Create(
             values,
-            '.',
+            process.cwd() + '/',
             null,
-            config,
             objects,
             new StyleSheet(null),
-            userdata || {}
         );
     }
 }

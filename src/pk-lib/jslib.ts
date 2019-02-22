@@ -5,8 +5,6 @@ import { log } from './logger';
 
 const jslib = (scope: IScope) => {
     const lib = {
-        // disabled ( causing circular dependency )
-        // expand: path => runtimes.statements.include(scope, { include: path }),
         log: (...msg: any[]) => log(...msg),
         files: (path: string) => scope.listFiles(path),
         loadText: (path: string) => scope.loadText(path),

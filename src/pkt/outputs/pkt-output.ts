@@ -1,10 +1,10 @@
-import { IOptions } from "../../pk-lib/types";
+import { IPktOptions } from "../../pk-lib/types";
 import * as pkyaml from '../../pk-yaml';
 import { IOutput } from "./output";
 import { IObject } from "../../common";
 
 export class PktOutput implements IOutput {
-    constructor(private options: IOptions) { }
+    constructor(private options: IPktOptions) { }
 
     *write(objects: IObject[]): Iterator<string> {
         var pkt = {

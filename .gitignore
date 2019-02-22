@@ -64,3 +64,5 @@ tmp/
 dist/*
 
 *.pkz
+pktlib/
+pkt.json
