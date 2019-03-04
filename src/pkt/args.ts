@@ -27,7 +27,7 @@ export class ArgsBuilder {
     private filterValues(argv: any): any {
         const values: IValues = {}
         Object.keys(argv).forEach(k => {
-            if (k[0] != '$') {
+            if (k[0] != '$' && k.length > 1) {
                 values[k] = argv[k];
             }
         });
@@ -35,7 +35,10 @@ export class ArgsBuilder {
     }
 
     private buildValues(argv: any): any {
-        return this.expandValues(this.filterValues(argv));
+        const values = this.expandValues(this.filterValues(argv));
+        delete values._;
+
+        return values;
     }
 
     private expandLibPath(p: string): string {
@@ -71,7 +74,7 @@ export class ArgsBuilder {
     }
 
     buildOptions(argv: string[], yargv: any) {
-        const options: IPktOptions = { argv, cwd: process.cwd() };
+        const options: IPktOptions = {};
         if (yargv.h) options.help = true;
         if (yargv.v) options.version = true;
         if (yargv.d) options.debug = true;
@@ -80,6 +83,10 @@ export class ArgsBuilder {
 
         if (yargv.J) options.json = true;
         if (yargv.T) options.pkt = true;
+
+        if (yargv.e) options.env = yargv.e;
+
+        if (yargv.S) options.spec = yargv.S;
 
         // if ('1' in yargv) options.json1 = !!yargv.J;
         // if ('n' in yargv) options.indent = !!yargv.n;
@@ -94,7 +101,7 @@ export class ArgsBuilder {
             .boolean([
                 'h', 'v', 'd',
                 'i',
-                'S', 'J', 'T',
+                'J', 'T',
             ])
             .argv;
 

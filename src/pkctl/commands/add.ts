@@ -11,7 +11,7 @@ export class AddCommand {
         const m = PktModule.Load(process.cwd());
         if (m) {
             console.log(this.options);
-            m.add(this.options.repositoryName, this.options.repositoryUri);
+            m.addRepository(this.options.repositoryName, this.options.repositoryUri);
             m.save();
             console.log('added !!!');
         }

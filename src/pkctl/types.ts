@@ -33,6 +33,12 @@ export interface IPkctlApplyOptions extends IPkctlOptions {
     sequentialApply: boolean;
 }
 
+export interface IPkctlEnvOptions extends IPkctlOptions {
+    envName: string;
+    contextName: string;
+}
+
+
 export interface ApplyConfig extends IKubeCtlConfig {
     target: string;
     apply: boolean;

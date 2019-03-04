@@ -4,6 +4,7 @@ import { DiffCommand } from "./commands/diff";
 import { ApplyCommand } from "./commands/apply";
 import { InitCommand } from "./commands/init";
 import { AddCommand } from "./commands/add";
+import { EnvCommand } from "./commands/env";
 
 type Argv = any;
 
@@ -48,6 +49,13 @@ function run(argv: string[], help: boolean) {
                 .positional('package-name', { describe: 'a package name', }),
             (argv: any) => {
                 new ApplyCommand(argv).execute();
+            })
+        .command(
+            'env <env-name> <context-name>',
+            'add or update env',
+            (yargs: Argv) => yargs,
+            (argv: any) => {
+                new EnvCommand(argv).execute();
             })
         .command(
             'init',

@@ -1,6 +1,6 @@
 import * as vm from 'vm';
 import jslib from './jslib';
-import { IScope, IValues, IStyleSheet, IPkt, CustomYamlTag, ITrace } from './types';
+import { IScope, IValues, IStyleSheet, IPkt, CustomYamlTag, ITrace, IPktEnv } from './types';
 import { IObject } from '../common';
 import { Evaluator } from './evaluator';
 import { Loader } from './loader';
@@ -19,10 +19,11 @@ export class Scope extends PathResolver implements IScope {
     trace?: ITrace;
     module?: PktModule;
     styleSheet: IStyleSheet;
+    env: IPktEnv;
     private evaluator: Evaluator;
     private loader: Loader;
 
-    constructor({ objects, values, uri, parent, styleSheet }: any) {
+    constructor({ objects, values, uri, parent, styleSheet, env }: any) {
         super(uri);
 
         this.objects = objects;
@@ -33,6 +34,7 @@ export class Scope extends PathResolver implements IScope {
         this.$buildLib = jslib;
         this.evaluator = new Evaluator(this);
         this.loader = new Loader(this);
+        this.env = env;
     }
 
     add(object: any): void {
@@ -51,6 +53,7 @@ export class Scope extends PathResolver implements IScope {
             parent: this,
             styleSheet: this.styleSheet,
             $buildLib: jslib,
+            env: this.env,
         });
 
         return handler(scope);
@@ -100,24 +103,26 @@ export class Scope extends PathResolver implements IScope {
     // style
     expandStyle = (object: any): void => this.styleSheet.apply(this, object);
 
-    static Create(values: IValues, uri: string, parent: IScope | null, objects: IObject[], styleSheet: IStyleSheet): IScope {
+    static Create(values: IValues, uri: string, parent: IScope | null, objects: IObject[], styleSheet: IStyleSheet, env: IPktEnv | null): IScope {
         const scope = new Scope({
             objects: objects ? [...objects] : [],
             values: values ? clone(values) : {},
             uri: uri || '.',
             styleSheet: styleSheet || (parent ? parent.styleSheet : null),
             parent: parent || null,
+            env: env || {},
         });
         return scope;
     }
 
-    static CreateRoot(objects: IObject[], values: IValues) {
+    static CreateRoot(objects: IObject[], values: IValues, env: IPktEnv | null) {
         return Scope.Create(
             values,
             process.cwd() + '/',
             null,
             objects,
             new StyleSheet(null),
+            env
         );
     }
 }
