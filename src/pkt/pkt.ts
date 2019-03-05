@@ -9,12 +9,7 @@ import { readStdin } from '../pk-lib/utils';
 import { Scope } from '../pk-lib/scope';
 import { exceptionHandler } from '../pk-util/exception';
 import { PktModule } from '../pk-lib/module';
-import { IPktEnv } from '../pk-lib/types';
-
-export interface IResult {
-    objects: IObject[];
-    args: IPktArgs;
-}
+import { IPktEnv, IResult } from '../pk-lib/types';
 
 function run(objects: IObject[], values: IValues, files: string[], env: IPktEnv | null): IObject[] {
     objects = objects || [];
@@ -26,7 +21,7 @@ function run(objects: IObject[], values: IValues, files: string[], env: IPktEnv 
     return scope.objects;
 }
 
-async function generate(args: IPktArgs, env: IPktEnv | null): Promise<IObject[]> {
+export async function generate(args: IPktArgs, env: IPktEnv | null): Promise<IObject[]> {
     if (args.options.stdin) {
         const text = await readStdin();
         const objects = pkyaml.parseYamlAll(text);
@@ -49,7 +44,7 @@ export async function executeWithTryCatch(args: IPktArgs, print: boolean): Promi
         const output = buildOutput(args.options, objects);
         console.log(output);
     }
-    return { objects, args };
+    return { objects, args, env };
 }
 
 export async function execute(argv: any, print: boolean): Promise<IResult | null> {

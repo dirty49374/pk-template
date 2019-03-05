@@ -1,6 +1,6 @@
 import { IPkctlUpdateOptions } from "../types";
 import { CreateCommand } from './create';
-import { Pkz } from '../../pk-lib/pkz';
+import * as Pkz from '../../pkz';
 import { diffObjects } from '../../pk-diff/diff-objects';
 import { getReadlineSync, getChalk } from '../../pk-lib/lazy';
 
@@ -13,27 +13,25 @@ export class UpdateCommand {
     }
 
     async update(packageName: string) {
-        const oldPkz = Pkz.Load(packageName);
-        const createCommand = new CreateCommand({
-            packageName: oldPkz.name,
-            kubeconfig: oldPkz.kubeconfig,
-            context: oldPkz.context,
-            cluster: oldPkz.cluster,
-            _: ['create'].concat(...oldPkz.args),
-            yes: true,
-            dryRun: true,
-        });
+        // const oldPkz = Pkz.Load(packageName);
+        // const createCommand = new CreateCommand({
+        //     packageName: oldPkz.name,
+        //     context: oldPkz.context,
+        //     _: ['create'].concat(...oldPkz.args),
+        //     yes: true,
+        //     dryRun: true,
+        // });
 
-        const newPkz = await createCommand.build();
-        if (newPkz != null) {
-            diffObjects(oldPkz.objects, newPkz.objects);
-            if (newPkz.exists() && !this.options.yes) {
-                getReadlineSync().question(getChalk().red('are you sure to override ? [ENTER/CTRL-C] '));
-            }
+        // const newPkz = await createCommand.build();
+        // if (newPkz != null) {
+        //     diffObjects(oldPkz.objects, newPkz.objects);
+        //     if (newPkz.exists() && !this.options.yes) {
+        //         getReadlineSync().question(getChalk().red('are you sure to override ? [ENTER/CTRL-C] '));
+        //     }
 
-            newPkz.save();
-            console.log(`${newPkz.name} saved`)
-        }
+        //     newPkz.save();
+        //     console.log(`${newPkz.name} saved`)
+        // }
     }
 
     async execute() {

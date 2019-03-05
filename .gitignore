@@ -63,7 +63,8 @@ typings/
 tmp/
 dist/*
 
-*.pkz
+/*.pkz
+/*.pks
 pktlib/
 pkt.json
 pkt.conf
