@@ -7,15 +7,12 @@ import * as pkyaml from '../pk-yaml';
 import * as Pkz from '../pkz';
 import { PkzSpec } from "../pkctl/spec";
 import { getChalk } from "../pk-lib/lazy";
+import { IPkzApplierOption } from "./options";
 
 interface IApplyStep {
     name: string;
     objects: IObject[];
     final: boolean;
-}
-export interface IPkzApplierOption extends IProgressOptions {
-    // packageName: string;
-    immediate?: boolean;
 }
 
 export class PkzApplier extends Progress {
@@ -84,10 +81,10 @@ export class PkzApplier extends Progress {
     }
 
     private findDisappearedObjects(currcmap: IObject): IResourceKey[] {
-        const prevcmap = this.kube.getPkzSpecOrDefault(currcmap.metadata.name);
+        const prevcmap = this.kube.getPkzSpec(currcmap.metadata.name) ||
+            { metadata: { name: currcmap.metadata.name }, data: { objects: '' } };
         const prevSpec = PkzSpec.parse(prevcmap.metadata.name, prevcmap.data.objects);
         const currSpec = PkzSpec.parse(currcmap.metadata.name, currcmap.data.objects);
-
         return prevSpec.subtract(currSpec);
     }
 
@@ -110,7 +107,6 @@ export class PkzApplier extends Progress {
 
     private async deleteStep(step: IApplyStep) {
         this.header(`Delete step`);
-
         const deleteList = this.findDisappearedObjects(step.objects[0]);
         const targets = deleteList.map(o => `${o.kind}/${o.namespace}/${o.name}`).join(', ');
         if (targets.length == 0) {

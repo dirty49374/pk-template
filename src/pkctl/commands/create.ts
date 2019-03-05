@@ -1,4 +1,4 @@
-import { execute } from "../../pkt/pkt";
+import { execCommand } from "../../pkt/pkt";
 import { IObject } from "../../common";
 import { IPktCreateOptions } from "../types";
 import * as Pkz from '../../pkz';
@@ -18,7 +18,7 @@ export class CreateCommand {
 
 
     async build(): Promise<IPkz | null> {
-        const result = await execute(this.args, false);
+        const result = await execCommand(this.args, false);
         return result != null
             ? Pkz.build(
                 this.options.packageName,

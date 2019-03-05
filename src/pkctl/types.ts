@@ -34,6 +34,10 @@ export interface IPkctlApplyOptions extends IPkctlOptions {
     sequentialApply: boolean;
 }
 
+export interface IPkctlDeleteOptions extends IPkctlOptions {
+    envName: string;
+}
+
 export interface IPkctlDeployOptions extends IPkctlOptions {
     specName: string;
     envName: string;

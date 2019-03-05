@@ -20,6 +20,15 @@ export class PkzSpec {
         return Object.keys(this.keys).sort().join('\n');
     }
 
+    getKeys(): IResourceKey[] {
+        const left: IResourceKey[] = [];
+        for (const key in this.keys) {
+            const [kind, apiGroup, name, namespace] = key.split('/');
+            left.push({ kind, apiGroup, namespace, name });
+        }
+        return left;
+    }
+
     subtract(other: PkzSpec): IResourceKey[] {
         const left: IResourceKey[] = [];
         for (const key in this.keys) {

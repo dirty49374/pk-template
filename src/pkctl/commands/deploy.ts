@@ -1,6 +1,6 @@
 import { IPkctlDeployOptions } from "../types";
 import { loadYamlFile } from '../../pk-yaml';
-import * as pkt from '../../pkt/pkt';
+import * as Pkt from '../../pkt/pkt';
 import * as Pkz from '../../pkz';
 import { unsetExt } from "../../common";
 import { IResult as IPktResult } from "../../pk-lib/types";
@@ -21,7 +21,7 @@ export class DeployCommand {
                 env: this.options.envName,
             },
         };
-        const result = await pkt.executeWithTryCatch(args, false);
+        const result = await Pkt.exec(args, false);
         if (!result) {
             process.exit(1);
             // @ts-ignore

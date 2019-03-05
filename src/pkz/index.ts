@@ -5,7 +5,10 @@ import { PkzDeserializer } from './deserializer';
 import { PkzBuilder } from './builder';
 import { IPktArgs } from '../pkt/args';
 import { PkzSerializer } from './serializer';
-import { PkzApplier, IPkzApplierOption } from './applier';
+import { PkzApplier } from './applier';
+import { IProgressOptions } from '../pkctl/types';
+import { PkzUninstaller } from './uninstaller';
+import { IPkzApplierOption } from './options';
 
 export const load = (path: string): IPkz => {
     const text = fs.readFileSync(path, 'utf8');
@@ -23,6 +26,10 @@ export const build = (packageName: string, contextName: string, args: IPktArgs, 
 
 export const deploy = async (pkz: IPkz, option: IPkzApplierOption) => {
     return await new PkzApplier(option, pkz).apply();
+}
+
+export const uninstall = async (packageName: string, contextName: string, option: IPkzApplierOption) => {
+    return await new PkzUninstaller(packageName, contextName, option).uninstall();
 }
 
 export const exists = (pkz: IPkz): boolean => {

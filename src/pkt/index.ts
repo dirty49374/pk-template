@@ -1,3 +1,3 @@
-import { execute } from "./pkt";
+import { execCommand } from "./pkt";
 
-execute(process.argv.slice(2), true);
+execCommand(process.argv.slice(2), true);

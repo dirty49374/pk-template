@@ -30,8 +30,8 @@ export class PkzKube extends KubeCtl {
     }
 
 
-    getPkzSpecOrDefault(name: string): IObject {
-        const command = `kubectl get configmap ${name} ${this.config.kube_option} --namespace default -ojson`;
+    getPkzSpec(name: string): IObject | null {
+        const command = `kubectl get configmap ${name} ${this.config.kube_option} --namespace pk-packages -ojson`;
         // this.progress.log(`--- ${command}`);
         const result = execPipeSync(command, '(NotFound)');
         if (result) {
@@ -43,7 +43,7 @@ export class PkzKube extends KubeCtl {
         // this.progress.log('notfound');
         // this.progress.log('---');
 
-        return { metadata: { name }, data: { objects: '' } };
+        return null;
     }
 
     toApiGroup(apiVersion: string): string {

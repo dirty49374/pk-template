@@ -81,7 +81,8 @@ export class ApplyCommand extends Progress {
     }
 
     private findDisappearedObjects(currcmap: IObject): IResourceKey[] {
-        const prevcmap = this.kube.getPkzSpecOrDefault(currcmap.metadata.name);
+        const prevcmap = this.kube.getPkzSpec(currcmap.metadata.name) ||
+            { metadata: { name }, data: { objects: '' } };
         const prevSpec = PkzSpec.parse(prevcmap.metadata.name, prevcmap.data.objects);
         const currSpec = PkzSpec.parse(currcmap.metadata.name, currcmap.data.objects);
 
