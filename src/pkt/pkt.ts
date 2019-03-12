@@ -43,8 +43,8 @@ export async function executeWithTryCatch(args: IPktArgs, print: boolean): Promi
         : PktModule.Load('.');
     const envs = (module && module.module && module.module.envs) || []
     const env = args.options.env ? (envs.find(e => e.name == args.options.env) || null) : null;
-    const objects = await generate(args, env);
 
+    const objects = await generate(args, env);
     if (print) {
         const output = buildOutput(args.options, objects);
         console.log(output);

@@ -69,5 +69,8 @@ export const pktYamlOption = (uri: string) => ({
         createCustomTag(
             'file',
             (data: string) => ({ type: 'file', uri, data, src: data })),
+        createCustomTag(
+            'template',
+            (data: string) => ({ type: 'template', uri, data, src: data })),
     ])
 });

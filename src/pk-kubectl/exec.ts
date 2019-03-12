@@ -20,7 +20,7 @@ export const execStdin = (command: string, input: string, cb: (data: any) => voi
     return new Promise((resolve, reject) => {
         try {
             const ps = exec(command);
-            ps.stdin.write(input, e => {
+            ps.stdin.write(input, (e: any) => {
                 ps.stdin.end();
             });
             ps.stdout.on('data', (data) => cb(data));

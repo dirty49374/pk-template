@@ -59,19 +59,20 @@ export class PktModule {
     }
 
     static FindPkModuleYaml(uri: string): IPktModuleLoaded | null {
-        uri = uri + '/';
+        uri = uri.startsWith('https://') || uri.startsWith('http://')
+            ? `${uri}/`
+            : url.resolve(process.cwd(), uri) + '/';
         while (true) {
             let u = url.resolve(uri, PKMODULE_FILE_NAME);
-
             const json = PktModule.TryLoadModule(u);
             if (json) {
-                if (!path.isAbsolute(u) && u[0] != '.') {
-                    u = './' + u;
-                }
+                // if (!path.isAbsolute(u) && u[0] != '.') {
+                //     u = './' + u;
+                // }
                 return { module: jsyaml.load(json) as any, uri: u };
             }
 
-            const parent = url.resolve(uri, '..');
+            const parent = url.resolve(uri, '../');
             if (parent == null || parent === uri) {
                 return null;
             }
