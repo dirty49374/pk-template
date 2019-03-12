@@ -1,9 +1,6 @@
 import { IPkctlDeleteOptions } from "../types";
-import { loadYamlFile } from '../../pk-yaml';
-import * as Pkt from '../../pkt/pkt';
 import * as Pkz from '../../pkz';
 import { unsetExt } from "../../common";
-import { IResult as IPktResult } from "../../pk-lib/types";
 import { PktModule } from "../../pk-lib/module";
 
 export class DeleteCommand {

@@ -1,25 +1,12 @@
-import { IObject, IKubeCtlConfig, IResourceKey, delay } from "../common";
+import { IKubeCtlConfig, IResourceKey, delay } from "../common";
 import { Progress } from "../pkctl/commands/progress";
 import { PkzKube } from "../pk-kubectl/pkt-kube";
-import { IPkctlApplyOptions, IProgressOptions } from "../pkctl/types";
-import { IPkz } from "../pk-lib/types";
-import * as pkyaml from '../pk-yaml';
-import * as Pkz from '.';
 import { PkzSpec } from "../pkctl/spec";
-import { getChalk } from "../pk-lib/lazy";
 import { IPkzApplierOption } from "./options";
-
-interface IDeleteObject {
-    apiGroup: string;
-    kind: string;
-    name: string;
-    namespace: string;
-}
 
 export class PkzUninstaller extends Progress {
     private kube: PkzKube;
     private kubeOption: IKubeCtlConfig;
-    private wholeOption: string = '';
 
     constructor(private packageName: string, private contextName: string, private options: IPkzApplierOption) {
         super(options);
@@ -30,7 +17,6 @@ export class PkzUninstaller extends Progress {
             sequential_apply: false,
         };
         this.kube = new PkzKube(this.kubeOption, this);
-        this.wholeOption = `${this.kubeOption.kube_dryrun_option}${this.kubeOption.kube_option}`
     }
 
     private loadInstalledSpec(): PkzSpec | null {
