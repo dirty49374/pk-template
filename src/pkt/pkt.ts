@@ -9,14 +9,9 @@ import { readStdin } from '../pk-lib/utils';
 import { Scope } from '../pk-lib/scope';
 import { exceptionHandler } from '../pk-util/exception';
 import { PktModule } from '../pk-lib/module';
-import { IPktEnv } from '../pk-lib/types';
+import { IPktEnv, IResult } from '../pk-lib/types';
 
-export interface IResult {
-    objects: IObject[];
-    args: IPktArgs;
-}
-
-function run(objects: IObject[], values: IValues, files: string[], env: IPktEnv | null): IObject[] {
+function gen(objects: IObject[], values: IValues, files: string[], env: IPktEnv | null): IObject[] {
     objects = objects || [];
     const scope = Scope.CreateRoot(objects, values, env);
     for (const path of files) {
@@ -26,33 +21,35 @@ function run(objects: IObject[], values: IValues, files: string[], env: IPktEnv 
     return scope.objects;
 }
 
-async function generate(args: IPktArgs, env: IPktEnv | null): Promise<IObject[]> {
-    if (args.options.stdin) {
-        const text = await readStdin();
-        const objects = pkyaml.parseYamlAll(text);
-        return run(objects, args.values, args.files, env);
-    } else {
-        return run([], args.values, args.files, env);
-    }
-}
-
-export async function executeWithTryCatch(args: IPktArgs, print: boolean): Promise<IResult | null> {
-
+export async function generate(args: IPktArgs): Promise<IResult> {
     const module = args.files.length > 0
         ? PktModule.Load(args.files[0])
         : PktModule.Load('.');
     const envs = (module && module.module && module.module.envs) || []
     const env = args.options.env ? (envs.find(e => e.name == args.options.env) || null) : null;
 
-    const objects = await generate(args, env);
-    if (print) {
-        const output = buildOutput(args.options, objects);
-        console.log(output);
+    if (args.options.stdin) {
+        const text = await readStdin();
+        const inputObjects = pkyaml.parseYamlAll(text);
+        const objects = gen(inputObjects, args.values, args.files, env);
+        return { objects, args, env };
+    } else {
+        const objects = gen([], args.values, args.files, env);
+        return { objects, args, env };
     }
-    return { objects, args };
 }
 
-export async function execute(argv: any, print: boolean): Promise<IResult | null> {
+export async function executeWithTryCatch(args: IPktArgs, print: boolean): Promise<IResult | null> {
+
+    const result = await generate(args);
+    if (print) {
+        const output = buildOutput(args.options, result.objects);
+        console.log(output);
+    }
+    return result;
+}
+
+export async function execCommand(argv: any, print: boolean): Promise<IResult | null> {
 
     if (argv.length == 0) {
         help([]);
@@ -87,7 +84,7 @@ export async function execute(argv: any, print: boolean): Promise<IResult | null
     }
 
     try {
-        return await executeWithTryCatch(args, print);
+        return await execCommand(args, print);
     } catch (e) {
         await exceptionHandler(e);
 

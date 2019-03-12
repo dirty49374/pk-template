@@ -1,7 +1,5 @@
 export interface IPkzHeader {
-    kubeconfig: string;
     context: string;
-    cluster: string;
 }
 
 export interface IObject {
@@ -80,3 +78,11 @@ export const forEachTreeObject = (object: any, cb: TreeNodeVisitor) => {
 }
 
 export const version = () => require(__dirname + '/../package.json').version;
+
+export const unsetExt = (fn: string, ext: string) => fn.toLowerCase().endsWith(ext)
+    ? fn.substr(0, fn.length - ext.length)
+    : fn;
+
+export const setExt = (fn: string, ext: string) => fn.toLowerCase().endsWith(ext)
+    ? fn
+    : fn + ext;

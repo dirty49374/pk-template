@@ -5,6 +5,8 @@ import { ApplyCommand } from "./commands/apply";
 import { InitCommand } from "./commands/init";
 import { AddCommand } from "./commands/add";
 import { EnvCommand } from "./commands/env";
+import { DeployCommand } from "./commands/deploy";
+import { DeleteCommand } from "./commands/delete";
 
 type Argv = any;
 
@@ -49,6 +51,30 @@ function run(argv: string[], help: boolean) {
                 .positional('package-name', { describe: 'a package name', }),
             (argv: any) => {
                 new ApplyCommand(argv).execute();
+            })
+        .command(
+            'deploy <spec-name> <env-name>',
+            'deploy spec to env',
+            (yargs: Argv) => yargs
+                .option('dry-run', { describe: 'dry run', boolean: true })
+                .option('immediate', { describe: 'execute immediately without initial 5 seconds delay', boolean: true })
+                .option('yes', { describe: 'overwrite without confirmation', boolean: true })
+                .positional('spec-name', { describe: 'a spec name', })
+                .positional('env-name', { describe: 'an environment name', }),
+            (argv: any) => {
+                new DeployCommand(argv).execute();
+            })
+        .command(
+            'delete <package-name> <env-name>',
+            'delete package from env',
+            (yargs: Argv) => yargs
+                .option('dry-run', { describe: 'dry run', boolean: true })
+                .option('immediate', { describe: 'execute immediately without initial 5 seconds delay', boolean: true })
+                .option('yes', { describe: 'overwrite without confirmation', boolean: true })
+                .positional('package-name', { describe: 'a package name', })
+                .positional('env-name', { describe: 'an environment name', }),
+            (argv: any) => {
+                new DeleteCommand(argv).execute();
             })
         .command(
             'env <env-name> <context-name>',

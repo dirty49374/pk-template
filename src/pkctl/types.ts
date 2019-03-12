@@ -1,13 +1,14 @@
 import { IResourceType, IKubeCtlConfig } from "../common";
 
-export interface IPkctlOptions {
-    kubeconfig: string;
-    context: string;
-    cluster: string;
-    packageName: string;
-    _: string[];
+export interface IProgressOptions {
     yes: boolean;
     dryRun: boolean;
+}
+
+export interface IPkctlOptions extends IProgressOptions {
+    context: string;
+    packageName: string;
+    _: string[];
 }
 
 export interface IPktCreateOptions extends IPkctlOptions {
@@ -29,6 +30,17 @@ export interface IPkctlAddOptions extends IPkctlOptions {
 }
 
 export interface IPkctlApplyOptions extends IPkctlOptions {
+    immediate: boolean;
+    sequentialApply: boolean;
+}
+
+export interface IPkctlDeleteOptions extends IPkctlOptions {
+    envName: string;
+}
+
+export interface IPkctlDeployOptions extends IPkctlOptions {
+    specName: string;
+    envName: string;
     immediate: boolean;
     sequentialApply: boolean;
 }

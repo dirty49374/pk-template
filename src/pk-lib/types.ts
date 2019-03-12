@@ -1,4 +1,5 @@
 import { IObject } from "../common";
+import { IPktArgs } from "../pkt/args";
 
 export type IConfig = any;
 export interface IPkt {
@@ -117,10 +118,8 @@ export interface IScope {
 
 export interface IPkz {
     name: string;
-    args: string[];
-    kubeconfig: string;
+    args: IPktArgs;
     context: string;
-    cluster: string;
     objects: IObject[];
 }
 
@@ -145,4 +144,10 @@ export interface IPktEnv {
 export interface IPktModule {
     repositories: IPktRepositories;
     envs: IPktEnv[];
+}
+
+export interface IResult {
+    objects: IObject[];
+    args: IPktArgs;
+    env: IPktEnv | null;
 }
