@@ -1,9 +1,5 @@
 import { IResourceType, IKubeCtlConfig } from "../common";
-
-export interface IProgressOptions {
-    yes: boolean;
-    dryRun: boolean;
-}
+import { IProgressOptions } from "../pk-ui";
 
 export interface IPkctlOptions extends IProgressOptions {
     context: string;

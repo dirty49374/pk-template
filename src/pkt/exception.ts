@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { extractSourceMap } from '../pk-template/sourceMap';
 
-import { getChalk, getSourceMap } from "../pk-template/lazy";
+import { getChalk, getSourceMap } from "../lazy";
 
 const extractSourceAndLocation2 = async (name: string, file: string, line: number, column: number): Promise<{ name: string, file: string, line: number, column: number }> => {
     try {

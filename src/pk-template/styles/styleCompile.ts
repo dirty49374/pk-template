@@ -1,4 +1,4 @@
-import { getUnderscore } from "../lazy";
+import { getUnderscore } from "../../lazy";
 import { forEachTreeObject } from "../../common";
 import { parseParametericStyle as parseParametericStyles, parseEmptyStyles } from "./styleParser";
 import { IStyle, IScope } from "../types";

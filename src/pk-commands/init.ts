@@ -1,4 +1,4 @@
-import { PkProjectFile } from '../pk-conf/conf';
+import { PkConf } from '../pk-conf/conf';
 import { mkdirSync } from 'fs';
 
 export default {
@@ -7,8 +7,8 @@ export default {
     builder: (yargs: any) => yargs,
     handler: (argv: any) => {
         console.log('initializing project')
-        const file = PkProjectFile.create(argv.projectName, 'unknown');
-        PkProjectFile.save('.', file);
+        const file = PkConf.create(argv.projectName, 'unknown');
+        PkConf.save('.', file);
 
         console.log('creating project directories...');
         mkdirSync('pk_modules');

@@ -1,5 +1,5 @@
 import jsyaml from 'js-yaml';
-import { getLiveScript, getCoffeeScript } from '../pk-template/lazy';
+import { getLiveScript, getCoffeeScript } from '../lazy';
 import { CustomYamlTag } from '../pk-template/types';
 
 

@@ -2,7 +2,7 @@
 import * as utils from './utils';
 import selectors from './selectors';
 import { IScope, IValues, IPkt, IStatement } from './types';
-import { getJsonPath, getJsonPatch } from './lazy';
+import { getJsonPath, getJsonPatch } from '../lazy';
 import { StyleSheet } from './styles/styleSheet';
 import { Schema } from './schema';
 import { Trace } from './trace';

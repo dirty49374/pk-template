@@ -1,4 +1,4 @@
-import { getAjv } from "./lazy";
+import { getAjv } from "../lazy";
 
 export class Schema {
     private ajv: any;

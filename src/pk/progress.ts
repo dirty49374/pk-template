@@ -1,4 +1,4 @@
-import { getReadlineSync, getChalk } from "../pk-template/lazy";
+import { getReadlineSync, getChalk } from "../lazy";
 import { ApplyConfig } from "../pk-commands/types";
 import { IProgress } from "../common";
 

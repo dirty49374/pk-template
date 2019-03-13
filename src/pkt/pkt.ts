@@ -8,10 +8,11 @@ import { IObject, version } from '../common';
 import { readStdin } from '../pk-template/utils';
 import { Scope } from '../pk-template/scope';
 import { exceptionHandler } from '../pk-util/exception';
-import { IPktEnv, IResult } from '../pk-template/types';
-import { PkProjectFile } from '../pk-conf/conf';
+import { IResult } from '../pk-template/types';
+import { PkConf } from '../pk-conf/conf';
+import { IPkEnv } from '../pk-conf';
 
-function gen(objects: IObject[], values: IValues, files: string[], env: IPktEnv | null): IObject[] {
+function gen(objects: IObject[], values: IValues, files: string[], env: IPkEnv | null): IObject[] {
     objects = objects || [];
     const scope = Scope.CreateRoot(objects, values, env);
     for (const path of files) {
@@ -23,10 +24,10 @@ function gen(objects: IObject[], values: IValues, files: string[], env: IPktEnv 
 
 export async function generate(args: IPktArgs): Promise<IResult> {
     const { conf } = args.files.length > 0
-        ? PkProjectFile.find(args.files[0])
-        : PkProjectFile.find('.');
-    const envs = (conf && conf.envs) || []
-    const env = args.options.env ? (envs.find(e => e.name == args.options.env) || null) : null;
+        ? PkConf.find(args.files[0])
+        : PkConf.find('.');
+    const envs = (conf && conf.envs) || [];
+    const env = args.options.env ? (envs.find(e => e.name === args.options.env) || null) : null;
 
     if (args.options.stdin) {
         const text = await readStdin();

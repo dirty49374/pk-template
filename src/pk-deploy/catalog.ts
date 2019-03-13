@@ -1,13 +1,16 @@
 import { ISet, IResourceKey } from "../common";
 
-export class PkzSpec {
-    static parse(id: string, text: string): PkzSpec {
+export class ICatalog {
+
+}
+export class PkdCatalog {
+    static parse(id: string, text: string): PkdCatalog {
         const set: ISet = {};
         text.split('\n')
             .filter((line: string) => line)
             .forEach(key => set[key.trim()] = true);
 
-        return new PkzSpec(id, set);
+        return new PkdCatalog(id, set);
     }
 
     constructor(private id: string, private keys: ISet) {
@@ -16,6 +19,7 @@ export class PkzSpec {
     getId() {
         return this.id;
     }
+
     getData(): string {
         return Object.keys(this.keys).sort().join('\n');
     }
@@ -29,7 +33,7 @@ export class PkzSpec {
         return left;
     }
 
-    subtract(other: PkzSpec): IResourceKey[] {
+    subtract(other: PkdCatalog): IResourceKey[] {
         const left: IResourceKey[] = [];
         for (const key in this.keys) {
             if (!other.keys[key]) {

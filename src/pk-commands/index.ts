@@ -11,4 +11,5 @@ export const initCommands = (yargs: any): any => yargs
     .command(require('./init').default)
     .command(require('./module').default)
     .command(require('./package').default)
+    .command(require('./deployment').default)
     ;

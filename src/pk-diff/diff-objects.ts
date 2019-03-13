@@ -42,8 +42,8 @@ export function diffObject(key: string, prev: string, curr: string) {
 export function diffObjects(prev: IObject[], curr: IObject[]) {
     const keyMapreducer = (sum: IObject, o: IObject) => ({ ...sum, [`${o.metadata.namespace || ''}/${o.metadata.name}/${o.apiVersion}/${o.kind}`]: o });
     const nonPkzFilter = (o: IObject) =>
-        (o.kind !== 'ConfigMap' || o.metadata.namespace !== 'pk-packages') &&
-        (o.kind !== 'Namespace' || o.metadata.name !== 'pk-packages');
+        (o.kind !== 'ConfigMap' || o.metadata.namespace !== 'pk-deployments') &&
+        (o.kind !== 'Namespace' || o.metadata.name !== 'pk-deployments');
     const prevmap: any = prev.filter(nonPkzFilter).reduce(keyMapreducer, {});
     const currmap: any = curr.filter(nonPkzFilter).reduce(keyMapreducer, {});
 

@@ -2,7 +2,7 @@ import fs from "fs";
 import url from 'url';
 import * as utils from './utils';
 import { IScope, IPkt, ILoader } from './types';
-import { getUnderscore, getSyncRequest } from './lazy';
+import { getUnderscore, getSyncRequest } from '../lazy';
 import { parseYaml, parseYamlAll, parseYamlAsPkt } from "../pk-yaml";
 
 function isHttp(uri: string): boolean {

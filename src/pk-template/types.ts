@@ -1,5 +1,6 @@
 import { IObject } from "../common";
 import { IPktArgs } from "../pkt/args";
+import { IPkEnv } from "../pk-conf";
 
 export type IConfig = any;
 export interface IPkt {
@@ -116,13 +117,6 @@ export interface IScope {
     expandStyle(orject: any): void;
 }
 
-export interface IPkz {
-    name: string;
-    args: IPktArgs;
-    context: string;
-    objects: IObject[];
-}
-
 export const PKMODULE_FILE_NAME = 'pkt.conf';
 export const PKTLIBS_DIR_NAME = 'pktlib';
 
@@ -139,5 +133,5 @@ export interface IPktEnv {
 export interface IResult {
     objects: IObject[];
     args: IPktArgs;
-    env: IPktEnv | null;
+    env: IPkEnv | null;
 }

@@ -2,7 +2,7 @@ import { execPipeSync } from "./exec";
 import { IResourceKey, IProgress, IKubeCtlConfig, IObject, ISet } from "../common";
 import { KubeCtl } from "./kubectl";
 
-export class PkzKube extends KubeCtl {
+export class PkKubeCtl extends KubeCtl {
 
     private unnamespacables: ISet | undefined;
     constructor(
@@ -31,7 +31,7 @@ export class PkzKube extends KubeCtl {
 
 
     getPkzSpec(name: string): IObject | null {
-        const command = `kubectl get configmap ${name} ${this.config.kube_option} --namespace pk-packages -ojson`;
+        const command = `kubectl get configmap ${name} ${this.config.kube_option} --namespace pk-deployments -ojson`;
         // this.progress.log(`--- ${command}`);
         const result = execPipeSync(command, '(NotFound)');
         if (result) {

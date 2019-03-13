@@ -6,7 +6,8 @@ import { Evaluator } from './evaluator';
 import { Loader } from './loader';
 import { StyleSheet } from './styles/styleSheet';
 import { PathResolver } from './pathResolver';
-import { PkProjectFile } from '../pk-conf/conf';
+import { PkConf } from '../pk-conf/conf';
+import { IPkEnv } from '../pk-conf';
 
 const clone = (obj: any): any => JSON.parse(JSON.stringify(obj));
 
@@ -17,7 +18,7 @@ export class Scope extends PathResolver implements IScope {
     parent: IScope;
     $buildLib: any;
     trace?: ITrace;
-    conf?: PkProjectFile;
+    conf?: PkConf;
     styleSheet: IStyleSheet;
     env: IPktEnv;
     private evaluator: Evaluator;
@@ -103,7 +104,7 @@ export class Scope extends PathResolver implements IScope {
     // style
     expandStyle = (object: any): void => this.styleSheet.apply(this, object);
 
-    static Create(values: IValues, uri: string, parent: IScope | null, objects: IObject[], styleSheet: IStyleSheet, env: IPktEnv | null): IScope {
+    static Create(values: IValues, uri: string, parent: IScope | null, objects: IObject[], styleSheet: IStyleSheet, env: IPkEnv | null): IScope {
         const scope = new Scope({
             objects: objects ? [...objects] : [],
             values: values ? clone(values) : {},
@@ -115,7 +116,7 @@ export class Scope extends PathResolver implements IScope {
         return scope;
     }
 
-    static CreateRoot(objects: IObject[], values: IValues, env: IPktEnv | null) {
+    static CreateRoot(objects: IObject[], values: IValues, env: IPkEnv | null) {
         return Scope.Create(
             values,
             process.cwd() + '/',

@@ -1,5 +1,5 @@
 import { IScope, CustomYamlTag } from "./types";
-import { getUnderscore, getLiveScript } from "./lazy";
+import { getUnderscore, getLiveScript } from "../lazy";
 import { parseYamlAll } from "../pk-yaml";
 import { forEachTreeObjectKey } from "../common";
 import * as utils from './utils';

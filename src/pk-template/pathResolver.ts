@@ -1,6 +1,6 @@
 import url from 'url';
 import { join, isAbsolute } from 'path';
-import { PkProjectFile } from '../pk-conf/conf';
+import { PkConf } from '../pk-conf/conf';
 
 export class PathResolver {
     public uri: string;
@@ -22,7 +22,7 @@ export class PathResolver {
         }
 
         if (rpath.startsWith(':')) {
-            const { dir } = PkProjectFile.find(this.uri);
+            const { dir } = PkConf.find(this.uri);
             if (dir) {
                 return join(dir, 'pk_modules', rpath.substr(1));
             }

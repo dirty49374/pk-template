@@ -1,35 +1,9 @@
 import * as fs from "fs";
 import { resolve, dirname } from "path";
 import * as Yaml from '../pk-yaml';
-import { v4 as uuid } from 'uuid';
-import { IPkModule } from "../pk-module/PkModuleHelper";
+import { IPkApp, IPkModule, IPkEnv, IPkProject, IPkConf } from ".";
 
-export interface IPkProject {
-    id: string
-    name: string;
-    owner: string;
-};
-
-export interface IPkApp {
-    id: string;
-    name: string;
-    path: string;
-}
-
-export interface IPkEnv {
-    name: string;
-    context: string;
-    data: { [id: string]: any; };
-}
-
-export interface IPkProjectFile {
-    project: IPkProject;
-    apps: IPkApp[];
-    envs: IPkEnv[];
-    modules: IPkModule[];
-}
-
-export class PkProjectFile implements IPkProjectFile {
+export class PkConf implements IPkConf {
     static FILENAME = "pk.conf";
 
     project: IPkProject;
@@ -37,12 +11,36 @@ export class PkProjectFile implements IPkProjectFile {
     envs: IPkEnv[];
     modules: IPkModule[];
 
-    constructor(file: IPkProjectFile) {
+    constructor(file: IPkConf) {
         this.project = file.project;
         this.apps = file.apps;
         this.envs = file.envs;
         this.modules = file.modules;
     }
+
+    getApp = (name: string): IPkApp | undefined => this.apps.find(app => app.name == name);
+    getAppEnv(appName: string, envName: string): IPkEnv | undefined {
+        const env = this.getEnv(envName);
+        const app = this.getApp(appName);
+        if (!app) {
+            throw new Error(`app ${appName} not exits`);
+        }
+        const appEnv = app.envs && app.envs.find(e => e.name === envName);
+        if (!env && !appEnv) {
+            return undefined;
+        }
+
+        return {
+            name: envName,
+            values: {
+                ...(env && env.values || {}),
+                ...(appEnv && appEnv.values || {}),
+            },
+        } as IPkEnv
+    }
+
+    getEnv = (name: string): IPkEnv | undefined => this.envs && this.envs.find(e => e.name === name);
+
     addModule(module: IPkModule) {
         if (this.modules.findIndex(m => m.name == module.name) >= 0) {
             throw new Error(`module ${module.name} already exists`);
@@ -50,18 +48,15 @@ export class PkProjectFile implements IPkProjectFile {
         this.modules.push(module);
     }
 
-    getModule(name: string) {
-        return this.modules.find(m => m.name == name);
-    }
+    getModule = (name: string): IPkModule | undefined => this.modules.find(m => m.name == name);
 
     static exists() {
-        return fs.existsSync(PkProjectFile.FILENAME);
+        return fs.existsSync(PkConf.FILENAME);
     }
 
     static create(projectName: string, owner: string) {
-        return new PkProjectFile({
+        return new PkConf({
             project: {
-                id: uuid(),
                 name: projectName,
                 owner: owner,
             },
@@ -71,9 +66,9 @@ export class PkProjectFile implements IPkProjectFile {
         });
     }
 
-    static save(dir: string, file: IPkProjectFile) {
+    static save(dir: string, file: IPkConf) {
         const content = Yaml.dumpYaml(file);
-        fs.writeFileSync(`${dir}/${PkProjectFile.FILENAME}`, content, 'utf8');
+        fs.writeFileSync(`${dir}/${PkConf.FILENAME}`, content, 'utf8');
     }
 
     private static tryLoad(uri: string): string | null {
@@ -87,14 +82,14 @@ export class PkProjectFile implements IPkProjectFile {
 
     private static _find(dir: string) {
         while (true) {
-            let path = resolve(dir, PkProjectFile.FILENAME);
-            const content = PkProjectFile.tryLoad(path);
+            let path = resolve(dir, PkConf.FILENAME);
+            const content = PkConf.tryLoad(path);
             if (content) {
                 const file = Yaml.parseYaml(content);
                 return {
                     path,
                     dir: dirname(path),
-                    conf: new PkProjectFile(file),
+                    conf: new PkConf(file),
                 };
             }
             const parent = resolve(dir, '../');
@@ -108,8 +103,8 @@ export class PkProjectFile implements IPkProjectFile {
 
     static find(uri?: string) {
         return uri
-            ? PkProjectFile._find(uri + '/')
-            : PkProjectFile._find(process.cwd() + '/');
+            ? PkConf._find(uri + '/')
+            : PkConf._find(process.cwd() + '/');
     }
 
 }

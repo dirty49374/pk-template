@@ -1,5 +1,6 @@
-import { PkProjectFile } from '../../pk-conf/conf';
-import { PkModuleHelper, IPkModule } from '../../pk-module/PkModuleHelper';
+import { PkConf } from '../../pk-conf/conf';
+import { cloneModule } from '../../pk-conf/module';
+import { IPkModule } from '../../pk-conf';
 
 export default {
     command: 'add <name> <repository>',
@@ -9,9 +10,9 @@ export default {
         .option('tag', { describe: 'tag name' }),
     handler: (argv: any) => {
         console.log(argv);
-        const { dir, conf } = PkProjectFile.find();
+        const { dir, conf } = PkConf.find();
         if (!dir || !conf) {
-            throw new Error(`${PkProjectFile.FILENAME} file not found`);
+            throw new Error(`${PkConf.FILENAME} file not found`);
         }
 
         const mod: IPkModule = {
@@ -27,9 +28,8 @@ export default {
         }
         conf.addModule(mod);
 
-        const helper = new PkModuleHelper(dir, mod);
-        helper.clone();
+        cloneModule(dir, mod);
 
-        PkProjectFile.save(dir, conf);
+        PkConf.save(dir, conf);
     },
 }

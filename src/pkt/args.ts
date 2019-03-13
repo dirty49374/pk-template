@@ -7,6 +7,7 @@ import { loadYamlFile } from '../pk-yaml';
 export interface IPktArgs {
     options: IPktOptions;
     files: string[];
+    env?: string;
     values: IValues;
 }
 
@@ -109,6 +110,6 @@ export class ArgsBuilder {
         const files = this.buildFiles(yargv)
         const options = this.buildOptions(argv, yargv)
 
-        return { options, values, files, };
+        return { options, values, files, env: options.env };
     }
 }
