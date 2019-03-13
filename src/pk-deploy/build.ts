@@ -13,7 +13,7 @@ const objectError = (object: IObject, err: string) => {
 
 }
 
-export const buildPkd = async (root: string, conf: PkConf, appName: string, envName: string) => {
+export const buildPkd = async (conf: PkConf, appName: string, envName: string) => {
     const app = conf.getApp(appName);
     if (!app) {
         throw new Error(`app ${appName} not exits`);
@@ -31,14 +31,14 @@ export const buildPkd = async (root: string, conf: PkConf, appName: string, envN
 
     const args: IPktArgs = {
         options: {},
-        files: [`${root}/${appName}/app.pkt`],
+        files: [`app.pkt`],
         env: env.name,
         values: env.values,
     }
 
-    const result = await generate(args);
+    const objects = await generate(args);
 
-    const newList = result.objects.map(o => o);
+    const newList = objects.map(o => o);
     newList.push({
         "apiVersion": "v1",
         kind: "Namespace",
@@ -61,7 +61,7 @@ export const buildPkd = async (root: string, conf: PkConf, appName: string, envN
         }
     }
 
-    const catalog = result.objects
+    const catalog = objects
         .map(o => {
             const kind = o.kind;
             const avs = o.apiVersion.split('/');
@@ -84,7 +84,6 @@ export const buildPkd = async (root: string, conf: PkConf, appName: string, envN
         },
         env: env,
     };
-    console.log(env);
 
     newList.unshift({
         apiVersion: "v1",

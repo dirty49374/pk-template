@@ -6,13 +6,13 @@ import { IPkdApplierOption } from "./options";
 
 export const deletePkd = async (packageName: string, contextName: string, options: IPkdApplierOption) => {
 
-    const loadInstalledSpec = (): PkdCatalog | null => {
+    const loadInstalledCatalog = (): PkdCatalog | null => {
         const map = kube.getPkzSpec(packageName);
         if (!map) {
             return null;
         }
-        const spec = PkdCatalog.parse(map.metadata.name, map.data.objects);
-        return spec
+        const catalog = PkdCatalog.parse(map.metadata.name, map.data.objects);
+        return catalog
     }
 
     const deleteObjects = async (keys: IResourceKey[]) => {
@@ -61,14 +61,14 @@ export const deletePkd = async (packageName: string, contextName: string, option
         }
     }
 
-    const spec = loadInstalledSpec();
-    if (!spec) {
+    const catalog = loadInstalledCatalog();
+    if (!catalog) {
         console.error(`cannot find package ${packageName} on context ${contextName}`)
         process.exit(1);
         return;
     }
 
-    const keys = spec.getKeys();
+    const keys = catalog.getKeys();
     deleteObjects(keys);
     ui.success('success !!!');
 }

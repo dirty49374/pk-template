@@ -3,5 +3,5 @@ export default {
     desc: 'deployment commands',
     builder: (yargs: any) => yargs
         .command(require('./createCommand').default)
-    // .command(require('./updateCommand').default),
+        .command(require('./updateCommand').default),
 }

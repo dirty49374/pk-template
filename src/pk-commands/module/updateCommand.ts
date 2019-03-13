@@ -1,5 +1,6 @@
 import { PkConf } from '../../pk-conf/conf';
 import { updateModule } from '../../pk-conf/module';
+import { atPkConfDir, atModuleDir } from '../util';
 
 export default {
     command: 'update <module-name>',
@@ -7,29 +8,25 @@ export default {
     builder: (yargs: any) => yargs
         .option('branch', { describe: 'branch name' })
         .option('tag', { describe: 'tag name' }),
-    handler: (argv: any) => {
-        const { dir, conf } = PkConf.find();
-        if (!dir || !conf) {
-            throw new Error(`${PkConf.FILENAME} file not found`);
-        }
+    handler: async (argv: any) => {
 
-        const mod = conf.getModule(argv.moduleName);
-        if (!mod) {
-            throw new Error(`module ${argv.moduleName} is not defined.`);
-        }
-        if (argv.branch) {
-            mod.branch = argv.branch;
-            delete mod.tag;
-        } else if (argv.tag) {
-            mod.tag = argv.tag;
-            delete mod.branch;
-        } else {
-            mod.branch = 'master';
-        }
-        console.log(mod);
+        await atPkConfDir(async (dir, conf) => {
 
-        updateModule(dir, mod);
+            await atModuleDir(conf, argv.moduleName, async mod => {
+                if (argv.branch) {
+                    mod.branch = argv.branch;
+                    delete mod.tag;
+                } else if (argv.tag) {
+                    mod.tag = argv.tag;
+                    delete mod.branch;
+                } else {
+                    mod.branch = 'master';
+                }
+                updateModule(mod);
+            });
 
-        PkConf.save(dir, conf);
+            PkConf.save('.', conf);
+        });
+
     },
 }

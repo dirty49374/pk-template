@@ -29,7 +29,6 @@ export interface IPktOptions {
     pkt?: boolean;
     indent?: boolean;
     env?: string;
-    spec?: string;
 }
 
 export type IScopeHandler = (scope: IScope) => any;
@@ -124,14 +123,7 @@ export interface IPktRepositories {
     [id: string]: string;
 }
 
-export interface IPktEnv {
-    name: string;
-    context: string;
-    data: { [id: string]: any; };
-}
-
 export interface IResult {
-    objects: IObject[];
     args: IPktArgs;
-    env: IPkEnv | null;
+    objects: IObject[];
 }

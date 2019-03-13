@@ -5,28 +5,34 @@ import { buildPkd } from '../../pk-deploy/build';
 import { savePkd } from '../../pk-deploy/save';
 import { existsPkd } from '../../pk-deploy/exists';
 import { PkConf } from '../../pk-conf/conf';
+import { atPkConfDir, atAppDir } from '../util';
 
 export default {
-    command: 'create <appName> <envName>',
+    command: 'create <appName>',
     desc: 'create a deployment for environment',
     builder: (yargs: any) => yargs
-        .option('cluster')
-        .option('yes', { describe: 'overwrite without confirmation', boolean: true }),
+        .option('env', { describe: 'environment name' })
+        .option('yes', { describe: 'overwrite without confirmation', boolean: true })
+        .demandOption(['env'], 'please specify --env option'),
     handler: async (argv: any): Promise<any> => {
-        const { dir, conf } = PkConf.find('.');
-        if (!dir || !conf) {
-            throw new Error('cannot find pk.conf file');
-        }
-        const deployment = await buildPkd(dir, conf, argv.appName, argv.envName);
 
-        if (deployment != null) {
-            if (existsPkd(deployment) && !argv.yes) {
-                getReadlineSync().question(getChalk().red(`file already exists, are you sure to overwrite ? [ENTER/CTRL-C] `));
-            }
-            savePkd(deployment);
-            console.log(getChalk().green(`${argv.envName} created`));
-        } else {
-            console.error(getChalk().red(`failed to create package ${argv.envName}`));
-        }
+        await atPkConfDir(async (root, conf) => {
+
+            await atAppDir(conf, argv.appName, async app => {
+
+                const deployment = await buildPkd(conf, argv.appName, argv.env);
+                if (deployment != null) {
+                    if (existsPkd(argv.env) && !argv.yes) {
+                        getReadlineSync().question(getChalk().red(`file ${argv.env} exists, are you sure to overwrite ? [ENTER/CTRL-C] `));
+                    }
+                    savePkd(deployment);
+                    console.log(getChalk().green(`${argv.env} created`));
+                } else {
+                    console.error(getChalk().red(`failed to create package ${argv.env}`));
+                }
+
+            });
+        });
+
     },
 };

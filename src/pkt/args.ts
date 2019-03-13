@@ -87,8 +87,6 @@ export class ArgsBuilder {
 
         if (yargv.e) options.env = yargv.e;
 
-        if (yargv.S) options.spec = yargv.S;
-
         // if ('1' in yargv) options.json1 = !!yargv.J;
         // if ('n' in yargv) options.indent = !!yargv.n;
 

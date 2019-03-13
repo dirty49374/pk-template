@@ -3,7 +3,7 @@ import chalk from "chalk";
 import Diff = require("diff");
 import { IObject } from "../common";
 
-function printDiffPart(encolor: any, prefix: string, value: string, print: string) {
+function printDiffPart(encolor: any, prefix: string, value: string, print: string, indent: string = '') {
     const lines = value.split('\n');
     lines.pop(); // value: "line1\nline2\n"
 
@@ -13,33 +13,33 @@ function printDiffPart(encolor: any, prefix: string, value: string, print: strin
             ((print == 'both' || print == 'begin') && i < 2) ||
             ((print == 'both' || print == 'end') && lines.length - 3 < i);
         if (enabled) {
-            console.log(encolor(prefix + line));
+            console.log(encolor(indent + prefix + line));
         } else if (i == 2) {
-            console.log(encolor('  |~~~~~~~~~~~~~~~~~~~~~~~~~~~'));
+            console.log(encolor(indent + '  |~~~~~~~~~~~~~~~~~~~~~~~~~~~'));
         }
     }
 }
 
-export function diffObject(key: string, prev: string, curr: string) {
-    console.log('*', key + ':');
+export function diffObject(key: string, prev: string, curr: string, indent: string = '') {
+    console.log(indent + '*', key + ':');
 
     var diff = Diff.diffLines(prev, curr);
     for (let i = 0; i < diff.length; ++i) {
         const part = diff[i];
         if (part.added) {
-            printDiffPart(chalk.green, '  + ', part.value, 'all');
+            printDiffPart(chalk.green, '  + ', part.value, 'all', indent);
         } else if (part.removed) {
-            printDiffPart(chalk.red, '  - ', part.value, 'all');
+            printDiffPart(chalk.red, '  - ', part.value, 'all', indent);
         } else {
             const print = i == 0
                 ? 'end'
                 : (i == diff.length - 1 ? 'begin' : 'both');
-            printDiffPart(chalk.gray, '  | ', part.value, print);
+            printDiffPart(chalk.gray, '  | ', part.value, print, indent);
         }
     }
 }
 
-export function diffObjects(prev: IObject[], curr: IObject[]) {
+export function diffObjects(prev: IObject[], curr: IObject[], indent: string = '') {
     const keyMapreducer = (sum: IObject, o: IObject) => ({ ...sum, [`${o.metadata.namespace || ''}/${o.metadata.name}/${o.apiVersion}/${o.kind}`]: o });
     const nonPkzFilter = (o: IObject) =>
         (o.kind !== 'ConfigMap' || o.metadata.namespace !== 'pk-deployments') &&
@@ -53,12 +53,12 @@ export function diffObjects(prev: IObject[], curr: IObject[]) {
             const prevYaml = pkyaml.dumpYamlSortedKey(prevmap[key]);
             const currYaml = pkyaml.dumpYamlSortedKey(currmap[key]);
             if (prevYaml !== currYaml) {
-                diffObject(key, prevYaml, currYaml);
+                diffObject(key, prevYaml, currYaml, indent);
                 same = false;
             }
         } else {
-            console.log('*', key + ':');
-            console.log(chalk.red('  - ', 'deleted'));
+            console.log(`${indent}*`, key + ':');
+            console.log(chalk.red(`${indent}  - `, 'deleted'));
             //diffObject(key, pkyaml.dumpYamlSortedKey(prevmap[key]), '');
             same = false;
         }
@@ -67,13 +67,14 @@ export function diffObjects(prev: IObject[], curr: IObject[]) {
         if (key in prevmap) {
             continue;
         } else {
-            console.log('*', key + ':');
-            console.log(chalk.green('  + ', 'created'));
+            console.log(`${indent}*`, key + ':');
+            console.log(chalk.green(`${indent}  + `, 'created'));
             // diffObject(key, '', pkyaml.dumpYamlSortedKey(currmap[key]));
             same = false;
         }
     }
     if (same) {
-        console.log(`all ${Object.keys(currmap).length} objects are same !`)
+        console.log(`${indent}all ${Object.keys(currmap).length} objects are same !`)
     }
+    return same;
 }

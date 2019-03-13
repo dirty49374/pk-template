@@ -3,10 +3,8 @@ import { join } from "path";
 import { IPkModule } from ".";
 
 
-export const cloneModule = (projectDir: string, module: IPkModule) => {
+export const cloneModule = (module: IPkModule) => {
     const moduleDir = `pk_modules/${module.name}`;
-
-    process.chdir(projectDir);
 
     console.log('* adding submodule ...')
     const cmd = `git submodule add ${module.repository} ${moduleDir}`;
@@ -26,9 +24,9 @@ export const cloneModule = (projectDir: string, module: IPkModule) => {
     console.log(`* done`);
 }
 
-export const updateModule = (projectDir: string, module: IPkModule) => {
+export const updateModule = (module: IPkModule) => {
     const moduleDir = `pk_modules/${module.name}`;
-    process.chdir(join(projectDir, moduleDir));
+    process.chdir(moduleDir);
 
     console.log('* fetching submodule ...')
     const cmd = `git fetch --all`;

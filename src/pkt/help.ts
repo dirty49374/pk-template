@@ -24,7 +24,6 @@ function help(files: string[]): void {
     console.log('   -i           : load yamls from stdin as initial objects');
     console.log();
     console.log('   -e           : set environment name');
-    console.log('   -S           : save current options to spec file');
     console.log();
     console.log('   -B           : bash script output');
     console.log('   -J           : json output');
