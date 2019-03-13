@@ -5,7 +5,7 @@ import * as Pkz from '../../pkz';
 import { getChalk, getReadlineSync } from '../../pk-lib/lazy';
 import { IPkz } from "../../pk-lib/types";
 
-export class CreateCommand {
+class Command {
     private args: string[];
     private packageName: string;
 
@@ -42,3 +42,15 @@ export class CreateCommand {
         }
     }
 }
+
+export const CreateCommand = {
+    command: 'create <package-name>',
+    desc: 'create a package',
+    builder: (yargs: any) => yargs
+        .option('kubeconfig')
+        .option('context')
+        .option('cluster')
+        .option('yes', { describe: 'overwrite without confirmation', boolean: true })
+        .positional('package-name', { describe: 'a package name to craete', }),
+    handler: (argv: any) => new Command(argv).execute(),
+};

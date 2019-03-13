@@ -3,7 +3,7 @@ import jsyaml from 'js-yaml';
 import { IPkctlDiffOptions } from "../types";
 import { IPktModule, PKMODULE_FILE_NAME, PKTLIBS_DIR_NAME } from "../../pk-lib/types";
 
-export class InitCommand {
+class Command {
     constructor(private options: IPkctlDiffOptions) {
     }
 
@@ -32,3 +32,10 @@ export class InitCommand {
         console.log('module initialized');
     }
 }
+
+export const InitCommand = {
+    command: 'init',
+    desc: 'init a module',
+    builder: (yargs: any) => yargs,
+    handler: (argv: any) => new Command(argv).execute(),
+};

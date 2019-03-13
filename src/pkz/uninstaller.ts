@@ -1,5 +1,5 @@
 import { IKubeCtlConfig, IResourceKey, delay } from "../common";
-import { Progress } from "../pkctl/commands/progress";
+import { Progress } from "../pk-ui/progress";
 import { PkzKube } from "../pk-kubectl/pkt-kube";
 import { PkzSpec } from "../pkctl/spec";
 import { IPkzApplierOption } from "./options";

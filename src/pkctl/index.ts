@@ -8,95 +8,18 @@ import { EnvCommand } from "./commands/env";
 import { DeployCommand } from "./commands/deploy";
 import { DeleteCommand } from "./commands/delete";
 
-type Argv = any;
 
 function run(argv: string[], help: boolean) {
     const yargs = require('yargs')(argv)
-        .command(
-            'create <package-name>',
-            'create a package',
-            (yargs: Argv) => yargs
-                .option('kubeconfig')
-                .option('context')
-                .option('cluster')
-                .option('yes', { describe: 'overwrite without confirmation', boolean: true })
-                .positional('package-name', { describe: 'a package name to craete', }),
-            (argv: any) => {
-                new CreateCommand(argv).execute();
-            })
-        .command(
-            'update <package-names..>',
-            'update a package',
-            (yargs: Argv) => yargs
-                .option('yes', { describe: 'overwrite without confirmation', boolean: true })
-                .positional('package-names', { describe: 'list of packages to update', }),
-            (argv: any) => {
-                new UpdateCommand(argv).execute();
-            })
-        .command(
-            'diff <package-name>',
-            'diff a package',
-            (yargs: Argv) => yargs
-                .positional('package-name', { describe: 'a package name', }),
-            (argv: any) => {
-                new DiffCommand(argv).execute();
-            })
-        .command(
-            'apply <package-name>',
-            'apply a package',
-            (yargs: Argv) => yargs
-                .option('dry-run', { describe: 'dry run', boolean: true })
-                .option('immediate', { describe: 'execute immediately without initial 5 seconds delay', boolean: true })
-                .option('yes', { describe: 'overwrite without confirmation', boolean: true })
-                .positional('package-name', { describe: 'a package name', }),
-            (argv: any) => {
-                new ApplyCommand(argv).execute();
-            })
-        .command(
-            'deploy <spec-name> <env-name>',
-            'deploy spec to env',
-            (yargs: Argv) => yargs
-                .option('dry-run', { describe: 'dry run', boolean: true })
-                .option('immediate', { describe: 'execute immediately without initial 5 seconds delay', boolean: true })
-                .option('yes', { describe: 'overwrite without confirmation', boolean: true })
-                .positional('spec-name', { describe: 'a spec name', })
-                .positional('env-name', { describe: 'an environment name', }),
-            (argv: any) => {
-                new DeployCommand(argv).execute();
-            })
-        .command(
-            'delete <package-name> <env-name>',
-            'delete package from env',
-            (yargs: Argv) => yargs
-                .option('dry-run', { describe: 'dry run', boolean: true })
-                .option('immediate', { describe: 'execute immediately without initial 5 seconds delay', boolean: true })
-                .option('yes', { describe: 'overwrite without confirmation', boolean: true })
-                .positional('package-name', { describe: 'a package name', })
-                .positional('env-name', { describe: 'an environment name', }),
-            (argv: any) => {
-                new DeleteCommand(argv).execute();
-            })
-        .command(
-            'env <env-name> <context-name>',
-            'add or update env',
-            (yargs: Argv) => yargs,
-            (argv: any) => {
-                new EnvCommand(argv).execute();
-            })
-        .command(
-            'init',
-            'init a module',
-            (yargs: Argv) => yargs,
-            (argv: any) => {
-                new InitCommand(argv).execute();
-            })
-        .command(
-            'add <repository-name> <repository-uri>',
-            'add a remote module',
-            (yargs: Argv) => yargs,
-            (argv: any) => {
-                new AddCommand(argv).execute();
-            })
+        .command(CreateCommand)
+        .command(UpdateCommand)
+        .command(DiffCommand)
+        .command(ApplyCommand)
+        .command(DeployCommand)
+        .command(DeleteCommand)
+        .command(EnvCommand)
+        .command(InitCommand)
+        .command(AddCommand)
         .demandCommand()
     if (help) {
         yargs.showHelp();

@@ -4,7 +4,7 @@ import * as Pkz from '../../pkz';
 import { diffObjects } from '../../pk-diff/diff-objects';
 import { getReadlineSync, getChalk } from '../../pk-lib/lazy';
 
-export class UpdateCommand {
+class Command {
     private packageNames: string[];
 
     constructor(private options: IPkctlUpdateOptions) {
@@ -40,3 +40,12 @@ export class UpdateCommand {
         }
     }
 }
+
+export const UpdateCommand = {
+    command: 'update <package-names..>',
+    desc: 'update a package',
+    builder: (yargs: any) => yargs
+        .option('yes', { describe: 'overwrite without confirmation', boolean: true })
+        .positional('package-names', { describe: 'list of packages to update', }),
+    handler: (argv: any) => new Command(argv).execute(),
+};

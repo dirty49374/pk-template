@@ -5,7 +5,7 @@ import * as Pkz from '../../pkz';
 import { unsetExt } from "../../common";
 import { IResult as IPktResult } from "../../pk-lib/types";
 
-export class DeployCommand {
+class Command {
     constructor(private options: IPkctlDeployOptions) {
     }
 
@@ -51,3 +51,15 @@ export class DeployCommand {
         })
     }
 }
+
+export const DeployCommand = {
+    command: 'deploy <spec-name> <env-name>',
+    desc: 'deploy spec to env',
+    builder: (yargs: any) => yargs
+        .option('dry-run', { describe: 'dry run', boolean: true })
+        .option('immediate', { describe: 'execute immediately without initial 5 seconds delay', boolean: true })
+        .option('yes', { describe: 'overwrite without confirmation', boolean: true })
+        .positional('spec-name', { describe: 'a spec name', })
+        .positional('env-name', { describe: 'an environment name', }),
+    handler: (argv: any) => new Command(argv).execute(),
+};

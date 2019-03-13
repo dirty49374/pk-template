@@ -3,7 +3,7 @@ import * as Pkz from '../../pkz';
 import { unsetExt } from "../../common";
 import { PktModule } from "../../pk-lib/module";
 
-export class DeleteCommand {
+class Command {
     constructor(private options: IPkctlDeleteOptions) {
     }
 
@@ -26,3 +26,15 @@ export class DeleteCommand {
         Pkz.uninstall(pkzName, env.context, this.options);
     }
 }
+
+export const DeleteCommand = {
+    command: 'delete <package-name> <env-name>',
+    desc: 'delete package from env',
+    builder: (yargs: any) => yargs
+        .option('dry-run', { describe: 'dry run', boolean: true })
+        .option('immediate', { describe: 'execute immediately without initial 5 seconds delay', boolean: true })
+        .option('yes', { describe: 'overwrite without confirmation', boolean: true })
+        .positional('package-name', { describe: 'a package name', })
+        .positional('env-name', { describe: 'an environment name', }),
+    handler: (argv: any) => new Command(argv).execute(),
+};

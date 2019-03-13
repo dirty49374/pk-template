@@ -1,5 +1,5 @@
 import { IObject, IKubeCtlConfig, IResourceKey, delay } from "../common";
-import { Progress } from "../pkctl/commands/progress";
+import { Progress } from "../pk-ui/progress";
 import { PkzKube } from "../pk-kubectl/pkt-kube";
 import { IPkctlApplyOptions, IProgressOptions } from "../pkctl/types";
 import { IPkz } from "../pk-lib/types";

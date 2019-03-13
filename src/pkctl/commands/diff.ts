@@ -3,7 +3,7 @@ import { CreateCommand } from './create';
 import * as Pkz from '../../pkz';
 import { diffObjects } from '../../pk-diff/diff-objects';
 
-export class DiffCommand {
+class Command {
     private packageName: string;
 
     constructor(private options: IPkctlDiffOptions) {
@@ -28,3 +28,11 @@ export class DiffCommand {
         // }
     }
 }
+
+export const DiffCommand = {
+    command: 'diff <package-name>',
+    desc: 'diff a package',
+    builder: (yargs: any) => yargs
+        .positional('package-name', { describe: 'a package name', }),
+    handler: (argv: any) => new Command(argv).execute(),
+};

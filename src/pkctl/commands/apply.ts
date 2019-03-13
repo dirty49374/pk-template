@@ -1,5 +1,5 @@
 import { IPkctlApplyOptions } from "../types";
-import { Progress } from "./progress";
+import { Progress } from "../../pk-ui/progress";
 import { IObject, IKubeCtlConfig, IResourceKey, delay } from "../../common";
 import * as pkyaml from '../../pk-yaml';
 import * as Pkz from '../../pkz';
@@ -14,7 +14,7 @@ interface IApplyStep {
     final: boolean;
 }
 
-export class ApplyCommand extends Progress {
+class Command extends Progress {
     private packageName: string;
 
     private kube: PkzKube;
@@ -214,3 +214,14 @@ export class ApplyCommand extends Progress {
         await this.apply(pkz);
     }
 }
+
+export const ApplyCommand = {
+    command: 'apply <package-name>',
+    desc: 'apply a package',
+    builder: (yargs: any) => yargs
+        .option('dry-run', { describe: 'dry run', boolean: true })
+        .option('immediate', { describe: 'execute immediately without initial 5 seconds delay', boolean: true })
+        .option('yes', { describe: 'overwrite without confirmation', boolean: true })
+        .positional('package-name', { describe: 'a package name', }),
+    handler: (argv: any) => new Command(argv).execute(),
+};

@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { PktModule } from "../../pk-lib/module";
 
-export class EnvCommand {
+class Command {
     constructor(private options: IPkctlEnvOptions) {
     }
 
@@ -18,3 +18,9 @@ export class EnvCommand {
         m.save();
     }
 }
+export const EnvCommand = {
+    command: 'env <env-name> <context-name>',
+    desc: 'add or update env',
+    builder: (yargs: any) => yargs,
+    handler: (argv: any) => new Command(argv).execute(),
+};
