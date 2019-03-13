@@ -5,7 +5,7 @@ module.exports = {
     entry: {
         pkt: './src/pkt/index.ts',
         pk: './src/pk/index.ts',
-        ['pk-lib']: './src/pk-lib/index.ts',
+        ['pk-template']: './src/pk-template/index.ts',
     },
     devtool: 'inline-source-map',
     target: 'node',
