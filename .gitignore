@@ -66,5 +66,7 @@ dist/*
 /*.pkz
 /*.pks
 pktlib/
+pktlibs/
 pkt.json
 pkt.conf
+/pk

@@ -1,5 +1,5 @@
 import * as pkyaml from '../pk-yaml';
-import { IPkz } from "../pk-lib/types";
+import { IPkz } from "../pk-template/types";
 
 export class PkzSerializer {
     serialize(pkz: IPkz): string {
@@ -10,7 +10,7 @@ export class PkzSerializer {
 
         lines.push(`#`);
         lines.push(`# APPLY:`);
-        lines.push(`# - pkctl   : $ pkctl apply ${pkz.name}`);
+        lines.push(`# - pk   : $ pk apply ${pkz.name}`);
 
         const options = []
         if (pkz.context) {

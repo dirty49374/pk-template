@@ -1,7 +1,7 @@
 import { IKubeCtlConfig, IResourceKey, delay } from "../common";
 import { Progress } from "../pk-ui/progress";
 import { PkzKube } from "../pk-kubectl/pkt-kube";
-import { PkzSpec } from "../pkctl/spec";
+import { PkzSpec } from "../pk/spec";
 import { IPkzApplierOption } from "./options";
 
 export class PkzUninstaller extends Progress {

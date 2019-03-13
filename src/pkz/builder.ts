@@ -1,8 +1,8 @@
 import { IObject } from "../common";
 import * as pkyaml from '../pk-yaml';
-import { getChalk, getReadlineSync } from '../pk-lib/lazy';
+import { getChalk, getReadlineSync } from '../pk-template/lazy';
 import { IPktArgs } from "../pkt/args";
-import { IPkz } from "../pk-lib/types";
+import { IPkz } from "../pk-template/types";
 
 export class PkzBuilder {
     private objectError(object: IObject, err: string) {

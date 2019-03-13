@@ -1,6 +1,6 @@
 import * as pkyaml from '../../pk-yaml';
 import { IOutput } from "./output";
-import { IPktOptions } from "../../pk-lib/types";
+import { IPktOptions } from "../../pk-template/types";
 import { IObject } from "../../common";
 
 export class YamlOutput implements IOutput {

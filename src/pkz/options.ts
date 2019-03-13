@@ -1,4 +1,4 @@
-import { IProgressOptions } from "../pkctl/types";
+import { IProgressOptions } from "../pk-commands/types";
 
 export interface IPkzApplierOption extends IProgressOptions {
     // packageName: string;

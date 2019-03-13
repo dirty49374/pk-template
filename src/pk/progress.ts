@@ -1,9 +1,9 @@
 import { getReadlineSync, getChalk } from "../pk-template/lazy";
-import { IProgressOptions } from "../pk-commands/types";
+import { ApplyConfig } from "../pk-commands/types";
 import { IProgress } from "../common";
 
 export class Progress implements IProgress {
-    constructor(protected baseOptions: IProgressOptions) { }
+    constructor(protected config: ApplyConfig) { }
 
     header(message: string) {
         this.info();
@@ -11,10 +11,10 @@ export class Progress implements IProgress {
     }
 
     confirm(msg: string) {
-        if (!this.baseOptions.yes) {
-            const chalk = this.baseOptions.dryRun
-                ? getChalk().green
-                : getChalk().red;
+        if (!this.config.already_confirmed) {
+            const chalk = this.config.apply
+                ? getChalk().red
+                : getChalk().green;
             const prompt = getChalk().magenta(
                 `==> are you sure to ${chalk(msg)} ? [ENTER/CTRL-C] `
             );

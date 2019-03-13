@@ -15,7 +15,7 @@
     },
     "bin": {
         "pkt": "bin/pkt.js",
-        "pkctl": "bin/pkctl.js"
+        "pk": "bin/pk.js"
     },
     "repository": {
         "type": "git",
@@ -36,7 +36,6 @@
     },
     "homepage": "https://github.com/dirty49374/pk-template#readme",
     "dependencies": {
-        "@types/readline-sync": "^1.4.3",
         "ajv": "^6.6.1",
         "chalk": "^2.4.1",
         "coffeescript": "^2.3.2",
@@ -50,6 +49,7 @@
         "source-map": "^0.7.3",
         "sync-request": "^6.0.0",
         "underscore": "^1.9.1",
+        "uuid": "^3.3.2",
         "yargs": "^12.0.5"
     },
     "devDependencies": {
@@ -59,7 +59,9 @@
         "@types/json-patch": "0.0.30",
         "@types/jsonpath": "^0.2.0",
         "@types/node": "^11.9.4",
+        "@types/readline-sync": "^1.4.3",
         "@types/underscore": "^1.8.9",
+        "@types/uuid": "^3.4.4",
         "mocha": "^5.2.0",
         "release-it": "*",
         "ts-loader": "^5.3.3",

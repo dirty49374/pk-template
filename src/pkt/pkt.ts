@@ -3,13 +3,13 @@ import help from './help';
 import * as pkyaml from '../pk-yaml';
 import { buildOutput } from './outputs/factory';
 import { ArgsBuilder, IPktArgs } from './args';
-import { Runtime, IValues } from '../pk-lib';
+import { Runtime, IValues } from '../pk-template';
 import { IObject, version } from '../common';
-import { readStdin } from '../pk-lib/utils';
-import { Scope } from '../pk-lib/scope';
+import { readStdin } from '../pk-template/utils';
+import { Scope } from '../pk-template/scope';
 import { exceptionHandler } from '../pk-util/exception';
-import { PktModule } from '../pk-lib/module';
-import { IPktEnv, IResult } from '../pk-lib/types';
+import { IPktEnv, IResult } from '../pk-template/types';
+import { PkProjectFile } from '../pk-conf/conf';
 
 function gen(objects: IObject[], values: IValues, files: string[], env: IPktEnv | null): IObject[] {
     objects = objects || [];
@@ -22,10 +22,10 @@ function gen(objects: IObject[], values: IValues, files: string[], env: IPktEnv 
 }
 
 export async function generate(args: IPktArgs): Promise<IResult> {
-    const module = args.files.length > 0
-        ? PktModule.Load(args.files[0])
-        : PktModule.Load('.');
-    const envs = (module && module.module && module.module.envs) || []
+    const { conf } = args.files.length > 0
+        ? PkProjectFile.find(args.files[0])
+        : PkProjectFile.find('.');
+    const envs = (conf && conf.envs) || []
     const env = args.options.env ? (envs.find(e => e.name == args.options.env) || null) : null;
 
     if (args.options.stdin) {
@@ -84,7 +84,7 @@ export async function execCommand(argv: any, print: boolean): Promise<IResult | 
     }
 
     try {
-        return await execCommand(args, print);
+        return await executeWithTryCatch(args, print);
     } catch (e) {
         await exceptionHandler(e);
 

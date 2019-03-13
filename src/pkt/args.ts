@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { IValues, IPktOptions } from '../pk-lib';
+import { IValues, IPktOptions } from '../pk-template';
 import { loadYamlFile } from '../pk-yaml';
 
 

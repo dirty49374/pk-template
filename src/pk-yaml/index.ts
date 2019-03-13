@@ -2,7 +2,7 @@ import fs from "fs";
 import url from 'url';
 import jsyaml from 'js-yaml';
 import { pktYamlOption } from './yamls';
-import { getSyncRequest } from '../pk-lib/lazy';
+import { getSyncRequest } from '../pk-template/lazy';
 
 function isHttp(uri: string): boolean {
     const supportedProtocols = ['http:', 'https:'];

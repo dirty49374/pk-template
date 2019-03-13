@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
-import { extractSourceMap } from '../pk-lib/sourceMap';
+import { extractSourceMap } from '../pk-template/sourceMap';
 
-import { getChalk, getSourceMap } from "../pk-lib/lazy";
+import { getChalk, getSourceMap } from "../pk-template/lazy";
 
 const extractSourceAndLocation2 = async (name: string, file: string, line: number, column: number): Promise<{ name: string, file: string, line: number, column: number }> => {
     try {

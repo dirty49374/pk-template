@@ -43,7 +43,6 @@ export interface ISet {
 export const delay = (ms: number): Promise<any> =>
     new Promise(resolve => setTimeout(() => resolve(), ms));
 
-
 export type TreeNodeKeyVisitor = (object: any, key: string, value: any) => void;
 
 export const forEachTreeObjectKey = (object: any, cb: TreeNodeKeyVisitor) => {

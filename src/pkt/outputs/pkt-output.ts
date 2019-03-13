@@ -1,4 +1,4 @@
-import { IPktOptions } from "../../pk-lib/types";
+import { IPktOptions } from "../../pk-template/types";
 import * as pkyaml from '../../pk-yaml';
 import { IOutput } from "./output";
 import { IObject } from "../../common";

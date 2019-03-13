@@ -1,4 +1,4 @@
-import { IPktOptions } from '../../pk-lib/types';
+import { IPktOptions } from '../../pk-template/types';
 import { JsonOutput } from './json-output';
 import { PktOutput } from './pkt-output';
 import { YamlOutput } from './yaml-output';

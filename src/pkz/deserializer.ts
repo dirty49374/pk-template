@@ -1,6 +1,6 @@
 import fs from 'fs';
 import * as pkyaml from '../pk-yaml';
-import { IPkz } from "../pk-lib/types";
+import { IPkz } from "../pk-template/types";
 import { basename } from "path";
 
 export class PkzDeserializer {
