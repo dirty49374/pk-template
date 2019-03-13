@@ -12,7 +12,7 @@ function helpPkt(url: string): void {
     console.log(props);
 }
 
-function help(args: any): void {
+function help(files: string[]): void {
     console.log('USAGE: pkt [options] ...files');
     console.log();
 
@@ -22,6 +22,9 @@ function help(args: any): void {
     console.log('   -d           : show nodejs errors and callstack');
     console.log();
     console.log('   -i           : load yamls from stdin as initial objects');
+    console.log();
+    console.log('   -e           : set environment name');
+    console.log('   -S           : save current options to spec file');
     console.log();
     console.log('   -B           : bash script output');
     console.log('   -J           : json output');
@@ -41,10 +44,10 @@ function help(args: any): void {
     console.log('   --name path@ : assign yaml content to name');
     console.log();
 
-    if (args.files.length) {
+    if (files && files.length) {
         console.log('FILES:');
 
-        for (const file of args.files) {
+        for (const file of files) {
             if (file.toLowerCase().endsWith('.pkt')) {
                 helpPkt(file);
             } else {

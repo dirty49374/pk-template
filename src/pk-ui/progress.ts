@@ -1,9 +1,9 @@
-import { getReadlineSync, getChalk } from "../../pk-lib/lazy";
-import { ApplyConfig, IPkctlOptions } from "../types";
-import { IProgress } from "../../common";
+import { getReadlineSync, getChalk } from "../pk-lib/lazy";
+import { IProgressOptions } from "../pkctl/types";
+import { IProgress } from "../common";
 
 export class Progress implements IProgress {
-    constructor(protected baseOptions: IPkctlOptions) { }
+    constructor(protected baseOptions: IProgressOptions) { }
 
     header(message: string) {
         this.info();

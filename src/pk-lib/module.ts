@@ -1,7 +1,8 @@
 import fs from "fs";
 import url from "url";
 import path from "path";
-import { IPktModule, PKTLIBS_DIR_NAME, IPktModuleLoaded, PKMODULE_FILE_NAME } from "./types";
+import jsyaml from "js-yaml";
+import { IPktModule, IPktModuleLoaded, PKMODULE_FILE_NAME } from "./types";
 
 export class PktModule {
     public homeUri: string;
@@ -9,11 +10,24 @@ export class PktModule {
         this.homeUri = path.dirname(uri);
     }
 
-    add(repositoryName: string, repositoryUri: string): any {
+    addRepository(repositoryName: string, repositoryUri: string): any {
         if (!this.module.repositories) {
             this.module.repositories = {};
         }
         this.module.repositories[repositoryName] = repositoryUri;
+    }
+
+    setEnv(name: string, context: string) {
+        if (!this.module.envs) {
+            this.module.envs = [];
+        }
+
+        const env = this.module.envs.find(e => e.name == name);
+        if (env) {
+            env.context = context;
+        } else {
+            this.module.envs.push({ name, context, data: {} })
+        }
     }
 
     resolve(mpath: string) {
@@ -30,7 +44,8 @@ export class PktModule {
     }
 
     save() {
-        const json = JSON.stringify(this.module, null, 4);
+        console.log('save')
+        const json = jsyaml.dump(this.module);
         fs.writeFileSync(this.uri, json, 'utf8');
     }
 
@@ -43,20 +58,21 @@ export class PktModule {
         }
     }
 
-    static FindPkModuleJson(uri: string): IPktModuleLoaded | null {
-        uri = uri + '/';
+    static FindPkModuleYaml(uri: string): IPktModuleLoaded | null {
+        uri = uri.startsWith('https://') || uri.startsWith('http://')
+            ? `${uri}/`
+            : url.resolve(process.cwd(), uri) + '/';
         while (true) {
             let u = url.resolve(uri, PKMODULE_FILE_NAME);
-
             const json = PktModule.TryLoadModule(u);
             if (json) {
-                if (!path.isAbsolute(u) && u[0] != '.') {
-                    u = './' + u;
-                }
-                return { module: JSON.parse(json) as any, uri: u };
+                // if (!path.isAbsolute(u) && u[0] != '.') {
+                //     u = './' + u;
+                // }
+                return { module: jsyaml.load(json) as any, uri: u };
             }
 
-            const parent = url.resolve(uri, '..');
+            const parent = url.resolve(uri, '../');
             if (parent == null || parent === uri) {
                 return null;
             }
@@ -66,7 +82,7 @@ export class PktModule {
     }
 
     static Load(uri: string): PktModule | null {
-        const loaded = PktModule.FindPkModuleJson(uri);
+        const loaded = PktModule.FindPkModuleYaml(uri);
         return loaded
             ? new PktModule(loaded.uri, loaded.module)
             : null;

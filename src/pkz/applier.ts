@@ -1,12 +1,13 @@
-import { IPkctlApplyOptions } from "../types";
-import { Progress } from "../../pk-ui/progress";
-import { IObject, IKubeCtlConfig, IResourceKey, delay } from "../../common";
-import * as pkyaml from '../../pk-yaml';
-import * as Pkz from '../../pkz';
-import { PkzKube } from "../../pk-kubectl/pkt-kube";
-import { PkzSpec } from "../spec";
-import { getChalk } from "../../pk-lib/lazy";
-import { IPkz } from "../../pk-lib/types";
+import { IObject, IKubeCtlConfig, IResourceKey, delay } from "../common";
+import { Progress } from "../pk-ui/progress";
+import { PkzKube } from "../pk-kubectl/pkt-kube";
+import { IPkctlApplyOptions, IProgressOptions } from "../pkctl/types";
+import { IPkz } from "../pk-lib/types";
+import * as pkyaml from '../pk-yaml';
+import * as Pkz from '../pkz';
+import { PkzSpec } from "../pkctl/spec";
+import { getChalk } from "../pk-lib/lazy";
+import { IPkzApplierOption } from "./options";
 
 interface IApplyStep {
     name: string;
@@ -14,22 +15,21 @@ interface IApplyStep {
     final: boolean;
 }
 
-class Command extends Progress {
-    private packageName: string;
-
+export class PkzApplier extends Progress {
     private kube: PkzKube;
     private kubeOption: IKubeCtlConfig;
-
     private wholeOption: string = '';
 
-    constructor(private options: IPkctlApplyOptions) {
-        super(options)
-
-        this.kube = null as unknown as PkzKube;
-        this.kubeOption = null as unknown as IKubeCtlConfig;
-        this.packageName = this.options.packageName.endsWith('.pkz')
-            ? this.options.packageName
-            : this.options.packageName + '.pkz';
+    constructor(private options: IPkzApplierOption, private pkz: IPkz) {
+        super(options);
+        this.kubeOption = {
+            context: pkz.context,
+            kube_dryrun_option: this.options.dryRun ? ' --dry-run' : '',
+            kube_option: this.buildKubeOption(pkz),
+            sequential_apply: false,
+        };
+        this.kube = new PkzKube(this.kubeOption, this);
+        this.wholeOption = `${this.kubeOption.kube_dryrun_option}${this.kubeOption.kube_option}`
     }
 
     private buildApplySteps(objects: IObject[]): IApplyStep[] {
@@ -82,18 +82,17 @@ class Command extends Progress {
 
     private findDisappearedObjects(currcmap: IObject): IResourceKey[] {
         const prevcmap = this.kube.getPkzSpec(currcmap.metadata.name) ||
-            { metadata: { name }, data: { objects: '' } };
+            { metadata: { name: currcmap.metadata.name }, data: { objects: '' } };
         const prevSpec = PkzSpec.parse(prevcmap.metadata.name, prevcmap.data.objects);
         const currSpec = PkzSpec.parse(currcmap.metadata.name, currcmap.data.objects);
-
         return prevSpec.subtract(currSpec);
     }
 
     private precheckStep(objects: IObject[], steps: IApplyStep[]) {
         this.header('pre-check');
         const chalk = getChalk().yellowBright;
-        this.output(`    target deployment : ${chalk(this.packageName)}`);
-        this.output(`    kubectl options   : ${chalk(this.wholeOption)} `);
+        this.output(`    target deployment : ${chalk(this.pkz.name)}`);
+        this.output(`    kubectl options   :${chalk(this.wholeOption)} `);
         this.output(`    context           : ${chalk(this.kubeOption.context)} `);
         this.output(`    apply             : ${chalk(this.options.dryRun ? 'no' : 'yes')} `);
         this.output();
@@ -108,7 +107,6 @@ class Command extends Progress {
 
     private async deleteStep(step: IApplyStep) {
         this.header(`Delete step`);
-
         const deleteList = this.findDisappearedObjects(step.objects[0]);
         const targets = deleteList.map(o => `${o.kind}/${o.namespace}/${o.name}`).join(', ');
         if (targets.length == 0) {
@@ -143,40 +141,9 @@ class Command extends Progress {
         this.confirm(`apply these ${step.objects.length} objects`);
         this.verbose(`  - kubectl: apply`);
 
-        if (this.options.sequentialApply) {
-            for (const o of step.objects) {
-                await this.kube.applyRaw([o], this.wholeOption);
-            }
-        } else {
-            await this.kube.applyRaw(step.objects, this.wholeOption);
-        }
-        this.output();
-    }
-
-    private async apply(pkz: IPkz) {
-        if (!this.options.dryRun) {
-            this.error('CAUTION) APPLYING TO REAL KUBERNETES CLUSTER !!!');
-            if (this.options.yes && !this.options.immediate) {
-                for (let i = 10; i >= 0; --i) {
-                    process.stdout.write(`..${i} `);
-                    await delay(500);
-                }
-                console.log('.. START !!!');
-            }
-        }
-        const objects = pkz.objects.filter(o => o);
-        const steps = this.buildApplySteps(objects);
-
-        this.precheckStep(objects, steps);
-        for (const step of steps) {
-            if (step.final) {
-                await this.deleteStep(step);
-            }
-            await this.applyStep(step);
-        }
+        await this.kube.applyRaw(step.objects, this.wholeOption);
 
         this.output();
-        this.success('success !!!');
     }
 
     buildKubeOption(pkz: IPkz): string {
@@ -200,28 +167,29 @@ class Command extends Progress {
         return option;
     }
 
-    async execute() {
-        const pkz = Pkz.load(this.packageName);
+    async apply() {
+        if (!this.options.dryRun) {
+            this.error('CAUTION) APPLYING TO REAL KUBERNETES CLUSTER !!!');
+            if (this.options.yes && !this.options.immediate) {
+                for (let i = 10; i >= 0; --i) {
+                    process.stdout.write(`..${i} `);
+                    await delay(500);
+                }
+                console.log('.. START !!!');
+            }
+        }
+        const objects = this.pkz.objects.filter(o => o);
+        const steps = this.buildApplySteps(objects);
 
-        this.kubeOption = {
-            context: pkz.context,
-            kube_dryrun_option: this.options.dryRun ? ' --dry-run' : '',
-            kube_option: this.buildKubeOption(pkz),
-            sequential_apply: false,
-        };
-        this.kube = new PkzKube(this.kubeOption, this);
-        this.wholeOption = `${this.kubeOption.kube_dryrun_option}${this.kubeOption.kube_option}`
-        await this.apply(pkz);
+        this.precheckStep(objects, steps);
+        for (const step of steps) {
+            if (step.final) {
+                await this.deleteStep(step);
+            }
+            await this.applyStep(step);
+        }
+
+        this.output();
+        this.success('success !!!');
     }
 }
-
-export const ApplyCommand = {
-    command: 'apply <package-name>',
-    desc: 'apply a package',
-    builder: (yargs: any) => yargs
-        .option('dry-run', { describe: 'dry run', boolean: true })
-        .option('immediate', { describe: 'execute immediately without initial 5 seconds delay', boolean: true })
-        .option('yes', { describe: 'overwrite without confirmation', boolean: true })
-        .positional('package-name', { describe: 'a package name', }),
-    handler: (argv: any) => new Command(argv).execute(),
-};

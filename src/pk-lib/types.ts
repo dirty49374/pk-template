@@ -1,4 +1,5 @@
 import { IObject } from "../common";
+import { IPktArgs } from "../pkt/args";
 
 export type IConfig = any;
 export interface IPkt {
@@ -18,8 +19,6 @@ export interface IValues {
 }
 
 export interface IPktOptions {
-    argv: string[];
-    cwd: string;
     stdin?: boolean;
     help?: boolean;
     version?: boolean;
@@ -28,6 +27,8 @@ export interface IPktOptions {
     json1?: boolean;
     pkt?: boolean;
     indent?: boolean;
+    env?: string;
+    spec?: string;
 }
 
 export type IScopeHandler = (scope: IScope) => any;
@@ -117,14 +118,12 @@ export interface IScope {
 
 export interface IPkz {
     name: string;
-    args: string[];
-    kubeconfig: string;
+    args: IPktArgs;
     context: string;
-    cluster: string;
     objects: IObject[];
 }
 
-export const PKMODULE_FILE_NAME = 'pkt.json';
+export const PKMODULE_FILE_NAME = 'pkt.conf';
 export const PKTLIBS_DIR_NAME = 'pktlib';
 
 export interface IPktModuleLoaded {
@@ -132,6 +131,23 @@ export interface IPktModuleLoaded {
     uri: string;
 }
 
+export interface IPktRepositories {
+    [id: string]: string;
+}
+
+export interface IPktEnv {
+    name: string;
+    context: string;
+    data: { [id: string]: any; };
+}
+
 export interface IPktModule {
-    repositories: { [id: string]: string };
+    repositories: IPktRepositories;
+    envs: IPktEnv[];
+}
+
+export interface IResult {
+    objects: IObject[];
+    args: IPktArgs;
+    env: IPktEnv | null;
 }

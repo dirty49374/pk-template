@@ -31,6 +31,8 @@ export class Evaluator {
                 return this.evalJavaScript(code.code, code.uri);
             case 'file':
                 return this.scope.loadText(code.code).data;
+            case 'template':
+                return this.scope.evalTemplate(code.code);
         }
     }
 

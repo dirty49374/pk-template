@@ -1,22 +1,24 @@
-import { IPkctlDiffOptions } from "../types";
 import fs from 'fs';
+import jsyaml from 'js-yaml';
+import { IPkctlDiffOptions } from "../types";
 import { IPktModule, PKMODULE_FILE_NAME, PKTLIBS_DIR_NAME } from "../../pk-lib/types";
 
-export class InitCommand {
+class Command {
     constructor(private options: IPkctlDiffOptions) {
     }
 
     async execute() {
         const module: IPktModule = {
             repositories: {},
+            envs: [],
         }
-        const json = JSON.stringify(module, null, 4);
+        const yaml = jsyaml.dump(module);
 
         try {
             if (fs.existsSync(PKMODULE_FILE_NAME)) {
                 console.log(`${PKMODULE_FILE_NAME} exists`);
             } else {
-                fs.writeFileSync(PKMODULE_FILE_NAME, json, 'utf8');
+                fs.writeFileSync(PKMODULE_FILE_NAME, yaml, 'utf8');
                 console.log(`${PKMODULE_FILE_NAME} created`);
             }
             if (fs.existsSync(PKTLIBS_DIR_NAME)) {
@@ -30,3 +32,10 @@ export class InitCommand {
         console.log('module initialized');
     }
 }
+
+export const InitCommand = {
+    command: 'init',
+    desc: 'init a module',
+    builder: (yargs: any) => yargs,
+    handler: (argv: any) => new Command(argv).execute(),
+};

@@ -6,12 +6,12 @@ import { log } from './logger';
 const jslib = (scope: IScope) => {
     const lib = {
         log: (...msg: any[]) => log(...msg),
-        files: (path: string) => scope.listFiles(path),
-        loadText: (path: string) => scope.loadText(path),
-        loadPkt: (path: string) => scope.loadPkt(path),
-        loadYaml: (path: string) => scope.loadYaml(path),
-        loadYamlAll: (path: string) => scope.loadYamlAll(path),
-        loadTemplate: (path: string) => scope.loadTemplate(path),
+        files: (path: string) => scope.listFiles(path).data,
+        loadText: (path: string) => scope.loadText(path).data,
+        loadPkt: (path: string) => scope.loadPkt(path).data,
+        loadYaml: (path: string) => scope.loadYaml(path).data,
+        loadYamlAll: (path: string) => scope.loadYamlAll(path).data,
+        loadTemplate: (path: string) => scope.loadTemplate(path).data,
         basename: (p: string) => path.basename(p),
         label: (object: any | string, name: string | null) => {
             if (name === null) {
