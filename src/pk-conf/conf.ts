@@ -145,7 +145,7 @@ export class PkConf implements IPkConf {
                 };
             }
             const parent = resolve(dir, '../');
-            if (parent == null || parent === path) {
+            if (parent == null || parent === dir) {
                 return { path: null, file: null, dir: null };
             }
 

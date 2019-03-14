@@ -5,11 +5,14 @@ import { mkdirSync, writeFileSync, existsSync } from 'fs';
 import { dumpYaml } from '../../pk-yaml';
 
 export default {
-    command: 'add <app-name>',
+    command: 'create <app-name>',
     desc: 'create new app entry',
     builder: (yargs: any) => yargs,
     handler: async (argv: any) => {
         await atPkConfDir(async (root, conf) => {
+            if (!argv.appName.match(/^[a-zA-Z0-9]+$/)) {
+                throw new Error(`app name ${argv.appName} is invalid`);
+            }
             const app = {
                 id: uuid(),
                 name: argv.appName,

@@ -24,6 +24,7 @@ export const buildPkd = async (conf: PkConf, appName: string, envName: string) =
         throw new Error(`app ${appName} does not have env ${envName}`);
     }
 
+    env.values.env = envName;
     env.values.namespace = `${conf.project.name}-${app.name}-${envName}`;
 
     const deploymentName = `${conf.project.name}-${appName}-${envName}`;

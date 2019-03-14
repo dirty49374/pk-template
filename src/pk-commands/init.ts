@@ -6,6 +6,10 @@ export default {
     desc: 'initialize project',
     builder: (yargs: any) => yargs,
     handler: (argv: any) => {
+        if (!argv.projectName.match(/^[a-zA-Z0-9]+$/)) {
+            throw new Error(`app name ${argv.projectName} is invalid`);
+        }
+
         console.log('initializing project')
         const file = PkConf.create(argv.projectName, 'unknown');
         PkConf.save('.', file);
