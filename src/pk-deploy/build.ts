@@ -19,7 +19,7 @@ export const buildPkd = async (conf: PkConf, appName: string, envName: string) =
         throw new Error(`app ${appName} not exits`);
     }
 
-    const env = conf.getAppEnv(appName, envName);
+    const env = conf.getMergedEnv(appName, envName);
     if (!env) {
         throw new Error(`app ${appName} does not have env ${envName}`);
     }

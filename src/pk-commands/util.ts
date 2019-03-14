@@ -1,5 +1,6 @@
 import { PkConf } from "../pk-conf/conf";
 import { IPkApp, IPkModule } from "../pk-conf";
+import { normalize, join } from "path";
 
 export const atPkConfDir = async (cb: (root: string, conf: PkConf) => Promise<any>) => {
     const { dir, conf } = PkConf.find();
@@ -52,3 +53,65 @@ export const atModuleDir = async (conf: PkConf, moduleName: string, cb: (module:
         throw e;
     }
 }
+
+
+export const getCurrentDirectoryApp = (apps: IPkApp[], root: string, cwd: string) => {
+    const app = apps.find(app => normalize(cwd) === normalize(join(root, app.name)));
+    if (!app) {
+        throw new Error('please specify app anme');
+    }
+    return app;
+}
+
+export const getEnvNames = (conf: PkConf, app: IPkApp) => {
+    const envs: any = {};
+    if (conf.envs) {
+        for (const env of conf.envs) {
+            envs[env.name] = true;
+        }
+    }
+    if (app.envs) {
+        for (const env of app.envs) {
+            envs[env.name] = true;
+        }
+    }
+    return Object.keys(envs);
+}
+
+export const visitEachAppAndEnv = async (
+    appName: string | undefined | null,
+    envName: string,
+    cb: (root: string, conf: PkConf, app: IPkApp, envName: string) => Promise<any>) => {
+
+    const cwd = process.cwd();
+    const targetAppNames = (root: string, conf: PkConf) => appName === '*'
+        ? conf.apps.map(app => app.name)
+        : (appName
+            ? [appName as string]
+            : [getCurrentDirectoryApp(conf.apps, root, cwd).name]);
+    const targetEnvNames = (conf: PkConf, app: IPkApp) => envName === '*'
+        ? getEnvNames(conf, app)
+        : [envName];
+    await atPkConfDir(async (root, conf) => {
+        const appNames = targetAppNames(root, conf);
+        if (appNames.length == 0) {
+            throw new Error('please specify app-name or use --all-apps option');
+        }
+
+        for (const appName of appNames) {
+
+            await atAppDir(conf, appName, async app => {
+
+                const envNames = targetEnvNames(conf, app);
+                if (envNames.length == 0) {
+                    throw new Error('please specify env-name or use --all-envs option');
+                }
+
+                for (const envName of envNames) {
+                    await cb(root, conf, app, envName);
+                }
+            });
+        }
+    });
+
+};

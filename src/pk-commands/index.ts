@@ -8,8 +8,10 @@ export const initCommands = (yargs: any): any => yargs
     // .command(require('./envCommand').default)
     // .command(require('./deployCommand').default)
     // .command(require('./deleteCommand').default)
+    .scriptName("pk")
     .command(require('./init').default)
+    .command(require('./app').default)
+    .command(require('./env').default)
     .command(require('./module').default)
-    .command(require('./package').default)
     .command(require('./deployment').default)
     ;

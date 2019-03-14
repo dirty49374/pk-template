@@ -18,14 +18,13 @@ const update = async (conf: PkConf, appName: string, envName: string, options: a
 }
 
 export default {
-    command: 'update [appName]',
-    desc: 'update a deployment for environment',
+    command: 'diff [appName]',
+    desc: 'diff a deployment changes',
     builder: (yargs: any) => yargs
         .option('env', { describe: 'environment name' })
         .option('all', { describe: 'update all apps and envs', boolean: true })
         .option('all-apps', { describe: 'update all apps', boolean: true })
-        .option('all-envs', { describe: 'update all environments', boolean: true })
-        .option('yes', { describe: 'overwrite without confirmation', boolean: true }),
+        .option('all-envs', { describe: 'update all environments', boolean: true }),
     handler: async (argv: any): Promise<any> => {
 
         const appName = argv.all || argv.allApps ? '*' : argv.appName;
@@ -36,19 +35,13 @@ export default {
                 return;
             }
 
-            console.log(`* updating app=${app.name} env=${envName}`);
+            console.log(`* diff app=${app.name} env=${envName}`);
 
             const oldDeployment = loadPkd(envName);
             const newDeployment = await buildPkd(conf, app.name, envName);
-            if (newDeployment != null) {
-                const same = diffObjects(oldDeployment.objects, newDeployment.objects, '  ');
-                if (existsPkd(newDeployment.header.env.name) && !argv.yes && !same) {
-                    getReadlineSync().question(getChalk().red(`  file already exists, are you sure to overwrite ? [ENTER/CTRL-C] `));
-                }
-                savePkd(newDeployment);
-                console.log(getChalk().green(`  deployment ${envName}.pkz updated on app ${app.name}`));
-            } else {
-                console.error(getChalk().red(`  failed to create package ${envName}`));
+            const same = diffObjects(oldDeployment.objects, newDeployment.objects, '  ');
+            if (same) {
+                console.log(getChalk().green(`  files are same !!!`));
             }
 
         });

@@ -2,9 +2,10 @@ import * as fs from "fs";
 import { resolve, dirname } from "path";
 import * as Yaml from '../pk-yaml';
 import { IPkApp, IPkModule, IPkEnv, IPkProject, IPkConf } from ".";
+import app from "../pk-commands/app";
 
 export class PkConf implements IPkConf {
-    static FILENAME = "pk.conf";
+    static FILENAME = "project.pk";
 
     project: IPkProject;
     apps: IPkApp[];
@@ -18,8 +19,48 @@ export class PkConf implements IPkConf {
         this.modules = file.modules;
     }
 
+    addApp(app: IPkApp) {
+        if (this.getApp(app.name)) {
+            throw new Error(`app ${app.name} already exists`);
+        }
+        this.apps.push(app);
+    }
     getApp = (name: string): IPkApp | undefined => this.apps.find(app => app.name == name);
-    getAppEnv(appName: string, envName: string): IPkEnv | undefined {
+    prepareEnv(envName: string) {
+        if (!this.envs) {
+            this.envs = [];
+        }
+        const env = this.envs.find(e => e.name == envName);
+        if (env) {
+            return env;
+        }
+        const newEnv = {
+            name: envName,
+            values: {},
+        };
+        this.envs.push(newEnv);
+        return newEnv;
+    }
+    prepareAppEnv(appName: string, envName: string) {
+        const app = this.getApp(appName);
+        if (!app) {
+            throw new Error(`app ${appName} does not exists`);
+        }
+        if (!app.envs) {
+            app.envs = [];
+        }
+        const env = app.envs.find(e => e.name == envName);
+        if (env) {
+            return env;
+        }
+        const newEnv = {
+            name: envName,
+            values: {},
+        };
+        app.envs.push(newEnv);
+        return newEnv;
+    }
+    getMergedEnv(appName: string, envName: string): IPkEnv | undefined {
         const env = this.getEnv(envName);
         const app = this.getApp(appName);
         if (!app) {
@@ -39,15 +80,20 @@ export class PkConf implements IPkConf {
         } as IPkEnv
     }
 
+    addEnv(env: IPkEnv) {
+        if (this.getEnv(env.name)) {
+            throw new Error(`env ${env.name} already exists`);
+        }
+        this.envs.push(env);
+    }
     getEnv = (name: string): IPkEnv | undefined => this.envs && this.envs.find(e => e.name === name);
 
     addModule(module: IPkModule) {
-        if (this.modules.findIndex(m => m.name == module.name) >= 0) {
+        if (this.getModule(module.name)) {
             throw new Error(`module ${module.name} already exists`);
         }
         this.modules.push(module);
     }
-
     getModule = (name: string): IPkModule | undefined => this.modules.find(m => m.name == name);
 
     static exists() {
@@ -67,7 +113,13 @@ export class PkConf implements IPkConf {
     }
 
     static save(dir: string, file: IPkConf) {
-        const content = Yaml.dumpYaml(file);
+        const data: IPkConf = {
+            project: file.project,
+            apps: file.apps || [],
+            envs: file.envs || [],
+            modules: file.modules || [],
+        }
+        const content = Yaml.dumpYaml(data);
         fs.writeFileSync(`${dir}/${PkConf.FILENAME}`, content, 'utf8');
     }
 
