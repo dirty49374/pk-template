@@ -24,7 +24,7 @@ export default {
             } else {
                 mod.branch = 'master';
             }
-            updateModule(mod);
+            await updateModule(mod);
             PkConf.save('.', conf);
             console.log();
         });

@@ -10,6 +10,9 @@ export default {
         .option('branch', { describe: 'branch name' })
         .option('tag', { describe: 'tag name' }),
     handler: async (argv: any) => {
+
+        console.log(process.cwd());
+
         const mod: IPkModule = {
             name: argv.name,
             repository: argv.repository,
@@ -23,7 +26,7 @@ export default {
         }
         argv.$pk.conf.addModule(mod);
 
-        cloneModule(mod);
+        await cloneModule(mod);
 
         PkConf.save('.', argv.$pk.conf);
 

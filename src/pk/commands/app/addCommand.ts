@@ -5,8 +5,8 @@ import { mkdirSync, writeFileSync, existsSync } from 'fs';
 import { dumpYaml } from '../../../pk-yaml';
 
 export default {
-    command: 'create <app-name>',
-    desc: 'create new app entry',
+    command: 'add <app-name>',
+    desc: 'add a new app',
     builder: (yargs: any) => yargs,
     handler: async (argv: any) => {
         await atPkConfDir(async (root, conf) => {

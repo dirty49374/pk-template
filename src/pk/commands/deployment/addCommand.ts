@@ -5,8 +5,8 @@ import { existsPkd } from '../../../pk-deploy/exists';
 import { visitEachAppAndEnv } from '../../libs';
 
 export default {
-    command: 'create',
-    desc: 'create a deployment for environment',
+    command: 'add',
+    desc: 'add a deployment for environment',
     builder: (yargs: any) => yargs
         .option('app', { describe: 'app name, (default = *)', default: '*' })
         .option('env', { describe: 'environment name (default = *)', default: '*' })
