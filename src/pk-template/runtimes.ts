@@ -26,7 +26,6 @@ export class Runtime {
     constructor(uri: string) {
         this.trace = new Trace(uri);
     }
-
     break(stmt: IStatement) {
         if (!stmt.break) return false;
         this.trace.step('break');
@@ -54,17 +53,27 @@ export class Runtime {
         delete scope.object;
         return true;
     }
+    varStatement(scope: IScope, stmt: IStatement) {
+        if (!stmt.var) return false;
+        this.trace.step('var');
+        scope.defineValues(stmt.var || {});
+
+        return true;
+    }
     assignStatement(scope: IScope, stmt: IStatement) {
         if (!stmt.assign) return false;
         this.trace.step('assign');
 
-        const values = typeof stmt.assign == 'string'
-            ? utils.parseKvps(stmt.assign)
-            : scope.evalObject(stmt.assign || {});
-        scope.values = {
-            ...scope.values,
-            ...values,
-        };
+        const values = scope.evalObject(stmt.assign || {});
+        for (const key of Object.keys(values)) {
+            if (key in scope.values) {
+                scope.values[key] = values[key];
+            } else {
+                console.log('XXX', scope.trace);
+                const msg = `value ${key} is not defined`;
+                throw utils.pktError(scope, new Error(msg), msg);
+            }
+        }
         return true;
     }
     addStatement(scope: IScope, stmt: IStatement) {
@@ -231,6 +240,7 @@ export class Runtime {
             this.eachStatement(scope, stmt);
             this.jsonpathStatement(scope, stmt);
             this.scriptStatement(scope, stmt);
+            this.varStatement(scope, stmt);
             this.assignStatement(scope, stmt);
             this.includeStatement(scope, stmt);
             this.includeWithStatement(scope, stmt);
@@ -259,7 +269,7 @@ export class Runtime {
                 if (stmt.select) {
                     const predicate = selectors.compile(stmt.select);
                     const objects = scope.objects.filter(predicate);
-                    scope.child({ objects, values: scope.values }, cscope => {
+                    scope.child({ objects }, cscope => {
                         this.execStatement(cscope, stmt)
                     });
                 } else {

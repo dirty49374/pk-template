@@ -7,6 +7,8 @@ import { Loader } from './loader';
 import { StyleSheet } from './styles/styleSheet';
 import { PathResolver } from './pathResolver';
 import { PkConf } from '../pk-conf/conf';
+import { pktError } from './utils';
+import { Trace } from './trace';
 
 const clone = (obj: any): any => JSON.parse(JSON.stringify(obj));
 
@@ -14,6 +16,7 @@ export class Scope extends PathResolver implements IScope {
     objects: IObject[];
     object: IObject | null = null;
     values: IValues;
+    pvalues: IValues;
     parent: IScope;
     $buildLib: any;
     trace?: ITrace;
@@ -27,12 +30,14 @@ export class Scope extends PathResolver implements IScope {
 
         this.objects = objects;
         this.values = values;
+        this.pvalues = {};
         this.uri = uri;
         this.parent = parent;
         this.styleSheet = styleSheet;
         this.$buildLib = jslib;
         this.evaluator = new Evaluator(this);
         this.loader = new Loader(this);
+        this.trace = parent && parent.trace;
     }
 
     add(object: any): void {
@@ -46,16 +51,50 @@ export class Scope extends PathResolver implements IScope {
     child<T>({ uri, objects, values }: any, handler: (scope: IScope) => T): T {
         const scope = new Scope({
             objects: objects || [],
-            values: values || clone(this.values),
+            values: values || this.values,
             uri: uri || this.uri,
             parent: this,
             styleSheet: this.styleSheet,
             $buildLib: jslib,
         });
 
-        return handler(scope);
+        const rst = handler(scope);
+
+        for (const key of Object.keys(scope.values)) {
+            if (key in this.values) {
+                this.values[key] = key in scope.pvalues
+                    ? scope.pvalues[key]
+                    : scope.values[key];
+            }
+        }
+
+        return rst;
     }
 
+    defineValues(values: IValues) {
+        const evals = this.evalObject(values || {});
+        for (const key of Object.keys(evals)) {
+            if (!(key in this.pvalues)) {
+                this.pvalues[key] = this.values[key];
+            }
+        }
+        this.values = {
+            ...this.values,
+            ...evals,
+        };
+
+    }
+
+    assignValues(values: IValues) {
+        const evals = this.evalObject(values || {});
+        for (const key of Object.keys(evals)) {
+            if (key in this.values) {
+                this.values[key] = values[key];
+            } else {
+                throw pktError(this, new Error(`value ${key} is not defined`), '');
+            }
+        }
+    }
 
     eval(src: string, uri?: string, additionalValues?: any) {
         const $ = additionalValues
@@ -107,6 +146,7 @@ export class Scope extends PathResolver implements IScope {
             uri: uri || '.',
             styleSheet: styleSheet || (parent ? parent.styleSheet : null),
             parent: parent || null,
+            trace: new Trace('$'),
         });
         return scope;
     }
@@ -117,7 +157,7 @@ export class Scope extends PathResolver implements IScope {
             process.cwd() + '/',
             null,
             objects,
-            new StyleSheet(null)
+            new StyleSheet(null),
         );
     }
 }

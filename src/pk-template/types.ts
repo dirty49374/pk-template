@@ -75,12 +75,14 @@ export interface ITrace {
     into<T>(stepCb: () => T): T;
     step(name: string | number): void;
     pos(): string;
+    depth(): number;
 }
 
 export interface IScope {
     objects: IObject[];
     object: IObject | null;
     values: IValues;
+    pvalues: IValues;
     uri: string;
     parent: IScope;
     $buildLib: any;
@@ -89,8 +91,10 @@ export interface IScope {
 
     resolve(relpath: string): string;
     add(object: any): void;
-    child({ uri, objects, values }: any, handler: IScopeHandler): any;
+    child({ uri, objects }: any, handler: IScopeHandler): any;
     eval(src: string, uri?: string, additionalValues?: any): any;
+    defineValues(values: IValues): void;
+    assignValues(values: IValues): void;
 
     // loader
     loadText(uri: string): { uri: string, data: string };

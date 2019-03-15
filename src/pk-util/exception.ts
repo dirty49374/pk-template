@@ -96,6 +96,7 @@ const showStack = async (stack: string, source?: string) => {
 }
 
 export const exceptionHandler = async (e: any): Promise<any> => {
+    console.log('POSPOS', e.pos);
     const chalk = getChalk();
     console.error(chalk.red('ERROR  : ' + e.message));
     if (e.summary) {
