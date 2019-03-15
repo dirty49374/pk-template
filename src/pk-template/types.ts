@@ -8,6 +8,7 @@ export interface IPkt {
     schema: any;
     import?: string[] | string;
     style: object[];
+    var: any;
     assign: any;
     routine: any;
 }

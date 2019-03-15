@@ -17,10 +17,7 @@ export default {
     handler: async (argv: any): Promise<any> => {
         await argv.$pk.tryCatch(async () => {
 
-            const appName = argv.app;
-            const envName = argv.env;
-
-            await visitEachAppAndEnv(appName, envName, async (root, conf, app, envName) => {
+            await visitEachAppAndEnv(argv.app, argv.env, async (root, conf, app, envName) => {
                 if (!existsPkd(envName)) {
                     console.log('not exists')
                     return;

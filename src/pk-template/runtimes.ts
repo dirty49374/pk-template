@@ -12,7 +12,7 @@ import { Trace } from './trace';
 export function buildInput(input: any, parentValues: IValues): any {
     if (!input) return {}
 
-    const values = { ...input };
+    const values = { cluster: null, env: null, namespace: null, ...input };
     for (const k in parentValues) {
         if (k in values)
             values[k] = parentValues[k];
@@ -315,7 +315,14 @@ export class Runtime {
                 }
 
                 // 4. build values
-                this.trace.step('values');
+                this.trace.step('var');
+                scope.values = {
+                    ...scope.values,
+                    ...scope.evalObject(file.var || {}),
+                };
+
+                // 4. build values
+                this.trace.step('assign');
                 scope.values = {
                     ...scope.values,
                     ...scope.evalObject(file.assign || {}),

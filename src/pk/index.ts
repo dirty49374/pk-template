@@ -48,8 +48,8 @@ async function main(argv: string[]) {
             }
         }
         yargs
-            .command(require('./commands/init'))
-            .command(require('./commands/test'))
+            .command(require('./commands/init').default)
+            .command(require('./commands/test').default)
             .recommendCommands()
             .demandCommand()
             .strict()
@@ -58,8 +58,8 @@ async function main(argv: string[]) {
             ;
     } else {
         yargs
-            .command(require('./commands/init'))
-            .command(require('./commands/test'))
+            .command(require('./commands/init').default)
+            .command(require('./commands/test').default)
             .recommendCommands()
             .demandCommand()
             .strict()

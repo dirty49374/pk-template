@@ -107,10 +107,10 @@ export const visitEachAppAndEnv = async (
 
 
     await atPkConfDir(async (root, conf) => {
-        const appNames = targetAppNames(root, conf);
-        if (appNames.length == 0) {
-            throw new Error('please specify app-name or use --all-apps option');
+        if (!conf.apps || conf.apps.length == 0) {
+            throw new Error('no apps defined in pk-project.yaml');
         }
+        const appNames = targetAppNames(root, conf);
 
         for (const appName of appNames) {
             await atAppDir(conf, appName, async app => {
