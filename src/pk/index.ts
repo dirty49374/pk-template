@@ -1,10 +1,11 @@
-import { PkConf } from "../pk-conf/conf";
+import { PkProjectConf } from "../pk-conf/projectConf";
 import * as libs from "./libs";
 import { readdirSync, existsSync } from "fs";
+import { join } from "path";
+import { MODULE_DIR } from "../pk-conf/module";
 
-function loadModuleCommands(yargs: any, name: string) {
-    const cwd = process.cwd();
-    const mcd = `${cwd}/pk_modules/${name}/commands/`;
+function loadModuleCommands(yargs: any, root: string, name: string) {
+    const mcd = join(root, MODULE_DIR, name, 'commands');
     if (existsSync(mcd)) {
         const commands = readdirSync(mcd)
             .filter(file => file.endsWith('.js'))
@@ -21,19 +22,15 @@ function loadModuleCommands(yargs: any, name: string) {
 
 }
 async function main(argv: string[]) {
-    const { dir, conf } = PkConf.find();
+    const { root, conf } = PkProjectConf.find();
     const yargs = require('yargs')(argv)
-        .scriptName("pk");
+        .scriptName("pk")
+        .option('d', { description: 'enable stacktrace on error', boolean: true });
 
-
-    if (conf && dir) {
+    if (conf && root) {
         yargs
             .middleware((argv: any) => {
-                argv.$pk = {
-                    ...libs,
-                    root: dir,
-                    conf,
-                };
+                argv.$pk = { ...libs, root, conf };
             })
             .command(require('./commands/app').default)
             .command(require('./commands/env').default)
@@ -41,15 +38,14 @@ async function main(argv: string[]) {
             .command(require('./commands/deployment').default)
             ;
 
-        process.chdir(dir);
-        if (conf.modules) {
-            for (const mod of conf.modules) {
-                loadModuleCommands(yargs, mod.name);
+        if (conf.data.modules) {
+            for (const mod of conf.data.modules) {
+                loadModuleCommands(yargs, root, mod.name);
             }
         }
         yargs
-            .command(require('./commands/init').default)
             .command(require('./commands/test').default)
+            .command(require('./commands/config').default)
             .recommendCommands()
             .demandCommand()
             .strict()
@@ -60,6 +56,7 @@ async function main(argv: string[]) {
         yargs
             .command(require('./commands/init').default)
             .command(require('./commands/test').default)
+            .command(require('./commands/config').default)
             .recommendCommands()
             .demandCommand()
             .strict()

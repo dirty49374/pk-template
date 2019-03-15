@@ -2,10 +2,11 @@ import { IPkModule } from '.';
 import { execSync } from 'child_process';
 import { preserveDir } from '../pk-util/preserveDir';
 
+export const MODULE_DIR = 'pk-modules';
 
 export const cloneModule = async (module: IPkModule) => {
     await preserveDir(async () => {
-        const moduleDir = `pk_modules/${module.name}`;
+        const moduleDir = `${MODULE_DIR}/${module.name}`;
 
         console.log('* adding submodule ...')
         const cmd = `git submodule add ${module.repository} ${moduleDir}`;
@@ -29,7 +30,7 @@ export const cloneModule = async (module: IPkModule) => {
 export const updateModule = async (module: IPkModule) => {
     await preserveDir(() => {
 
-        const moduleDir = `pk_modules/${module.name}`;
+        const moduleDir = `${MODULE_DIR}/${module.name}`;
         process.chdir(moduleDir);
 
         console.log('* fetching submodule ...')

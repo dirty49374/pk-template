@@ -1,6 +1,7 @@
 import url from 'url';
 import { join, isAbsolute } from 'path';
-import { PkConf } from '../pk-conf/conf';
+import { PkProjectConf } from '../pk-conf/projectConf';
+import { MODULE_DIR } from '../pk-conf/module';
 
 export class PathResolver {
     public uri: string;
@@ -21,10 +22,10 @@ export class PathResolver {
             throw new Error(`path should be string (${rpath})`);
         }
 
-        if (rpath.startsWith(':')) {
-            const { dir } = PkConf.find(this.uri);
-            if (dir) {
-                return join(dir, 'pk_modules', rpath.substr(1));
+        if (rpath.startsWith('~/')) {
+            const { root } = PkProjectConf.find(this.uri);
+            if (root) {
+                return join(root, MODULE_DIR, rpath.substr(1));
             }
             throw new Error(`cannot resolve path ${rpath}, not in module`);
         }

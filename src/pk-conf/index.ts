@@ -23,9 +23,14 @@ export interface IPkModule {
     tag?: string;
 }
 
-export interface IPkConf {
+export interface IPkProjectConf {
     project: IPkProject;
     apps: IPkApp[];
     envs: IPkEnv[];
+    modules: IPkModule[];
+}
+
+export interface IPkConf {
+    email: string;
     modules: IPkModule[];
 }

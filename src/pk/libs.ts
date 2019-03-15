@@ -1,28 +1,29 @@
-import { exceptionHandler } from "../pk-util/exception";
-import { PkConf } from "../pk-conf/conf";
-import { IPkApp, IPkModule } from "../pk-conf";
-import { normalize, join } from "path";
-import { exec } from "child_process";
+import { exceptionHandler } from '../pk-util/exception';
+import { PkProjectConf } from '../pk-conf/projectConf';
+import { IPkApp, IPkModule } from '../pk-conf';
+import { normalize, join } from 'path';
+import { MODULE_DIR } from '../pk-conf/module';
 
 export const log = (...args: any) => console.log(...args);
-export const tryCatch = async (cb: any) => {
+export const tryCatch = async (cb: any, debug: boolean) => {
     try {
         await cb();
     } catch (e) {
-        await exceptionHandler(e);
+        await exceptionHandler(e, debug);
     }
 }
 
-export const atPkConfDir = async (cb: (root: string, conf: PkConf) => Promise<any>) => {
-    const { dir, conf } = PkConf.find();
-    if (!dir || !conf) {
-        throw new Error(`cannot find ${PkConf.FILENAME}`);
+export const atProjectDir = async (cb: (root: string, conf: PkProjectConf) => Promise<any>) => {
+    const { root, conf } = PkProjectConf.find();
+    if (!root || !conf) {
+        throw new Error(`cannot find ${PkProjectConf.FILENAME}`);
     }
 
     const cwd = process.cwd();
+    process.chdir(root);
+
     try {
-        process.chdir(dir);
-        await cb(dir, conf);
+        await cb(root, conf);
         process.chdir(cwd);
     } catch (e) {
         process.chdir(cwd);
@@ -30,7 +31,7 @@ export const atPkConfDir = async (cb: (root: string, conf: PkConf) => Promise<an
     }
 }
 
-export const atAppDir = async (conf: PkConf, appName: string, cb: (app: IPkApp) => Promise<any>) => {
+export const atAppDir = async (conf: PkProjectConf, appName: string, cb: (app: IPkApp) => Promise<any>) => {
     const app = conf.getApp(appName);
     if (!app) {
         throw new Error(`app ${appName} does not exists`);
@@ -48,7 +49,7 @@ export const atAppDir = async (conf: PkConf, appName: string, cb: (app: IPkApp) 
 }
 
 
-export const atModuleDir = async (conf: PkConf, moduleName: string, cb: (module: IPkModule) => Promise<any>) => {
+export const atModuleDir = async (conf: PkProjectConf, moduleName: string, cb: (module: IPkModule) => Promise<any>) => {
     const module = conf.getModule(moduleName);
     if (!module) {
         throw new Error(`module ${moduleName} does not exists`);
@@ -56,7 +57,7 @@ export const atModuleDir = async (conf: PkConf, moduleName: string, cb: (module:
 
     const cwd = process.cwd();
     try {
-        const moduleDir = cwd + `/pk_modules/${moduleName}`;
+        const moduleDir = join(cwd, MODULE_DIR, moduleName);
         process.chdir(moduleDir);
         await cb(module);
         process.chdir(cwd);
@@ -75,10 +76,10 @@ export const getCurrentDirectoryApp = (apps: IPkApp[], root: string, cwd: string
     return app;
 }
 
-export const getEnvNames = (conf: PkConf, app: IPkApp) => {
+export const getEnvNames = (conf: PkProjectConf, app: IPkApp) => {
     const envs: any = {};
-    if (conf.envs) {
-        for (const env of conf.envs) {
+    if (conf.data.envs) {
+        for (const env of conf.data.envs) {
             envs[env.name] = true;
         }
     }
@@ -93,21 +94,21 @@ export const getEnvNames = (conf: PkConf, app: IPkApp) => {
 export const visitEachAppAndEnv = async (
     appName: string | undefined | null,
     envName: string,
-    cbb: (root: string, conf: PkConf, app: IPkApp, envName: string) => Promise<any>) => {
+    cbb: (root: string, conf: PkProjectConf, app: IPkApp, envName: string) => Promise<any>) => {
 
     const cwd = process.cwd();
-    const targetAppNames = (root: string, conf: PkConf) => appName === '*'
-        ? conf.apps.map(app => app.name)
+    const targetAppNames = (root: string, conf: PkProjectConf) => appName === '*'
+        ? conf.data.apps.map(app => app.name)
         : (appName
             ? [appName as string]
-            : [getCurrentDirectoryApp(conf.apps, root, cwd).name]);
-    const targetEnvNames = (conf: PkConf, app: IPkApp) => envName === '*'
+            : [getCurrentDirectoryApp(conf.data.apps, root, cwd).name]);
+    const targetEnvNames = (conf: PkProjectConf, app: IPkApp) => envName === '*'
         ? getEnvNames(conf, app)
         : [envName];
 
 
-    await atPkConfDir(async (root, conf) => {
-        if (!conf.apps || conf.apps.length == 0) {
+    await atProjectDir(async (root, conf) => {
+        if (!conf.data.apps || conf.data.apps.length == 0) {
             throw new Error('no apps defined in pk-project.yaml');
         }
         const appNames = targetAppNames(root, conf);

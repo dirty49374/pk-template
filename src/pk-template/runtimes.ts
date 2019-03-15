@@ -10,7 +10,7 @@ import { Trace } from './trace';
 
 
 export function buildInput(input: any, parentValues: IValues): any {
-    if (!input) return {}
+    if (!input) return { cluster: null, env: null, namespace: null };
 
     const values = { cluster: null, env: null, namespace: null, ...input };
     for (const k in parentValues) {

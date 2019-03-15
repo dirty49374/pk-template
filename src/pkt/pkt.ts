@@ -9,7 +9,7 @@ import { readStdin } from '../pk-template/utils';
 import { Scope } from '../pk-template/scope';
 import { exceptionHandler } from '../pk-util/exception';
 import { IResult } from '../pk-template/types';
-import { PkConf } from '../pk-conf/conf';
+import { PkProjectConf } from '../pk-conf/projectConf';
 
 function _generate(objects: IObject[], values: IValues, files: string[]): IObject[] {
     objects = objects || [];
@@ -62,7 +62,7 @@ export async function execCommand(argv: any, print: boolean): Promise<IResult | 
         }
         return { args, objects };
     } catch (e) {
-        await exceptionHandler(e);
+        await exceptionHandler(e, !!args.options.debug);
 
         throw e;
     }

@@ -1,5 +1,5 @@
-import { PkConf } from '../../../pk-conf/conf';
-import { atPkConfDir } from '../../libs';
+import { PkProjectConf } from '../../../pk-conf/projectConf';
+import { atProjectDir } from '../../libs';
 import { v4 as uuid } from 'uuid';
 import { mkdirSync, writeFileSync, existsSync } from 'fs';
 import { dumpYaml } from '../../../pk-yaml';
@@ -9,7 +9,7 @@ export default {
     desc: 'add a new app',
     builder: (yargs: any) => yargs,
     handler: async (argv: any) => {
-        await atPkConfDir(async (root, conf) => {
+        await atProjectDir(async (root, conf) => {
             if (!argv.appName.match(/^[a-zA-Z0-9]+$/)) {
                 throw new Error(`app name ${argv.appName} is invalid`);
             }
@@ -31,7 +31,7 @@ export default {
             const yaml = dumpYaml(data);
             writeFileSync(`${app.name}/app.pkt`, yaml, 'utf8');
 
-            PkConf.save('.', conf);
+            PkProjectConf.save(conf, '.');
         });
     },
 }

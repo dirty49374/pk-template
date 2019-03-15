@@ -95,7 +95,7 @@ const showStack = async (stack: string, source?: string) => {
     }
 }
 
-export const exceptionHandler = async (e: any): Promise<any> => {
+export const exceptionHandler = async (e: any, debug: boolean): Promise<any> => {
     const chalk = getChalk();
     console.error(chalk.red('ERROR  : ' + e.message));
     if (e.summary) {
@@ -105,7 +105,9 @@ export const exceptionHandler = async (e: any): Promise<any> => {
         console.error(chalk.red('         ' + e.pos));
     }
     console.error();
-    await showStack(e.stack, e.source);
+    if (debug) {
+        await showStack(e.stack, e.source);
+    }
 
     process.exit(1);
 }

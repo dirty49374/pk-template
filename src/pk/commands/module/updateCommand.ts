@@ -1,6 +1,6 @@
-import { PkConf } from '../../../pk-conf/conf';
+import { PkProjectConf } from '../../../pk-conf/projectConf';
 import { updateModule } from '../../../pk-conf/module';
-import { atPkConfDir, atModuleDir } from '../../libs';
+import { atProjectDir, atModuleDir } from '../../libs';
 
 export default {
     command: 'update <module-name>',
@@ -25,7 +25,7 @@ export default {
                 mod.branch = 'master';
             }
             await updateModule(mod);
-            PkConf.save('.', conf);
+            PkProjectConf.save(conf, '.');
             console.log();
         });
 

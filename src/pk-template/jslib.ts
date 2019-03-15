@@ -6,6 +6,7 @@ import { log } from './logger';
 const jslib = (scope: IScope) => {
     const lib = {
         indent: () => scope.trace ? ''.padEnd(scope.trace.depth() * 2) : '',
+        envVar: (name: string) => process.env[name],
         log: (...msg: any[]) => log(...msg),
         files: (path: string) => scope.listFiles(path).data,
         loadText: (path: string) => scope.loadText(path).data,

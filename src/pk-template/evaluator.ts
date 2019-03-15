@@ -12,7 +12,10 @@ export class Evaluator {
         const _ = getUnderscore();
         return _.template(tpl)({
             ...this.scope.values,
-            $: this.scope
+            $: {
+                ...this.scope.$buildLib(this),
+                ...this.scope,
+            }
         });
     }
 

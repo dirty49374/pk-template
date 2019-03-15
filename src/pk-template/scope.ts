@@ -6,7 +6,7 @@ import { Evaluator } from './evaluator';
 import { Loader } from './loader';
 import { StyleSheet } from './styles/styleSheet';
 import { PathResolver } from './pathResolver';
-import { PkConf } from '../pk-conf/conf';
+import { PkProjectConf } from '../pk-conf/projectConf';
 import { pktError } from './utils';
 import { Trace } from './trace';
 
@@ -20,7 +20,7 @@ export class Scope extends PathResolver implements IScope {
     parent: IScope;
     $buildLib: any;
     trace?: ITrace;
-    conf?: PkConf;
+    conf?: PkProjectConf;
     styleSheet: IStyleSheet;
     private evaluator: Evaluator;
     private loader: Loader;

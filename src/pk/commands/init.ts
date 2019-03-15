@@ -1,20 +1,51 @@
+import { PkProjectConf } from '../../pk-conf/projectConf';
+import { mkdirSync, existsSync } from 'fs';
 import { PkConf } from '../../pk-conf/conf';
-import { mkdirSync } from 'fs';
+import { tryCatch } from '../libs';
+import { insideGit } from '../../pk-path/insideGit';
+import { MODULE_DIR } from '../../pk-conf/module';
 
 export default {
-    command: 'init <project-name>',
+    command: 'init <project-name> [directory]',
     desc: 'initialize project',
     builder: (yargs: any) => yargs,
-    handler: (argv: any) => {
-        if (!argv.projectName.match(/^[a-zA-Z0-9]+$/)) {
-            throw new Error(`app name ${argv.projectName} is invalid`);
-        }
+    handler: async (argv: any) => {
+        const directory = argv.directory || 'pk';
 
-        console.log('initializing project')
-        const file = PkConf.create(argv.projectName, 'unknown');
-        PkConf.save('.', file);
+        await tryCatch(async () => {
+            const conf = PkConf.load();
+            if (!conf) {
+                throw new Error('~/pk.yaml not exists. use pk config');
+            }
+            if (!conf.data.email) {
+                throw new Error('user is not set. use pk config --user to set');
+            }
 
-        console.log('creating project directories...');
-        mkdirSync('pk_modules');
+            if (!argv.projectName.match(/^[a-zA-Z0-9]+$/)) {
+                throw new Error(`app name ${argv.projectName} is invalid`);
+            }
+
+            if (!insideGit()) {
+                throw new Error(`need git reporitory to create project`);
+            }
+
+            console.log(`* creating ${directory}/ directory ...`);
+            if (!existsSync(argv.projectConf)) {
+                mkdirSync(directory);
+            }
+
+            console.log(`* initializing ${directory}/${PkProjectConf.FILENAME} file ...`)
+            const file = PkProjectConf.create(argv.projectName, conf.data.email);
+            if (PkProjectConf.exists(directory)) {
+                throw new Error(`project ${argv.projectName} already exists`)
+            }
+            PkProjectConf.save(file, directory);
+
+            const modulesDir = `${directory}/${MODULE_DIR}`;
+            console.log(`* creating ${modulesDir}/ directories...`);
+            if (!existsSync(modulesDir)) {
+                mkdirSync(modulesDir);
+            }
+        }, argv.d);
     },
 }

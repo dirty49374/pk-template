@@ -3,7 +3,7 @@ import * as pkyaml from '../pk-yaml';
 import { getChalk } from '../lazy';
 import { IPktArgs } from "../pkt/args";
 import { IPkDeployment } from ".";
-import { PkConf } from "../pk-conf/conf";
+import { PkProjectConf } from "../pk-conf/projectConf";
 import { generate } from "../pkt/pkt";
 
 const objectError = (object: IObject, err: string) => {
@@ -13,7 +13,7 @@ const objectError = (object: IObject, err: string) => {
 
 }
 
-export const buildPkd = async (conf: PkConf, appName: string, envName: string) => {
+export const buildPkd = async (conf: PkProjectConf, appName: string, envName: string) => {
     const app = conf.getApp(appName);
     if (!app) {
         throw new Error(`app ${appName} not exits`);
@@ -25,9 +25,9 @@ export const buildPkd = async (conf: PkConf, appName: string, envName: string) =
     }
 
     env.values.env = envName;
-    env.values.namespace = `${conf.project.name}-${app.name}-${envName}`;
+    env.values.namespace = `${conf.data.project.name}-${app.name}-${envName}`;
 
-    const deploymentName = `${conf.project.name}-${appName}-${envName}`;
+    const deploymentName = `${conf.data.project.name}-${appName}-${envName}`;
     const deploymentId = `${app.id}-${envName}`;
 
     const args: IPktArgs = {
@@ -78,7 +78,7 @@ export const buildPkd = async (conf: PkConf, appName: string, envName: string) =
         id: deploymentId,
         name: deploymentName,
         created: new Date().toJSON(),
-        project: conf.project,
+        project: conf.data.project,
         app: {
             name: app.name,
             id: app.id,
