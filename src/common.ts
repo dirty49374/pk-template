@@ -1,5 +1,5 @@
 export interface IPkzHeader {
-    context: string;
+    cluster: string;
 }
 
 export interface IObject {
@@ -7,9 +7,8 @@ export interface IObject {
 }
 
 export interface IKubeCtlConfig extends IPkzHeader {
-    kube_dryrun_option: string;
-    kube_option: string;
-    sequential_apply: boolean;
+    isDryRun: boolean;
+    kubeConfig: string;
 }
 
 export interface IProgress {

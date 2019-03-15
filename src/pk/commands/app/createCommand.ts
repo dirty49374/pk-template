@@ -1,8 +1,8 @@
-import { PkConf } from '../../pk-conf/conf';
-import { atPkConfDir } from '../util';
+import { PkConf } from '../../../pk-conf/conf';
+import { atPkConfDir } from '../../libs';
 import { v4 as uuid } from 'uuid';
 import { mkdirSync, writeFileSync, existsSync } from 'fs';
-import { dumpYaml } from '../../pk-yaml';
+import { dumpYaml } from '../../../pk-yaml';
 
 export default {
     command: 'create <app-name>',

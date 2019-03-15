@@ -1,4 +1,4 @@
-import { PkConf } from '../pk-conf/conf';
+import { PkConf } from '../../pk-conf/conf';
 import { mkdirSync } from 'fs';
 
 export default {

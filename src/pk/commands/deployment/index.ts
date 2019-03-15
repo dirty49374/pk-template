@@ -4,5 +4,6 @@ export default {
     builder: (yargs: any) => yargs
         .command(require('./createCommand').default)
         .command(require('./diffCommand').default)
-        .command(require('./updateCommand').default),
+        .command(require('./updateCommand').default)
+        .command(require('./applyCommand').default),
 }

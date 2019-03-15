@@ -4,20 +4,16 @@ export class ICatalog {
 
 }
 export class PkdCatalog {
-    static parse(id: string, text: string): PkdCatalog {
+    static parse(text: string): PkdCatalog {
         const set: ISet = {};
         text.split('\n')
             .filter((line: string) => line)
             .forEach(key => set[key.trim()] = true);
 
-        return new PkdCatalog(id, set);
+        return new PkdCatalog(set);
     }
 
-    constructor(private id: string, private keys: ISet) {
-    }
-
-    getId() {
-        return this.id;
+    constructor(private keys: ISet) {
     }
 
     getData(): string {

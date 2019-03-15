@@ -1,25 +1,72 @@
-import { initCommands } from "../pk-commands";
+import { PkConf } from "../pk-conf/conf";
+import * as libs from "./libs";
+import { readdirSync, existsSync } from "fs";
 
-function run(argv: string[], help: boolean) {
-    const yargs = initCommands(require('yargs')(argv))
-        .demandCommand()
+function loadModuleCommands(yargs: any, name: string) {
+    const cwd = process.cwd();
+    const mcd = `${cwd}/pk_modules/${name}/commands/`;
+    if (existsSync(mcd)) {
+        const commands = readdirSync(mcd)
+            .filter(file => file.endsWith('.js'))
+            .map(file => require(`${mcd}/${file}`));
 
-    if (help) {
-        yargs.showHelp();
-    } else {
-        yargs.recommendCommands().strict().help('h').argv;
+        if (commands.length != 0) {
+            yargs.command({
+                command: `${name} <command>`,
+                desc: `module ${name} commands`,
+                builder: (yargs: any) => commands.forEach(c => yargs.command(c)),
+            });
+        }
     }
+
 }
-
 async function main(argv: string[]) {
-    switch (argv[0]) {
-        case 'apply':
-            if (argv.length < 2) {
-                await run(argv, true);
-                return;
+    const { dir, conf } = PkConf.find();
+    const yargs = require('yargs')(argv)
+        .scriptName("pk");
+
+
+    if (conf && dir) {
+        yargs
+            .middleware((argv: any) => {
+                argv.$pk = {
+                    ...libs,
+                    root: dir,
+                    conf,
+                };
+            })
+            .command(require('./commands/app').default)
+            .command(require('./commands/env').default)
+            .command(require('./commands/module').default)
+            .command(require('./commands/deployment').default)
+            ;
+
+        process.chdir(dir);
+        if (conf.modules) {
+            for (const mod of conf.modules) {
+                loadModuleCommands(yargs, mod.name);
             }
+        }
+        yargs
+            .command(require('./commands/init'))
+            .command(require('./commands/test'))
+            .recommendCommands()
+            .demandCommand()
+            .strict()
+            .help('h')
+            .argv
+            ;
+    } else {
+        yargs
+            .command(require('./commands/init'))
+            .command(require('./commands/test'))
+            .recommendCommands()
+            .demandCommand()
+            .strict()
+            .help('h')
+            .argv
+            ;
     }
-    await run(argv, false);
 }
 
 main(process.argv.slice(2));

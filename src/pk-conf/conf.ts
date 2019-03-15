@@ -2,10 +2,9 @@ import * as fs from "fs";
 import { resolve, dirname } from "path";
 import * as Yaml from '../pk-yaml';
 import { IPkApp, IPkModule, IPkEnv, IPkProject, IPkConf } from ".";
-import app from "../pk-commands/app";
 
 export class PkConf implements IPkConf {
-    static FILENAME = "project.pk";
+    static FILENAME = "pk-project.yaml";
 
     project: IPkProject;
     apps: IPkApp[];

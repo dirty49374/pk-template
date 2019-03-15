@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { IPkDeployment } from '.';
-import { dumpYaml, dumpYamlAll } from '../pk-yaml';
+import { dumpYamlAll } from '../pk-yaml';
 
 export const savePkd = (pkz: IPkDeployment) => {
     const yaml = dumpYamlAll(pkz.objects);

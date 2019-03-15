@@ -1,19 +1,10 @@
-import { IKubeCtlConfig, IResourceKey, delay } from "../common";
+import { IResourceKey, delay, IKubeCtlConfig } from "../common";
 import { Progress } from "../pk-ui/progress";
 import { PkKubeCtl } from "../pk-kubectl/pk-kubectl";
 import { PkdCatalog } from "./catalog";
 import { IPkdApplierOption } from "./options";
 
-export const deletePkd = async (packageName: string, contextName: string, options: IPkdApplierOption) => {
-
-    const loadInstalledCatalog = (): PkdCatalog | null => {
-        const map = kube.getPkzSpec(packageName);
-        if (!map) {
-            return null;
-        }
-        const catalog = PkdCatalog.parse(map.metadata.name, map.data.objects);
-        return catalog
-    }
+export const deletePkd = async (envName: string, cluster: string, options: IPkdApplierOption) => {
 
     const deleteObjects = async (keys: IResourceKey[]) => {
         const nonNamespaces = keys.filter(k => k.kind !== 'Namespace');
@@ -42,11 +33,10 @@ export const deletePkd = async (packageName: string, contextName: string, option
 
 
     const ui = new Progress(options);
-    const kubeOption = {
-        context: contextName,
-        kube_dryrun_option: options.dryRun ? ' --dry-run' : '',
-        kube_option: buildKubeOption(contextName, options),
-        sequential_apply: false,
+    const kubeOption: IKubeCtlConfig = {
+        cluster: cluster,
+        isDryRun: options.dryRun,
+        kubeConfig: buildKubeOption(cluster, options),
     };
     const kube = new PkKubeCtl(kubeOption, ui);
 
@@ -61,12 +51,17 @@ export const deletePkd = async (packageName: string, contextName: string, option
         }
     }
 
-    const catalog = loadInstalledCatalog();
+    const spec = kube.getPkzSpec(envName);
+    if (!spec) {
+        return null;
+    }
+    const catalog = PkdCatalog.parse(spec.data.catalog);
     if (!catalog) {
-        console.error(`cannot find package ${packageName} on context ${contextName}`)
+        console.error(`cannot find env ${envName} on context ${cluster}`)
         process.exit(1);
         return;
     }
+    const packageName = spec.header.name;
 
     const keys = catalog.getKeys();
     deleteObjects(keys);

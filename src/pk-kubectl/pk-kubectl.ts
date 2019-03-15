@@ -12,7 +12,7 @@ export class PkKubeCtl extends KubeCtl {
     }
 
     queryUnnamespacables() {
-        const command = `kubectl api-resources --no-headers --namespaced=false ${this.config.kube_option}`;
+        const command = `kubectl api-resources --no-headers --namespaced=false --kubeconfig ${this.config.kubeConfig}`;
         const result = execPipeSync(command);
 
         const lines = result.split('\n').filter(l => l);
@@ -31,17 +31,12 @@ export class PkKubeCtl extends KubeCtl {
 
 
     getPkzSpec(name: string): IObject | null {
-        const command = `kubectl get configmap ${name} ${this.config.kube_option} --namespace pk-deployments -ojson`;
-        // this.progress.log(`--- ${command}`);
+        const command = `kubectl get configmap ${name} --kubeconfig ${this.config.kubeConfig} --namespace pk-deployments -ojson`;
         const result = execPipeSync(command, '(NotFound)');
         if (result) {
             const configmap = JSON.parse(result);
-            // this.progress.log(configmap.data.objects);
-            // this.progress.log('---');
             return configmap;
         }
-        // this.progress.log('notfound');
-        // this.progress.log('---');
 
         return null;
     }
@@ -74,9 +69,9 @@ export class PkKubeCtl extends KubeCtl {
             this.progress.confirm(`delete ${key.kind} ${namespaced ? key.namespace + '/' : ''}${key.name}`);
 
             if (namespaced) {
-                this.deleteRaw(key.kind, key.name, key.namespace);
+                this.deleteRaw(this.config, key.kind, key.name, key.namespace);
             } else {
-                this.deleteRaw(key.kind, key.name);
+                this.deleteRaw(this.config, key.kind, key.name);
             }
         }
     }

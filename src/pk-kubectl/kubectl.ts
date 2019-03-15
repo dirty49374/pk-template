@@ -8,9 +8,9 @@ export class KubeCtl {
         protected progress: IProgress) {
     }
 
-    async applyRaw(objects: IObject[], alloption: string) {
+    async applyRaw(opt: IKubeCtlConfig, objects: IObject[]) {
         const yaml = objects.map(o => pkyaml.dumpYaml(o)).filter(o => o != null).join('---\n');
-        const command = `kubectl apply${alloption} -f -`;
+        const command = `kubectl apply --kubeconfig ${opt.kubeConfig}${opt.isDryRun ? ' --dry-run' : ''} -f -`;
 
         process.stdout.write('    ');
         await execStdin(command, yaml, data => {
@@ -19,12 +19,12 @@ export class KubeCtl {
         });
     }
 
-    deleteRaw(kind: string, name: string, namespace?: string) {
+    deleteRaw(opt: IKubeCtlConfig, kind: string, name: string, namespace?: string) {
         const command = namespace === undefined
-            ? `kubectl delete ${kind} ${name}`
-            : `kubectl delete ${kind} ${name} --namespace ${namespace}`;
+            ? `kubectl delete ${kind} ${name} --kubeconfig ${opt.kubeConfig}`
+            : `kubectl delete ${kind} ${name} --kubeconfig ${opt.kubeConfig} --namespace ${namespace}`;
 
-        if (this.config.kube_dryrun_option) {
+        if (this.config.isDryRun) {
             this.progress.verbose('    skipped');
         } else {
             const result = execPipeSync(command, '(NotFound)');

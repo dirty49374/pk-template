@@ -1,11 +1,11 @@
-import { execCommand } from '../../pkt/pkt';
-import * as PkDeploy from '../../pk-deploy';
-import { getChalk, getReadlineSync } from '../../lazy';
-import { buildPkd } from '../../pk-deploy/build';
-import { savePkd } from '../../pk-deploy/save';
-import { existsPkd } from '../../pk-deploy/exists';
-import { PkConf } from '../../pk-conf/conf';
-import { atPkConfDir, atAppDir, visitEachAppAndEnv } from '../util';
+import { execCommand } from '../../../pkt/pkt';
+import * as PkDeploy from '../../../pk-deploy';
+import { getChalk, getReadlineSync } from '../../../lazy';
+import { buildPkd } from '../../../pk-deploy/build';
+import { savePkd } from '../../../pk-deploy/save';
+import { existsPkd } from '../../../pk-deploy/exists';
+import { PkConf } from '../../../pk-conf/conf';
+import { atPkConfDir, atAppDir, visitEachAppAndEnv } from '../../libs';
 
 export default {
     command: 'create [appName]',

@@ -60,6 +60,7 @@
         "src/test",
         "src/testcases",
         "bin",
+        "pk",
         "tmp"
     ]
 }

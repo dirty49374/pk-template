@@ -93,7 +93,7 @@ export const buildPkd = async (conf: PkConf, appName: string, envName: string) =
             name: deploymentName,
             namespace: "pk-deployments",
             annotations: {
-                "pkt.io/type": "deployment",
+                "pkt.io/type": "pk-deployment",
                 "pkt.io/pk-deployment-id": deploymentId,
                 "pkt.io/pk-deployment-name": deploymentName,
             },

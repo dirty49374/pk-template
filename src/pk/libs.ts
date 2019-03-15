@@ -1,6 +1,17 @@
+import { exceptionHandler } from "../pk-util/exception";
 import { PkConf } from "../pk-conf/conf";
 import { IPkApp, IPkModule } from "../pk-conf";
 import { normalize, join } from "path";
+import { exec } from "child_process";
+
+export const log = (...args: any) => console.log(...args);
+export const tryCatch = async (cb: any) => {
+    try {
+        await cb();
+    } catch (e) {
+        await exceptionHandler(e);
+    }
+}
 
 export const atPkConfDir = async (cb: (root: string, conf: PkConf) => Promise<any>) => {
     const { dir, conf } = PkConf.find();
@@ -45,7 +56,8 @@ export const atModuleDir = async (conf: PkConf, moduleName: string, cb: (module:
 
     const cwd = process.cwd();
     try {
-        process.chdir(`${moduleName}`);
+        const moduleDir = cwd + `/pk_modules/${moduleName}`;
+        process.chdir(moduleDir);
         await cb(module);
         process.chdir(cwd);
     } catch (e) {
@@ -81,7 +93,7 @@ export const getEnvNames = (conf: PkConf, app: IPkApp) => {
 export const visitEachAppAndEnv = async (
     appName: string | undefined | null,
     envName: string,
-    cb: (root: string, conf: PkConf, app: IPkApp, envName: string) => Promise<any>) => {
+    cbb: (root: string, conf: PkConf, app: IPkApp, envName: string) => Promise<any>) => {
 
     const cwd = process.cwd();
     const targetAppNames = (root: string, conf: PkConf) => appName === '*'
@@ -92,6 +104,8 @@ export const visitEachAppAndEnv = async (
     const targetEnvNames = (conf: PkConf, app: IPkApp) => envName === '*'
         ? getEnvNames(conf, app)
         : [envName];
+
+
     await atPkConfDir(async (root, conf) => {
         const appNames = targetAppNames(root, conf);
         if (appNames.length == 0) {
@@ -99,19 +113,17 @@ export const visitEachAppAndEnv = async (
         }
 
         for (const appName of appNames) {
-
             await atAppDir(conf, appName, async app => {
-
                 const envNames = targetEnvNames(conf, app);
                 if (envNames.length == 0) {
                     throw new Error('please specify env-name or use --all-envs option');
                 }
 
                 for (const envName of envNames) {
-                    await cb(root, conf, app, envName);
+                    await cbb(root, conf, app, envName);
                 }
             });
         }
     });
 
-};
+}
