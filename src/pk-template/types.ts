@@ -112,6 +112,7 @@ export interface IScope {
     objects: IObject[];
     object: IObject | null;
     values: IValues;
+    value: any;
     pvalues: IValues;
     uri: string;
     parent: IScope;

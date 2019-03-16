@@ -2,7 +2,7 @@ input:
   greet: hello
 
 routine:
-- assign:
+- var:
     name: john
 - include: 02-interpolation.yaml
 - assign:

@@ -1,7 +1,7 @@
 import { getChalk } from '../../../lazy';
 import { buildPkd } from '../../../pk-deploy/build';
 import { existsPkd } from '../../../pk-deploy/exists';
-import { visitEachAppAndEnv, tryCatch } from '../../libs';
+import { visitEachAppAndEnv, tryCatch, atProjectDir } from '../../libs';
 import { loadPkd } from '../../../pk-deploy/load';
 import { diffObjects } from '../../../pk-diff/diff-objects';
 import { IPkCommandInfo } from "../../types";
@@ -15,22 +15,23 @@ export default (pk: IPkCommandInfo) => ({
     handler: async (argv: any): Promise<any> => {
 
         await tryCatch(async () => {
+            await atProjectDir(async (root, conf) => {
+                await visitEachAppAndEnv(argv.app, argv.env, async (root, conf, app, envName) => {
+                    if (!existsPkd(envName)) {
+                        return;
+                    }
 
-            await visitEachAppAndEnv(argv.app, argv.env, async (root, conf, app, envName) => {
-                if (!existsPkd(envName)) {
-                    return;
-                }
+                    console.log(`* diff app=${app.name} env=${envName}`);
 
-                console.log(`* diff app=${app.name} env=${envName}`);
+                    const oldDeployment = loadPkd(envName);
+                    const newDeployment = await buildPkd(conf, app.name, envName);
+                    const same = diffObjects(oldDeployment.objects, newDeployment.objects, '  ');
+                    if (same) {
+                        console.log(getChalk().green(`  same !!!`));
+                    }
 
-                const oldDeployment = loadPkd(envName);
-                const newDeployment = await buildPkd(conf, app.name, envName);
-                const same = diffObjects(oldDeployment.objects, newDeployment.objects, '  ');
-                if (same) {
-                    console.log(getChalk().green(`  same !!!`));
-                }
-
-                console.log();
+                    console.log();
+                });
             });
         }, !!argv.d);
     },

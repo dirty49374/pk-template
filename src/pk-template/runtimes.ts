@@ -137,6 +137,7 @@ export class Runtime {
                 nodes.forEach((node: any) => {
                     scope.child({}, cscope => {
                         cscope.object = o;
+                        cscope.value = node.value;
                         if (stmt.jsonpath.apply) {
                             const value = cscope.evalObject(stmt.jsonpath.apply);
                             jsonpath.apply(o, jsonpath.stringify(node.path), () => value);

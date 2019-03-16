@@ -171,7 +171,7 @@ input:
   greet: hello
 
 routine:
-- assign:
+- var:
     name: john
 - include: 02-interpolation.yaml
 - assign:
@@ -222,27 +222,30 @@ source
 ```yaml
 # 10-subroutine.pkt
 routine:
-- assign:
-    name: world               # name = 'world'
+- var:
+    greet: hello              # greet = hello
+    name: world               # name = world
 - template: |
-    hello: <<<= name >>>
-- routine:                    # routine opens new scope
+    msg: <<<= greet >>> <<<= name >>>
+- routine:
   - assign:
-      name: universe          # name = 'universe'
+      greet: hi               # greet = hi
+  - var:
+      name: universe          # name = universe ( declared new variable name )
   - template: |
-      hello1: <<<= name >>>
+      msg: <<<= greet >>> <<<= name >>>
 - template: |                 # scope is restored
-    hello: <<<= name >>>      # name = 'world'
+    msg: <<<= greet >>> <<<= name >>>
 ```
 
 result
 ```bash
 $ pkt 10-subroutine.pkt
-hello: world
+msg: hello world
 ---
-hello1: universe
+msg: hi universe
 ---
-hello: world
+msg: hi world
 
 ```
 
@@ -291,10 +294,10 @@ routine:
 
 result
 ```bash
-$ pkt 12-javascript.pkt
-hello: yaml-0
+$ pkt 12-java-live-coffee-script.pkt
+hello: yaml-js0-cs0-ls0
 ---
-hello: yaml-1
+hello: yaml-js1-cs1-ls1
 
 ```
 

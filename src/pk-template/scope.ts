@@ -17,6 +17,7 @@ export class Scope extends PathResolver implements IScope {
     object: IObject | null = null;
     values: IValues;
     pvalues: IValues;
+    value: any;
     parent: IScope;
     $buildLib: any;
     trace?: ITrace;

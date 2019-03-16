@@ -86,8 +86,6 @@ export class Evaluator {
     evalAllCustomTags(node: any): any {
         if (node instanceof CustomYamlTag) {
             return this.evalCustomYamlTag(node);
-        } else if (node instanceof CustomYamlTagTag) {
-            return node;
         } else if (Array.isArray(node)) {
             return node.map(item => this.evalAllCustomTags(item));
         } else if (typeof node === 'object') {

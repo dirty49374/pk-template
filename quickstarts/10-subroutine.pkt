@@ -1,12 +1,15 @@
 routine:
-- assign:
-    name: world
+- var:
+    greet: hello              # greet = hello
+    name: world               # name = world
 - template: |
-    hello: <<<= name >>>
+    msg: <<<= greet >>> <<<= name >>>
 - routine:
   - assign:
-      name: universe     # name = 'universe' only inside current scope
+      greet: hi               # greet = hi
+  - var:
+      name: universe          # name = universe ( declared new variable name )
   - template: |
-      hello1: <<<= name >>>
-- template: |
-    hello: <<<= name >>>
+      msg: <<<= greet >>> <<<= name >>>
+- template: |                 # scope is restored
+    msg: <<<= greet >>> <<<= name >>>
