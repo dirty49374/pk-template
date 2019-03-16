@@ -9,7 +9,8 @@ import { loadPkd } from '../../../pk-deploy/load';
 import { IPkDeployment } from '../../../pk-deploy';
 import { join } from 'path';
 import { homedir } from 'os';
-import { visitEachAppAndEnv } from '../../libs';
+import { visitEachAppAndEnv, tryCatch } from '../../libs';
+import { IPkCommandInfo } from "../../types";
 
 interface IApplyStep {
     name: string;
@@ -205,8 +206,7 @@ class Command extends Progress {
     }
 }
 
-
-export default {
+export default (pk: IPkCommandInfo) => ({
     command: 'apply',
     desc: 'apply deployments to kubernetes',
     builder: (yargs: any) => yargs
@@ -217,7 +217,7 @@ export default {
         .option('immediate', { describe: 'execute immediately without initial 5 seconds delay', boolean: true })
         .option('yes', { describe: 'overwrite without confirmation', boolean: true }),
     handler: async (argv: any) => {
-        await argv.$pk.tryCatch(async () => {
+        await tryCatch(async () => {
 
             if (argv.app === '*' && argv.env === '*' && !argv.all) {
                 throw new Error('please specify --app app-name or --env env-name or --all');
@@ -226,6 +226,6 @@ export default {
             await visitEachAppAndEnv(argv.app, argv.env, async (root, conf, app, envName) => {
                 await new Command(argv, app.name, envName).execute();
             })
-        });
+        }, !!argv.d);
     }
-};
+});

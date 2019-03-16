@@ -2,9 +2,10 @@ import { getChalk, getReadlineSync } from '../../../lazy';
 import { buildPkd } from '../../../pk-deploy/build';
 import { savePkd } from '../../../pk-deploy/save';
 import { existsPkd } from '../../../pk-deploy/exists';
-import { visitEachAppAndEnv } from '../../libs';
+import { visitEachAppAndEnv, tryCatch } from '../../libs';
+import { IPkCommandInfo } from "../../types";
 
-export default {
+export default (pk: IPkCommandInfo) => ({
     command: 'add',
     desc: 'add a deployment for environment',
     builder: (yargs: any) => yargs
@@ -13,7 +14,7 @@ export default {
         .option('all', { describe: 'deploy all apps and environments', boolean: true })
         .option('yes', { describe: 'overwrite without confirmation', boolean: true }),
     handler: async (argv: any): Promise<any> => {
-        await argv.$pk.tryCatch(async () => {
+        await tryCatch(async () => {
             if (argv.app === '*' && argv.env === '*' && !argv.all) {
                 throw new Error('please specify --app app-name or --env env-name or --all');
             }
@@ -33,6 +34,6 @@ export default {
                 }
 
             });
-        });
+        }, !!argv.d);
     },
-};
+});

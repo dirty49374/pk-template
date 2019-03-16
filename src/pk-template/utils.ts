@@ -14,8 +14,6 @@ export const pktError = (scope: IScope | null, error: Error, message: string): I
     const pe = error as IPktError;
     pe.summary = message;
     pe.uri = scope ? scope.uri : '.';
-    if (scope)
-        console.log('PPPP', scope.trace);
     pe.pos = (scope && scope.trace) ? scope.trace.pos() : null;
     return pe;
 }

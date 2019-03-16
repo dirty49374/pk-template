@@ -9,7 +9,6 @@ import { readStdin } from '../pk-template/utils';
 import { Scope } from '../pk-template/scope';
 import { exceptionHandler } from '../pk-util/exception';
 import { IResult } from '../pk-template/types';
-import { PkProjectConf } from '../pk-conf/projectConf';
 
 function _generate(objects: IObject[], values: IValues, files: string[]): IObject[] {
     objects = objects || [];

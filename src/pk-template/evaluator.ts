@@ -1,4 +1,4 @@
-import { IScope, CustomYamlTag } from "./types";
+import { IScope, CustomYamlTag, CustomYamlTagTag, CustomYamlJsTag, CustomYamlCsTag, CustomYamlLsTag, CustomYamlFileTag, CustomYamlTemplateTag } from "./types";
 import { getUnderscore, getLiveScript } from "../lazy";
 import { parseYamlAll } from "../pk-yaml";
 import { forEachTreeObjectKey } from "../common";
@@ -28,14 +28,17 @@ export class Evaluator {
         return this.evalJavaScript(data.code, uri);
     }
 
-    evalCustomYamlTag(code: CustomYamlTag): any {
-        switch (code.type) {
-            case 'js':
-                return this.evalJavaScript(code.code, code.uri);
-            case 'file':
-                return this.scope.loadText(code.code).data;
-            case 'template':
-                return this.scope.evalTemplate(code.code);
+    evalCustomYamlTag(tag: CustomYamlTag): any {
+        if (tag instanceof CustomYamlJsTag ||
+            tag instanceof CustomYamlLsTag ||
+            tag instanceof CustomYamlCsTag) {
+            return this.evalJavaScript(tag.code, tag.uri);
+        } else if (tag instanceof CustomYamlFileTag) {
+            return this.scope.loadText(tag.code).data;
+        } else if (tag instanceof CustomYamlTemplateTag) {
+            return this.scope.evalTemplate(tag.code);
+        } else if (tag instanceof CustomYamlTagTag) {
+            return tag.convert();
         }
     }
 
@@ -83,6 +86,8 @@ export class Evaluator {
     evalAllCustomTags(node: any): any {
         if (node instanceof CustomYamlTag) {
             return this.evalCustomYamlTag(node);
+        } else if (node instanceof CustomYamlTagTag) {
+            return node;
         } else if (Array.isArray(node)) {
             return node.map(item => this.evalAllCustomTags(item));
         } else if (typeof node === 'object') {

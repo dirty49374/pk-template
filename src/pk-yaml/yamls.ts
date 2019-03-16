@@ -1,6 +1,6 @@
 import jsyaml from 'js-yaml';
 import { getLiveScript, getCoffeeScript } from '../lazy';
-import { CustomYamlTag } from '../pk-template/types';
+import { CustomYamlTag, CustomYamlTagTag, CustomYamlCsTag, CustomYamlLsTag, CustomYamlJsTag, CustomYamlFileTag, CustomYamlTemplateTag } from '../pk-template/types';
 
 
 interface ITagData {
@@ -10,7 +10,7 @@ interface ITagData {
     uri: string;
 }
 
-const createCustomTag = (name: string, compile: (text: string) => ITagData) => {
+function createCustomTag<T extends CustomYamlTag>(cls: new (data: string, src: string, uri: string) => T, name: string, compile: (text: string) => ITagData) {
     return new jsyaml.Type(`!${name}`, {
         kind: 'scalar',
         resolve: (data: any) =>
@@ -19,10 +19,10 @@ const createCustomTag = (name: string, compile: (text: string) => ITagData) => {
             typeof data === null,
         construct: (data: any) => {
             const compiled = compile(data);
-            return new CustomYamlTag(compiled.type, compiled.data, compiled.uri);
+            return new cls(compiled.data, data, compiled.uri);
         },
-        instanceOf: CustomYamlTag,
-        represent: (jsCode: any) => `!${name} ${jsCode.code}`
+        instanceOf: cls,
+        represent: (tag: any) => tag.represent(),
     });
 }
 
@@ -49,28 +49,28 @@ const compileLive = (data: string): string => {
 export const pktYamlOption = (uri: string) => ({
     schema: jsyaml.Schema.create([
         createCustomTag(
+            CustomYamlCsTag,
             'cs',
             (data: string) => ({ type: 'js', uri, data: compileCoffee(data), src: data })),
         createCustomTag(
-            'coffeeScript',
-            (data: string) => ({ type: 'js', uri, data: compileCoffee(data), src: data })),
-        createCustomTag(
+            CustomYamlLsTag,
             'ls',
             (data: string) => ({ type: 'js', uri, data: compileLive(data), src: data })),
         createCustomTag(
-            'liveScript',
-            (data: string) => ({ type: 'js', uri, data: compileLive(data), src: data })),
-        createCustomTag(
+            CustomYamlJsTag,
             'js',
             (data: string) => ({ type: 'js', uri, data, src: data })),
         createCustomTag(
-            'javaScript',
-            (data: string) => ({ type: 'js', uri, data, src: data })),
-        createCustomTag(
+            CustomYamlFileTag,
             'file',
             (data: string) => ({ type: 'file', uri, data, src: data })),
         createCustomTag(
+            CustomYamlTemplateTag,
             'template',
             (data: string) => ({ type: 'template', uri, data, src: data })),
+        createCustomTag(
+            CustomYamlTagTag,
+            'tag',
+            (data: string) => ({ type: 'tag', uri, data, src: data })),
     ])
 });

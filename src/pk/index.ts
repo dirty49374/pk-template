@@ -3,49 +3,42 @@ import * as libs from "./libs";
 import { readdirSync, existsSync } from "fs";
 import { join } from "path";
 import { MODULE_DIR } from "../pk-conf/module";
+import { generate } from "../pkt/pkt";
+import * as yaml from '../pk-yaml';
+import jsonpatch from 'json-patch';
+import { loadModuleCommands, loadModuleGenerators } from "./module";
 
-function loadModuleCommands(yargs: any, root: string, name: string) {
-    const mcd = join(root, MODULE_DIR, name, 'commands');
-    if (existsSync(mcd)) {
-        const commands = readdirSync(mcd)
-            .filter(file => file.endsWith('.js'))
-            .map(file => require(`${mcd}/${file}`));
-
-        if (commands.length != 0) {
-            yargs.command({
-                command: `${name} <command>`,
-                desc: `module ${name} commands`,
-                builder: (yargs: any) => commands.forEach(c => yargs.command(c)),
-            });
-        }
-    }
-
-}
 async function main(argv: string[]) {
     const { root, conf } = PkProjectConf.find();
     const yargs = require('yargs')(argv)
         .scriptName("pk")
-        .option('d', { description: 'enable stacktrace on error', boolean: true });
+
+    const pk = { ...libs, root, conf, generate, yaml, jsonpatch };
 
     if (conf && root) {
         yargs
-            .middleware((argv: any) => {
-                argv.$pk = { ...libs, root, conf };
-            })
-            .command(require('./commands/app').default)
-            .command(require('./commands/env').default)
-            .command(require('./commands/module').default)
-            .command(require('./commands/deployment').default)
+            .command(require('./commands/app').default(pk))
+            .command(require('./commands/env').default(pk))
+            .command(require('./commands/module').default(pk))
+            .command(require('./commands/deployment').default(pk))
             ;
 
         if (conf.data.modules) {
             for (const mod of conf.data.modules) {
-                loadModuleCommands(yargs, root, mod.name);
+                yargs.command({
+                    command: `${mod.name} <command>`,
+                    description: `module ${mod.name} command`,
+                    builder: (yargs: any) => {
+                        loadModuleCommands(yargs, root, mod.name, pk);
+                        loadModuleGenerators(yargs, root, mod.name, pk);
+                    }
+                });
             }
         }
         yargs
-            .command(require('./commands/test').default)
-            .command(require('./commands/config').default)
+            .command(require('./commands/test').default(pk))
+            .command(require('./commands/config').default(pk))
+            .option('d', { description: 'enable stacktrace on error', boolean: true })
             .recommendCommands()
             .demandCommand()
             .strict()
@@ -54,9 +47,10 @@ async function main(argv: string[]) {
             ;
     } else {
         yargs
-            .command(require('./commands/init').default)
-            .command(require('./commands/test').default)
-            .command(require('./commands/config').default)
+            .command(require('./commands/init').default(pk))
+            .command(require('./commands/test').default(pk))
+            .command(require('./commands/config').default(pk))
+            .option('d', { description: 'enable stacktrace on error', boolean: true })
             .recommendCommands()
             .demandCommand()
             .strict()

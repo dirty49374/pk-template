@@ -40,7 +40,36 @@ export interface IStyle extends Array<{ k: string, v: string, kv: string }> {
 }
 
 export class CustomYamlTag {
-    constructor(public type: string, public code: string, public uri: string) { }
+    constructor(public type: string, public code: string, public src: string, public uri: string) { }
+    represent = () => this.src;
+}
+export class CustomYamlJsTag extends CustomYamlTag {
+    constructor(code: string, src: string, uri: string) { super('js', code, src, uri); }
+}
+export class CustomYamlCsTag extends CustomYamlTag {
+    constructor(code: string, src: string, uri: string) { super('cs', code, src, uri); }
+}
+export class CustomYamlLsTag extends CustomYamlTag {
+    constructor(code: string, src: string, uri: string) { super('ls', code, src, uri); }
+}
+export class CustomYamlTemplateTag extends CustomYamlTag {
+    constructor(code: string, src: string, uri: string) { super('template', code, src, uri); }
+}
+export class CustomYamlFileTag extends CustomYamlTag {
+    constructor(code: string, src: string, uri: string) { super('file', code, src, uri); }
+}
+export class CustomYamlTagTag extends CustomYamlTag {
+    constructor(code: string, src: string, uri: string) { super('tag', code, src, uri); }
+    convert() {
+        const [tag, src] = this.src.split(' ', 2);
+        switch (tag) {
+            case '!js': return new CustomYamlJsTag(src, src, this.uri);
+            case '!ls': return new CustomYamlLsTag(src, src, this.uri);
+            case '!cs': return new CustomYamlCsTag(src, src, this.uri);
+            case '!template': return new CustomYamlTemplateTag(src, src, this.uri);
+            case '!file': return new CustomYamlFileTag(src, src, this.uri);
+        }
+    }
 }
 
 

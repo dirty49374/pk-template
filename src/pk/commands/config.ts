@@ -3,8 +3,9 @@ import { mkdirSync } from 'fs';
 import { PkConf } from '../../pk-conf/conf';
 import { tryCatch } from '../libs';
 import { dumpYaml } from '../../pk-yaml';
+import { IPkCommandInfo } from '../types';
 
-export default {
+export default (pk: IPkCommandInfo) => ({
     command: 'config',
     desc: 'config',
     builder: (yargs: any) => yargs
@@ -40,4 +41,4 @@ export default {
             }
         }, argv.d);
     },
-}
+});

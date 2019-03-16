@@ -1,7 +1,8 @@
 import { PkProjectConf } from '../../../pk-conf/projectConf';
 import { atProjectDir, tryCatch } from '../../libs';
+import { IPkCommandInfo } from "../../types";
 
-export default {
+export default (pk: IPkCommandInfo) => ({
     command: 'set <env-name>',
     desc: 'set env <env-name> -- [--name value ...]',
     builder: (yargs: any) => yargs
@@ -41,4 +42,4 @@ export default {
             });
         }, !!argv.d);
     },
-}
+});

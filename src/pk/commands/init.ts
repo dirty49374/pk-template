@@ -4,8 +4,9 @@ import { PkConf } from '../../pk-conf/conf';
 import { tryCatch } from '../libs';
 import { insideGit } from '../../pk-path/insideGit';
 import { MODULE_DIR } from '../../pk-conf/module';
+import { IPkCommandInfo } from '../types';
 
-export default {
+export default (pk: IPkCommandInfo) => ({
     command: 'init <project-name> [directory]',
     desc: 'initialize project',
     builder: (yargs: any) => yargs,
@@ -48,4 +49,4 @@ export default {
             }
         }, argv.d);
     },
-}
+});

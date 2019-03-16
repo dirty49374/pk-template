@@ -69,7 +69,6 @@ export class Runtime {
             if (key in scope.values) {
                 scope.values[key] = values[key];
             } else {
-                console.log('XXX', scope.trace);
                 const msg = `value ${key} is not defined`;
                 throw utils.pktError(scope, new Error(msg), msg);
             }

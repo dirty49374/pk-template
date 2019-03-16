@@ -3,8 +3,9 @@ import { cloneModule } from '../../../pk-conf/module';
 import { IPkModule } from '../../../pk-conf';
 import { atProjectDir, tryCatch } from '../../libs';
 import { PkConf } from '../../../pk-conf/conf';
+import { IPkCommandInfo } from "../../types";
 
-export default {
+export default (pk: IPkCommandInfo) => ({
     command: 'add <module-name> [repository]',
     desc: 'initialize project',
     builder: (yargs: any) => yargs
@@ -39,12 +40,12 @@ export default {
             }
 
             await atProjectDir(async () => {
-                argv.$pk.conf.addModule(mod);
+                pk.conf.addModule(mod);
 
                 await cloneModule(mod);
 
-                PkProjectConf.save(argv.$pk.conf, '.');
+                PkProjectConf.save(pk.conf, '.');
             });
         }, !!argv.d);
     },
-}
+});

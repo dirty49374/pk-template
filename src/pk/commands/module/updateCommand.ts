@@ -1,8 +1,9 @@
 import { PkProjectConf } from '../../../pk-conf/projectConf';
 import { updateModule } from '../../../pk-conf/module';
-import { atProjectDir, atModuleDir } from '../../libs';
+import { atProjectDir, atModuleDir, tryCatch } from '../../libs';
+import { IPkCommandInfo } from "../../types";
 
-export default {
+export default (pk: IPkCommandInfo) => ({
     command: 'update <module-name>',
     desc: 'update module from git repository',
     builder: (yargs: any) => yargs
@@ -10,9 +11,9 @@ export default {
         .option('tag', { describe: 'tag name' }),
     handler: async (argv: any) => {
 
-        argv.$pk.tryCatch(async () => {
-            const conf = argv.$pk.conf;
-            const mod = argv.$pk.conf.modules
+        await tryCatch(async () => {
+            const conf = pk.conf;
+            const mod = pk.conf.modules
                 .find((m: any) => m.name == argv.moduleName);
 
             if (argv.branch) {
@@ -27,7 +28,7 @@ export default {
             await updateModule(mod);
             PkProjectConf.save(conf, '.');
             console.log();
-        });
+        }, !!argv.d);
 
     },
-}
+});

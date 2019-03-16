@@ -1,12 +1,12 @@
 import { getChalk } from '../../../lazy';
 import { buildPkd } from '../../../pk-deploy/build';
 import { existsPkd } from '../../../pk-deploy/exists';
-import { visitEachAppAndEnv } from '../../libs';
+import { visitEachAppAndEnv, tryCatch } from '../../libs';
 import { loadPkd } from '../../../pk-deploy/load';
 import { diffObjects } from '../../../pk-diff/diff-objects';
+import { IPkCommandInfo } from "../../types";
 
-
-export default {
+export default (pk: IPkCommandInfo) => ({
     command: 'diff [appName]',
     desc: 'diff a deployment changes',
     builder: (yargs: any) => yargs
@@ -14,7 +14,7 @@ export default {
         .option('env', { describe: 'environment name (default = *)', default: '*' }),
     handler: async (argv: any): Promise<any> => {
 
-        await argv.$pk.tryCatch(async () => {
+        await tryCatch(async () => {
 
             await visitEachAppAndEnv(argv.app, argv.env, async (root, conf, app, envName) => {
                 if (!existsPkd(envName)) {
@@ -32,6 +32,6 @@ export default {
 
                 console.log();
             });
-        });
+        }, !!argv.d);
     },
-};
+});

@@ -3,8 +3,9 @@ import { atProjectDir } from '../../libs';
 import { v4 as uuid } from 'uuid';
 import { mkdirSync, writeFileSync, existsSync } from 'fs';
 import { dumpYaml } from '../../../pk-yaml';
+import { IPkCommandInfo } from "../../types";
 
-export default {
+export default (pk: IPkCommandInfo) => ({
     command: 'add <app-name>',
     desc: 'add a new app',
     builder: (yargs: any) => yargs,
@@ -34,4 +35,4 @@ export default {
             PkProjectConf.save(conf, '.');
         });
     },
-}
+});

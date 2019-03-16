@@ -1,6 +1,8 @@
 import { IResourceType, IKubeCtlConfig } from '../common';
 import { IProgressOptions } from '../pk-ui';
 
+export type IPkCommandInfo = any;
+
 export interface IPkctlOptions extends IProgressOptions {
     context: string;
     packageName: string;
