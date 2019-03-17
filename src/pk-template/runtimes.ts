@@ -7,12 +7,13 @@ import { StyleSheet } from './styles/styleSheet';
 import { Schema } from './schema';
 import { Trace } from './trace';
 
-
-
 export function buildInput(input: any, parentValues: IValues): any {
-    if (!input) return { cluster: null, env: null, namespace: null };
-
-    const values = { cluster: null, env: null, namespace: null, ...input };
+    const values = {
+        cluster: null,
+        env: null,
+        namespace: null,
+        ...(input || {}),
+    };
     for (const k in parentValues) {
         if (k in values)
             values[k] = parentValues[k];
@@ -27,15 +28,13 @@ export class Runtime {
         this.trace = new Trace(uri);
     }
     break(stmt: IStatement) {
-        if (!stmt.break) return false;
+        if (!('break' in stmt)) return false;
         this.trace.step('break');
-
         return true;
     }
     scriptStatement(scope: IScope, stmt: IStatement) {
         if (!stmt.script) return false;
         this.trace.step('script');
-
         scope.evalScript(stmt.script);
         return true;
     }
@@ -55,6 +54,7 @@ export class Runtime {
     }
     varStatement(scope: IScope, stmt: IStatement) {
         if (!stmt.var) return false;
+
         this.trace.step('var');
         scope.defineValues(stmt.var || {});
 
@@ -76,9 +76,9 @@ export class Runtime {
         return true;
     }
     addStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt.add) return false;
-        this.trace.step('add');
+        if (!('add' in stmt)) return false;
 
+        this.trace.step('add');
         const object = scope.evalObject(stmt.add);
         scope.add(object);
         return true;

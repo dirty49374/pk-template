@@ -6,8 +6,8 @@ export class StyleApply {
     constructor(
         private name: string,
         private tag: CustomYamlTag) {
-        if (tag.type !== 'js') {
-            throw new Error(`style type is not script`);
+        if (!tag.isScript()) {
+            throw new Error(`style type(${tag.type}) is not script`);
         }
     }
 

@@ -42,15 +42,20 @@ export interface IStyle extends Array<{ k: string, v: string, kv: string }> {
 export class CustomYamlTag {
     constructor(public type: string, public code: string, public src: string, public uri: string) { }
     represent = () => this.src;
+    isScript = () => false;
+
 }
 export class CustomYamlJsTag extends CustomYamlTag {
     constructor(code: string, src: string, uri: string) { super('js', code, src, uri); }
+    isScript = () => true;
 }
 export class CustomYamlCsTag extends CustomYamlTag {
     constructor(code: string, src: string, uri: string) { super('cs', code, src, uri); }
+    isScript = () => true;
 }
 export class CustomYamlLsTag extends CustomYamlTag {
     constructor(code: string, src: string, uri: string) { super('ls', code, src, uri); }
+    isScript = () => true;
 }
 export class CustomYamlTemplateTag extends CustomYamlTag {
     constructor(code: string, src: string, uri: string) { super('template', code, src, uri); }

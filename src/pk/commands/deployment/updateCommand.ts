@@ -19,7 +19,6 @@ export default (pk: IPkCommandInfo) => ({
 
             await visitEachAppAndEnv(argv.app, argv.env, async (root, conf, app, envName) => {
                 if (!existsPkd(envName)) {
-                    console.log('not exists')
                     return;
                 }
 
@@ -29,15 +28,12 @@ export default (pk: IPkCommandInfo) => ({
                 const newDeployment = await buildPkd(conf, app.name, envName);
                 if (newDeployment != null) {
                     const same = diffObjects(oldDeployment.objects, newDeployment.objects, '  ');
-                    if (existsPkd(newDeployment.header.env.name) && !argv.yes && !same) {
-                        getReadlineSync().question(getChalk().red(`  file already exists, are you sure to overwrite ? [ENTER/CTRL-C] `));
-                    }
-                    savePkd(newDeployment);
                     if (same) {
                         console.log(getChalk().green(`  same !!!`));
                     } else {
                         console.log(getChalk().green(`  updated !!!`));
                     }
+                    savePkd(newDeployment);
                 } else {
                     console.error(getChalk().red(`  failed to create package ${envName}`));
                 }

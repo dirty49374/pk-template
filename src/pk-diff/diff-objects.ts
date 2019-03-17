@@ -74,7 +74,7 @@ export function diffObjects(prev: IObject[], curr: IObject[], indent: string = '
         }
     }
     if (same) {
-        console.log(`${indent}all ${Object.keys(currmap).length} objects are same !`)
+        // console.log(`${indent}all ${Object.keys(currmap).length} objects are same !`)
     }
     return same;
 }

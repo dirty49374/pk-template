@@ -24,7 +24,7 @@ export const parseKvps = (value: string): IKvpType => {
     value.split(';')
         .forEach(kvp => {
             const [key, value] = kvp.split('=');
-            kvps[key.trim()] = value.trim();
+            kvps[key.trim()] = value ? value.trim() : '';
         });
     return kvps;
 }

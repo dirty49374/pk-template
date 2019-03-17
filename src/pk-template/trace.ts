@@ -16,7 +16,9 @@ export class Trace implements ITrace {
         return rst;
     }
 
-    step = (name: string | number) => this.locs[this._depth] = name;
+    step = (name: string | number) => {
+        this.locs[this._depth] = name;
+    }
     pos = () => this.locs.slice(0, this._depth + 1).join(' > ');
     depth = () => this._depth;
 }
