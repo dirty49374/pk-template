@@ -1,6 +1,6 @@
 {
     "name": "pk-template",
-    "version": "0.1.44",
+    "version": "0.1.45",
     "description": "p template engine for kubernetes",
     "main": "dist/pk-lib/index.js",
     "scripts": {

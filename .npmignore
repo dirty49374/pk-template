@@ -14,3 +14,7 @@ tmp/
 *.pkz
 pk/
 *.pks
+.circleci/
+webpack.config.js
+release-patch
+tsconfig.json
