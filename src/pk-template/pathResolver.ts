@@ -23,9 +23,9 @@ export class PathResolver {
         }
 
         if (rpath.startsWith('~/')) {
-            const { root } = PkProjectConf.find(this.uri);
-            if (root) {
-                return join(root, MODULE_DIR, rpath.substr(1));
+            const { projectRoot } = PkProjectConf.find(this.uri);
+            if (projectRoot) {
+                return join(projectRoot, MODULE_DIR, rpath.substr(1));
             }
             throw new Error(`cannot resolve path ${rpath}, not in module`);
         }

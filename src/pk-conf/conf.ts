@@ -1,4 +1,4 @@
-import { IPkConf } from ".";
+import { IPkConf, IPkModule } from ".";
 import { dumpYaml, parseYaml } from "../pk-yaml";
 import { writeFileSync, readFileSync, existsSync } from "fs";
 import { join } from "path";
@@ -8,6 +8,10 @@ export class PkConf {
     static FILENAME = '.pk.yaml';
 
     constructor(public data: IPkConf) {
+    }
+
+    addModule(mod: IPkModule) {
+        this.data.modules.push(mod);
     }
 
     static load(path?: string) {

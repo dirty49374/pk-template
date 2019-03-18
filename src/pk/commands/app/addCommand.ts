@@ -10,7 +10,7 @@ export default (pk: IPkCommandInfo) => ({
     desc: 'add a new app',
     builder: (yargs: any) => yargs,
     handler: async (argv: any) => {
-        await atProjectDir(async (root, conf) => {
+        await atProjectDir(async (projectRoot, projectConf) => {
             if (!argv.appName.match(/^[a-zA-Z0-9]+$/)) {
                 throw new Error(`app name ${argv.appName} is invalid`);
             }
@@ -18,7 +18,7 @@ export default (pk: IPkCommandInfo) => ({
                 id: uuid(),
                 name: argv.appName,
             };
-            conf.addApp(app);
+            projectConf.addApp(app);
             existsSync(app.name) || mkdirSync(app.name);
 
             const data = {
@@ -32,7 +32,7 @@ export default (pk: IPkCommandInfo) => ({
             const yaml = dumpYaml(data);
             writeFileSync(`${app.name}/app.pkt`, yaml, 'utf8');
 
-            PkProjectConf.save(conf, '.');
+            PkProjectConf.save(projectConf, '.');
         });
     },
 });

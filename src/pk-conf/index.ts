@@ -33,4 +33,5 @@ export interface IPkProjectConf {
 export interface IPkConf {
     email: string;
     modules: IPkModule[];
+    repositories: IPkModule[];
 }

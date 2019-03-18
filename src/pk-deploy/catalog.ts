@@ -1,8 +1,5 @@
 import { ISet, IResourceKey } from "../common";
 
-export class ICatalog {
-
-}
 export class PkdCatalog {
     static parse(text: string): PkdCatalog {
         const set: ISet = {};

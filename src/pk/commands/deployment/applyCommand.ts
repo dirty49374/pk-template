@@ -223,7 +223,7 @@ export default (pk: IPkCommandInfo) => ({
                 throw new Error('please specify --app app-name or --env env-name or --all');
             }
 
-            await visitEachAppAndEnv(argv.app, argv.env, async (root, conf, app, envName) => {
+            await visitEachAppAndEnv(argv.app, argv.env, async (projectRoot, projectConf, app, envName) => {
                 await new Command(argv, app.name, envName).execute();
             })
         }, !!argv.d);

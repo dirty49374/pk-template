@@ -17,7 +17,7 @@ export default (pk: IPkCommandInfo) => ({
     handler: async (argv: any): Promise<any> => {
         await tryCatch(async () => {
 
-            await visitEachAppAndEnv(argv.app, argv.env, async (root, conf, app, envName) => {
+            await visitEachAppAndEnv(argv.app, argv.env, async (projectRoot, projectConf, app, envName) => {
                 if (!existsPkd(envName)) {
                     return;
                 }
@@ -25,7 +25,7 @@ export default (pk: IPkCommandInfo) => ({
                 console.log(`* app = ${app.name}, env = ${envName}`);
 
                 const oldDeployment = loadPkd(envName);
-                const newDeployment = await buildPkd(conf, app.name, envName);
+                const newDeployment = await buildPkd(projectConf, app.name, envName);
                 if (newDeployment != null) {
                     const same = diffObjects(oldDeployment.objects, newDeployment.objects, '  ');
                     if (same) {

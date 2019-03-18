@@ -9,9 +9,9 @@ export default (pk: IPkCommandInfo) => ({
         .option('app', { description: 'set env only to app' }),
     handler: async (argv: any) => {
         await tryCatch(async () => {
-            await atProjectDir(async (root, conf) => {
+            await atProjectDir(async (projectRoot, projectConf) => {
                 if (argv.app) {
-                    const env = conf.prepareAppEnv(argv.app, argv.envName);
+                    const env = projectConf.prepareAppEnv(argv.app, argv.envName);
                     if (!env) {
                         throw new Error(`app ${argv.app} does not exists`);
                     }
@@ -26,7 +26,7 @@ export default (pk: IPkCommandInfo) => ({
                         throw new Error(`env ${argv.envName} at ${argv.app} does not have cluster value`);
                     }
                 } else {
-                    const env = conf.prepareEnv(argv.envName);
+                    const env = projectConf.prepareEnv(argv.envName);
                     const data = require('yargs')(argv._.slice(2)).argv;
                     delete data._;
                     delete data['$0'];
@@ -38,7 +38,7 @@ export default (pk: IPkCommandInfo) => ({
                         throw new Error(`env ${argv.envName} does not have cluster value`);
                     }
                 }
-                PkProjectConf.save(conf, '.');
+                PkProjectConf.save(projectConf, '.');
             });
         }, !!argv.d);
     },

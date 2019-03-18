@@ -1,24 +1,21 @@
-import { PkProjectConf } from '../../../pk-conf/projectConf';
-import { atProjectDir, tryCatch, visitEachAppAndEnv } from '../../libs';
-import { dumpYaml } from '../../../pk-yaml';
-import { IPkCommandInfo } from "../../types";
+import { atProjectDir, tryCatch } from '../../libs';
 
-export default (pk: IPkCommandInfo) => ({
+export default () => ({
     command: 'show',
     desc: 'show envs',
     builder: (yargs: any) => yargs,
     handler: async (argv: any) => {
         await tryCatch(async () => {
-            await atProjectDir(async (root, conf) => {
+            await atProjectDir(async (projectRoot, projectConf) => {
 
                 console.log('* project environments');
-                const envs: any = conf.data.envs.reduce((sum, e) => ({ ...sum, [e.name]: e.values.cluster }), {});
+                const envs: any = projectConf.data.envs.reduce((sum, e) => ({ ...sum, [e.name]: e.values.cluster }), {});
                 for (const env of Object.keys(envs)) {
                     console.log(`  ${env.padEnd(20)} - ${envs[env]}`);
                 }
                 console.log();
 
-                for (const app of conf.data.apps) {
+                for (const app of projectConf.data.apps) {
                     if (app.envs) {
                         const appOnlyEnvs = app.envs.filter(e => !envs[e.name]);
                         if (appOnlyEnvs.length) {

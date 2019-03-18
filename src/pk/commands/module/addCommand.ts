@@ -1,7 +1,7 @@
 import { PkProjectConf } from '../../../pk-conf/projectConf';
 import { cloneModule } from '../../../pk-conf/module';
 import { IPkModule } from '../../../pk-conf';
-import { atProjectDir, tryCatch } from '../../libs';
+import { atProjectDir, tryCatch, atHomeDir } from '../../libs';
 import { PkConf } from '../../../pk-conf/conf';
 import { IPkCommandInfo } from "../../types";
 
@@ -9,8 +9,9 @@ export default (pk: IPkCommandInfo) => ({
     command: 'add <module-name> [repository]',
     desc: 'initialize project',
     builder: (yargs: any) => yargs
-        .option('branch', { describe: 'branch name' })
-        .option('tag', { describe: 'tag name' }),
+        .option('branch', { alias: 'b', describe: 'branch name' })
+        .option('tag', { alias: 't', describe: 'tag name' })
+        .option('global', { alias: 'g', describe: 'branch name', boolean: true }),
     handler: async (argv: any) => {
         await tryCatch(async () => {
             let mod: IPkModule = {
@@ -18,15 +19,15 @@ export default (pk: IPkCommandInfo) => ({
                 repository: argv.repository,
             };
 
-            if (!mod.repository) {
-                const conf = PkConf.load();
-                if (conf == null) {
-                    throw new Error(`repository is not set, ~/${PkConf.FILENAME} not exists`);
-                }
+            const conf = PkConf.load();
+            if (conf == null) {
+                throw new Error(`~/${PkConf.FILENAME} not exists`);
+            }
 
-                const mod1 = conf.data.modules.find(m => m.name == argv.moduleName);
+            if (!mod.repository) {
+                const mod1 = conf.data.repositories.find(m => m.name == argv.moduleName);
                 if (!mod1) {
-                    throw new Error(`repository is not set, cannot find ${argv.moduleName} module entry in ~/${PkConf.FILENAME}`);
+                    throw new Error(`cannot find ${argv.moduleName} module entry in ~/${PkConf.FILENAME}`);
                 }
                 mod = { ...mod1 };
             }
@@ -39,13 +40,23 @@ export default (pk: IPkCommandInfo) => ({
                 mod.branch = 'master';
             }
 
-            await atProjectDir(async () => {
-                pk.conf.addModule(mod);
+            if (argv.global) {
 
-                await cloneModule(mod);
+                await atHomeDir(async () => {
+                    conf.addModule(mod);
+                    await cloneModule(mod, true);
+                    PkConf.save(conf);
+                });
 
-                PkProjectConf.save(pk.conf, '.');
-            });
+            } else {
+
+                await atProjectDir(async () => {
+                    pk.projectConf.addModule(mod);
+                    await cloneModule(mod, false);
+                    PkProjectConf.save(pk.projectConf, '.');
+                });
+            }
+
         }, !!argv.d);
     },
 });

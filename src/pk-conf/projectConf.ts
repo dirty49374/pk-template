@@ -128,19 +128,19 @@ export class PkProjectConf {
 
     private static _find(dir: string) {
         while (true) {
-            let path = resolve(dir, PkProjectConf.FILENAME);
-            const content = PkProjectConf.tryLoad(path);
+            let projectPath = resolve(dir, PkProjectConf.FILENAME);
+            const content = PkProjectConf.tryLoad(projectPath);
             if (content) {
                 const file = Yaml.parseYaml(content);
                 return {
-                    path,
-                    root: dirname(path),
-                    conf: new PkProjectConf(file),
+                    projectPath,
+                    projectRoot: dirname(projectPath),
+                    projectConf: new PkProjectConf(file),
                 };
             }
             const parent = resolve(dir, '../');
             if (parent == null || parent === dir) {
-                return { path: null, file: null, root: null };
+                return { projectPath: null, projectConf: null, projectRoot: null };
             }
 
             dir = parent;

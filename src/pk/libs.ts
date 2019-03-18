@@ -3,6 +3,8 @@ import { PkProjectConf } from '../pk-conf/projectConf';
 import { IPkApp, IPkModule } from '../pk-conf';
 import { normalize, join } from 'path';
 import { MODULE_DIR } from '../pk-conf/module';
+import { homedir } from 'os';
+import { preserveDir } from '../pk-util/preserveDir';
 
 export const log = (...args: any) => console.log(...args);
 export const tryCatch = async (cb: any, debug: boolean) => {
@@ -13,60 +15,60 @@ export const tryCatch = async (cb: any, debug: boolean) => {
     }
 }
 
-export const atProjectDir = async (cb: (root: string, conf: PkProjectConf) => Promise<any>) => {
-    const { root, conf } = PkProjectConf.find();
-    if (!root || !conf) {
+export const atHomeDir = async (cb: (homedir: string) => Promise<any>) => {
+    const home = homedir();
+
+    await preserveDir(async () => {
+        process.chdir(home);
+        await cb(home);
+    });
+}
+
+export const atProjectDir = async (cb: (projectRoot: string, projectConf: PkProjectConf) => Promise<any>) => {
+    const { projectRoot, projectConf } = PkProjectConf.find();
+    if (!projectRoot || !projectConf) {
         throw new Error(`cannot find ${PkProjectConf.FILENAME}`);
     }
 
-    const cwd = process.cwd();
-    process.chdir(root);
-
-    try {
-        await cb(root, conf);
-        process.chdir(cwd);
-    } catch (e) {
-        process.chdir(cwd);
-        throw e;
-    }
+    await preserveDir(async () => {
+        process.chdir(projectRoot);
+        await cb(projectRoot, projectConf);
+    });
 }
 
-export const atAppDir = async (conf: PkProjectConf, appName: string, cb: (app: IPkApp) => Promise<any>) => {
-    const app = conf.getApp(appName);
+export const atAppDir = async (appName: string, cb: (app: IPkApp) => Promise<any>) => {
+    const { projectRoot, projectConf } = PkProjectConf.find();
+    if (!projectRoot || !projectConf) {
+        throw new Error(`cannot find ${PkProjectConf.FILENAME}`);
+    }
+
+    const app = projectConf.getApp(appName);
     if (!app) {
         throw new Error(`app ${appName} does not exists`);
     }
 
-    const cwd = process.cwd();
-    try {
-        process.chdir(`${appName}`);
+    await preserveDir(async () => {
+        process.chdir(join(projectRoot, appName));
         await cb(app);
-        process.chdir(cwd);
-    } catch (e) {
-        process.chdir(cwd);
-        throw e;
-    }
+    });
 }
 
+export const atModuleDir = async (moduleName: string, cb: (module: IPkModule) => Promise<any>) => {
+    const { projectRoot, projectConf } = PkProjectConf.find();
+    if (!projectRoot || !projectConf) {
+        throw new Error(`cannot find ${PkProjectConf.FILENAME}`);
+    }
 
-export const atModuleDir = async (conf: PkProjectConf, moduleName: string, cb: (module: IPkModule) => Promise<any>) => {
-    const module = conf.getModule(moduleName);
+    const module = projectConf.getModule(moduleName);
     if (!module) {
         throw new Error(`module ${moduleName} does not exists`);
     }
 
-    const cwd = process.cwd();
-    try {
-        const moduleDir = join(cwd, MODULE_DIR, moduleName);
-        process.chdir(moduleDir);
+    await preserveDir(async () => {
+        process.chdir(join(projectRoot, MODULE_DIR, moduleName));
         await cb(module);
-        process.chdir(cwd);
-    } catch (e) {
-        process.chdir(cwd);
-        throw e;
-    }
+    });
 }
-
 
 export const getCurrentDirectoryApp = (apps: IPkApp[], root: string, cwd: string) => {
     const app = apps.find(app => normalize(cwd) === normalize(join(root, app.name)));
@@ -76,10 +78,10 @@ export const getCurrentDirectoryApp = (apps: IPkApp[], root: string, cwd: string
     return app;
 }
 
-export const getEnvNames = (conf: PkProjectConf, app: IPkApp) => {
+export const getEnvNames = (projectConf: PkProjectConf, app: IPkApp) => {
     const envs: any = {};
-    if (conf.data.envs) {
-        for (const env of conf.data.envs) {
+    if (projectConf.data.envs) {
+        for (const env of projectConf.data.envs) {
             envs[env.name] = true;
         }
     }
@@ -94,34 +96,34 @@ export const getEnvNames = (conf: PkProjectConf, app: IPkApp) => {
 export const visitEachAppAndEnv = async (
     appName: string | undefined | null,
     envName: string,
-    cbb: (root: string, conf: PkProjectConf, app: IPkApp, envName: string) => Promise<any>) => {
+    cbb: (projectRoot: string, projectConf: PkProjectConf, app: IPkApp, envName: string) => Promise<any>) => {
 
     const cwd = process.cwd();
-    const targetAppNames = (root: string, conf: PkProjectConf) => appName === '*'
-        ? conf.data.apps.map(app => app.name)
+    const targetAppNames = (projectRoot: string, projectConf: PkProjectConf) => appName === '*'
+        ? projectConf.data.apps.map(app => app.name)
         : (appName
             ? [appName as string]
-            : [getCurrentDirectoryApp(conf.data.apps, root, cwd).name]);
-    const targetEnvNames = (conf: PkProjectConf, app: IPkApp) => envName === '*'
-        ? getEnvNames(conf, app)
+            : [getCurrentDirectoryApp(projectConf.data.apps, projectRoot, cwd).name]);
+    const targetEnvNames = (projectConf: PkProjectConf, app: IPkApp) => envName === '*'
+        ? getEnvNames(projectConf, app)
         : [envName];
 
 
-    await atProjectDir(async (root, conf) => {
-        if (!conf.data.apps || conf.data.apps.length == 0) {
+    await atProjectDir(async (projectRoot, projectConf) => {
+        if (!projectConf.data.apps || projectConf.data.apps.length == 0) {
             throw new Error('no apps defined in pk-project.yaml');
         }
-        const appNames = targetAppNames(root, conf);
+        const appNames = targetAppNames(projectRoot, projectConf);
 
         for (const appName of appNames) {
-            await atAppDir(conf, appName, async app => {
-                const envNames = targetEnvNames(conf, app);
+            await atAppDir(appName, async app => {
+                const envNames = targetEnvNames(projectConf, app);
                 if (envNames.length == 0) {
                     throw new Error('please specify env-name or use --all-envs option');
                 }
 
                 for (const envName of envNames) {
-                    await cbb(root, conf, app, envName);
+                    await cbb(projectRoot, projectConf, app, envName);
                 }
             });
         }

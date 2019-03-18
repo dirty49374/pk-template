@@ -9,9 +9,9 @@ export default (pk: IPkCommandInfo) => ({
     builder: (yargs: any) => yargs,
     handler: async (argv: any) => {
         await tryCatch(async () => {
-            await visitEachAppAndEnv('*', '*', async (root, conf, app, envName) => {
+            await visitEachAppAndEnv('*', '*', async (projectRoot, projectConf, app, envName) => {
                 console.log(`* app = ${app.name}, env = ${envName}`);
-                const env = conf.getMergedEnv(app.name, envName);
+                const env = projectConf.getMergedEnv(app.name, envName);
                 console.log(dumpYaml(env).split('\n').map(l => '  ' + l).join('\n'));
             });
         }, !!argv.d);

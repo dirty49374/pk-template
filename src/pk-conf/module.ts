@@ -4,12 +4,14 @@ import { preserveDir } from '../pk-util/preserveDir';
 
 export const MODULE_DIR = 'pk-modules';
 
-export const cloneModule = async (module: IPkModule) => {
+export const cloneModule = async (module: IPkModule, isGlobal: boolean) => {
     await preserveDir(async () => {
         const moduleDir = `${MODULE_DIR}/${module.name}`;
 
-        console.log('* adding submodule ...')
-        const cmd = `git submodule add ${module.repository} ${moduleDir}`;
+        console.log('* cloning module ...')
+        const cmd = isGlobal
+            ? `git clone ${module.repository} ${moduleDir}`
+            : `git submodule add ${module.repository} ${moduleDir}`;
         console.log(cmd);
 
         execSync(cmd);

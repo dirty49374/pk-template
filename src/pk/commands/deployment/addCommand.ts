@@ -19,14 +19,14 @@ export default (pk: IPkCommandInfo) => ({
                 throw new Error('please specify --app app-name or --env env-name or --all');
             }
 
-            await visitEachAppAndEnv(argv.app, argv.env, async (root, conf, app, envName) => {
+            await visitEachAppAndEnv(argv.app, argv.env, async (projectRoot, projectConf, app, envName) => {
                 console.log(`* ${app.name} ${envName}`);
 
                 if (existsPkd(envName)) {
                     console.log(getChalk().yellow(`  already exists, skip`));
                     return;
                 }
-                const deployment = await buildPkd(conf, app.name, envName);
+                const deployment = await buildPkd(projectConf, app.name, envName);
                 if (deployment.objects.length == 2) {
                     console.log(getChalk().yellow(`  no outputs, skip`));
                     return;
