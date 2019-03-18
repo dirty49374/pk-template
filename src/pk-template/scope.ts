@@ -101,7 +101,7 @@ export class Scope extends PathResolver implements IScope {
         const $ = additionalValues
             ? { ...this, ...this.$buildLib(this), ...additionalValues }
             : { ...this, ...this.$buildLib(this) };
-        const sandbox = { $, console, ...this.values };
+        const sandbox = { $, console, Buffer, ...this.values };
         try {
             const context = vm.createContext(sandbox);
             const script = new vm.Script(src);

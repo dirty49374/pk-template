@@ -28,6 +28,7 @@ export interface IPkProjectConf {
     apps: IPkApp[];
     envs: IPkEnv[];
     modules: IPkModule[];
+    namespace?: string;
 }
 
 export interface IPkConf {
