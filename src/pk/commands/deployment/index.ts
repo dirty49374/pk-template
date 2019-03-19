@@ -8,5 +8,6 @@ export default (pk: IPkCommandInfo) => ({
         .command(require('./addCommand').default(pk))
         .command(require('./diffCommand').default(pk))
         .command(require('./updateCommand').default(pk))
+        .command(require('./deleteCommand').default(pk))
         .command(require('./applyCommand').default(pk)),
 });

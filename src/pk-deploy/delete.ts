@@ -3,8 +3,11 @@ import { Progress } from "../pk-ui/progress";
 import { PkKubeCtl } from "../pk-kubectl/pk-kubectl";
 import { PkdCatalog } from "./catalog";
 import { IPkdApplierOption } from "./options";
+import { homedir } from "os";
+import { join } from "path";
 
-export const deletePkd = async (envName: string, cluster: string, options: IPkdApplierOption) => {
+export const deletePkd = async (projectName: string, appName: string, envName: string, cluster: string, options: IPkdApplierOption) => {
+    const deploymentName = `${projectName}-${appName}-${envName}`;
 
     const deleteObjects = async (keys: IResourceKey[]) => {
         const nonNamespaces = keys.filter(k => k.kind !== 'Namespace');
@@ -17,26 +20,15 @@ export const deletePkd = async (envName: string, cluster: string, options: IPkdA
             kind: 'ConfigMap',
             apiGroup: 'v1',
             namespace: 'pk-deployments',
-            name: packageName,
+            name: deploymentName,
         }]);
-
     }
-
-    const buildKubeOption = (context: string, options: IPkdApplierOption): string => {
-        let option = ''
-        if (context)
-            option += ` --context ${context}`;
-        if (options.dryRun)
-            option += ` --dry-run`;
-        return option;
-    }
-
 
     const ui = new Progress(options);
     const kubeOption: IKubeCtlConfig = {
         cluster: cluster,
         isDryRun: options.dryRun,
-        kubeConfig: buildKubeOption(cluster, options),
+        kubeConfig: join(homedir(), '.kube', cluster),
     };
     const kube = new PkKubeCtl(kubeOption, ui);
 
@@ -45,14 +37,16 @@ export const deletePkd = async (envName: string, cluster: string, options: IPkdA
         if (options.yes && !options.immediate) {
             for (let i = 10; i >= 0; --i) {
                 process.stdout.write(`..${i} `);
+                console.log('await')
                 await delay(500);
             }
             console.log('.. START !!!');
         }
     }
 
-    const spec = kube.getPkzSpec(envName);
+    const spec = kube.getPkzSpec(deploymentName);
     if (!spec) {
+        console.log('no spec');
         return null;
     }
     const catalog = PkdCatalog.parse(spec.data.catalog);
@@ -61,7 +55,7 @@ export const deletePkd = async (envName: string, cluster: string, options: IPkdA
         process.exit(1);
         return;
     }
-    const packageName = spec.header.name;
+    const packageName = spec.data.header.name;
 
     const keys = catalog.getKeys();
     deleteObjects(keys);

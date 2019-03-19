@@ -11,9 +11,10 @@ export default (pk: IPkCommandInfo) => ({
     command: 'update',
     desc: 'update a deployment for environment',
     builder: (yargs: any) => yargs
-        .option('app', { describe: 'app name, (default = *)', default: '*' })
-        .option('env', { describe: 'environment name (default = *)', default: '*' })
-        .option('yes', { describe: 'overwrite without confirmation', boolean: true }),
+        .option('app', { aliases: ['a'], describe: 'app name, (default = *)', default: '*' })
+        .option('env', { aliases: ['e'], describe: 'environment name (default = *)', default: '*' })
+        .option('force', { aliases: ['f'], describe: 'environment name (default = *)' })
+        .option('yes', { aliases: ['y'], describe: 'overwrite without confirmation', boolean: true }),
     handler: async (argv: any): Promise<any> => {
         await tryCatch(async () => {
 
@@ -29,11 +30,16 @@ export default (pk: IPkCommandInfo) => ({
                 if (newDeployment != null) {
                     const same = diffObjects(oldDeployment.objects, newDeployment.objects, '  ');
                     if (same) {
-                        console.log(getChalk().green(`  same !!!`));
+                        if (argv.force) {
+                            savePkd(newDeployment);
+                            console.log(getChalk().green(`  same, force write !!!`));
+                        } else {
+                            console.log(getChalk().green(`  same, skipped !!!`));
+                        }
                     } else {
+                        savePkd(newDeployment);
                         console.log(getChalk().green(`  updated !!!`));
                     }
-                    savePkd(newDeployment);
                 } else {
                     console.error(getChalk().red(`  failed to create package ${envName}`));
                 }

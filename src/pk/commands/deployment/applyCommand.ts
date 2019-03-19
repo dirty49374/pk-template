@@ -79,6 +79,16 @@ class Command extends Progress {
 
         return g;
     }
+    private toResourceKey(objects: IObject[]): IResourceKey[] {
+        return objects.map(o => ({
+            kind: o.kind,
+            apiGroup: o.apiVersion.split('/').length == 1
+                ? ''
+                : o.apiVersion.split('/')[1],
+            name: o.metadata.name,
+            namespace: o.metadata.namespace || '',
+        }));
+    }
 
     private findDisappearedObjects(currcmap: IObject): IResourceKey[] {
         const prevcmap = this.kube.getPkzSpec(currcmap.metadata.name) ||
@@ -112,11 +122,11 @@ class Command extends Progress {
         } else {
             this.verbose(`  - targets:`);
             const kmax = targets.reduce((max, target) => max = Math.max(max, target.kind.length), 0);
-            const nmax = targets.reduce((max, target) => max = Math.max(max, target.metadata.name.length), 0);
+            const nmax = targets.reduce((max, target) => max = Math.max(max, target.name.length), 0);
             for (const target of targets) {
-                const name = target.metadata.namespace
-                    ? `${target.kind.padEnd(kmax)}  ${target.metadata.name.padEnd(nmax)}  namespace = ${target.metadata.namespace}`
-                    : `${target.kind.padEnd(kmax)}  ${target.metadata.name.padEnd(nmax)}`;
+                const name = target.namespace
+                    ? `${target.kind.padEnd(kmax)}  ${target.name.padEnd(nmax)}  namespace = ${target.namespace}`
+                    : `${target.kind.padEnd(kmax)}  ${target.name.padEnd(nmax)}`;
                 this.verbose(`    ${name}`);
             }
         }
@@ -151,7 +161,7 @@ class Command extends Progress {
             return;
         }
 
-        this.showTargets(step.objects);
+        this.showTargets(this.toResourceKey(step.objects));
         this.confirm(`apply these ${step.objects.length} objects`);
         this.verbose(`  - kubectl: apply`);
 
@@ -210,12 +220,12 @@ export default (pk: IPkCommandInfo) => ({
     command: 'apply',
     desc: 'apply deployments to kubernetes',
     builder: (yargs: any) => yargs
-        .option('app', { describe: 'app name, (default = *)', default: '*' })
-        .option('env', { describe: 'environment name (default = *)', default: '*' })
+        .option('app', { alias: ['a'], describe: 'app name, (default = *)', default: '*' })
+        .option('env', { alias: ['e'], describe: 'environment name (default = *)', default: '*' })
         .option('all', { describe: 'deploy all apps and environments', boolean: true })
-        .option('dry-run', { describe: 'dry run', boolean: true })
-        .option('immediate', { describe: 'execute immediately without initial 5 seconds delay', boolean: true })
-        .option('yes', { describe: 'overwrite without confirmation', boolean: true }),
+        .option('dry-run', { alias: ['dry'], describe: 'dry run', boolean: true })
+        .option('immediate', { alias: ['imm'], describe: 'execute immediately without initial 5 seconds delay', boolean: true })
+        .option('yes', { alias: ['y'], describe: 'overwrite without confirmation', boolean: true }),
     handler: async (argv: any) => {
         await tryCatch(async () => {
 

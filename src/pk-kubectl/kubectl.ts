@@ -25,10 +25,10 @@ export class KubeCtl {
             : `kubectl delete ${kind} ${name} --kubeconfig ${opt.kubeConfig} --namespace ${namespace}`;
 
         if (this.config.isDryRun) {
-            this.progress.verbose('    skipped');
+            this.progress.info('    skipped');
         } else {
             const result = execPipeSync(command, '(NotFound)');
-            this.progress.verbose(`    ${result}`);
+            this.progress.info(`    ${result || 'not found'}`);
         }
     }
 }
