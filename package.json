@@ -1,13 +1,13 @@
 {
     "name": "pk-template",
-    "version": "0.1.45",
+    "version": "0.1.47",
     "description": "p template engine for kubernetes",
     "main": "dist/pk-lib/index.js",
     "scripts": {
         "start": "ts-node bin/pkt.ts",
         "watch": "npm run distclean && tsc --watch",
-        "build": "npm run distclean && tsc build",
-        "deploy": "npm run distclean && tsc build && npm publish",
+        "build": "npm run distclean && tsc",
+        "deploy": "npm run distclean && tsc && npm publish",
         "webpack": "webpack --config webpack.config.js",
         "distclean": "rimraf dist/*",
         "test": "true",
