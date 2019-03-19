@@ -44,6 +44,11 @@ export function getSourceMap(): any {
     return _sourceMap || (_sourceMap = require('source-map'));
 }
 
+let _inquirer: any = null;
+export function getInquirer(): any {
+    return _inquirer || (_inquirer = require('inquirer'));
+}
+
 let _underscore: any = null;
 export function getUnderscore() {
     if (_underscore) {

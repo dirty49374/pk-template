@@ -3,6 +3,7 @@ import * as libs from "./libs";
 import * as lazy from "../lazy";
 import { generate } from "../pkt/pkt";
 import * as yaml from '../pk-yaml';
+import * as cmdui from '../pk-ui/cmdui';
 import jsonpatch from 'json-patch';
 import { loadModuleCommands, loadModuleGenerators } from "./module";
 import { PkConf } from "../pk-conf/conf";
@@ -15,7 +16,7 @@ async function main(argv: string[]) {
     const yargs = require('yargs')(argv)
         .scriptName("pk")
 
-    const pk = { ...libs, ...lazy, projectRoot, projectConf, generate, yaml, jsonpatch };
+    const pk = { ...libs, ...lazy, ui: cmdui, projectRoot, projectConf, generate, yaml, jsonpatch };
     if (projectConf && projectRoot) {
         yargs
             .command(require('./commands/app').default(pk))

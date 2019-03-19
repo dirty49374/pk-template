@@ -5,6 +5,10 @@ import { normalize, join } from 'path';
 import { MODULE_DIR } from '../pk-conf/module';
 import { homedir } from 'os';
 import { preserveDir } from '../pk-util/preserveDir';
+import { getInquirer, getChalk, getUnderscore } from '../lazy';
+import { exec as child_process_exec } from "child_process";
+import { template } from 'underscore';
+import { readFileSync } from 'fs';
 
 export const log = (...args: any) => console.log(...args);
 export const tryCatch = async (cb: any, debug: boolean) => {
@@ -18,9 +22,15 @@ export const tryCatch = async (cb: any, debug: boolean) => {
 export const atHomeDir = async (cb: (homedir: string) => Promise<any>) => {
     const home = homedir();
 
-    await preserveDir(async () => {
-        process.chdir(home);
+    await atDir(home, async () => {
         await cb(home);
+    });
+}
+
+export const atDir = async (dir: string, cb: (dir: string) => Promise<any>) => {
+    await preserveDir(async () => {
+        process.chdir(dir);
+        await cb(dir);
     });
 }
 
@@ -30,8 +40,7 @@ export const atProjectDir = async (cb: (projectRoot: string, projectConf: PkProj
         throw new Error(`cannot find ${PkProjectConf.FILENAME}`);
     }
 
-    await preserveDir(async () => {
-        process.chdir(projectRoot);
+    await atDir(projectRoot, async () => {
         await cb(projectRoot, projectConf);
     });
 }
@@ -47,8 +56,7 @@ export const atAppDir = async (appName: string, cb: (app: IPkApp) => Promise<any
         throw new Error(`app ${appName} does not exists`);
     }
 
-    await preserveDir(async () => {
-        process.chdir(join(projectRoot, appName));
+    await atDir(join(projectRoot, appName), async () => {
         await cb(app);
     });
 }
@@ -64,8 +72,7 @@ export const atModuleDir = async (moduleName: string, cb: (module: IPkModule) =>
         throw new Error(`module ${moduleName} does not exists`);
     }
 
-    await preserveDir(async () => {
-        process.chdir(join(projectRoot, MODULE_DIR, moduleName));
+    await atDir(join(projectRoot, MODULE_DIR, moduleName), async () => {
         await cb(module);
     });
 }
@@ -128,5 +135,51 @@ export const visitEachAppAndEnv = async (
             });
         }
     });
+}
 
+export const prompt = async (inq: any): Promise<any> => {
+    return await getInquirer().prompt(inq);
+}
+
+export const promptStart = (msg: string) => {
+    console.log(getChalk().grey(`  ${msg} ...`));
+}
+
+export const promptSkip = () => {
+    console.log(getChalk().grey('  skipped !!!'));
+}
+
+export const promptSuccess = (msg: string) => {
+    console.log(getChalk().grey(`  ${msg} !!!`));
+}
+
+export const tpl = (file: string) => {
+    const _ = getUnderscore();
+    const tpl = readFileSync(file, 'utf8');
+    return _.template(tpl);
+}
+
+export const exec = async (command: string) => {
+    console.log(getChalk().grey(`  * exec: ${command}`));
+    return new Promise((resolve, reject) => {
+        try {
+            const ps = child_process_exec(command);
+            process.stdout.write('  ');
+            const cb = (data: string) => {
+                const indented = data.replace(/\n/g, '\n  ');
+                process.stdout.write(getChalk().grey(indented));
+            }
+            ps.stdout.on('data', cb);
+            ps.stderr.on('data', cb);
+            ps.on('close', code => {
+                console.log();
+                if (code == 0) {
+                    resolve();
+                }
+                reject(new Error(`process exited with code = ${code}`));
+            });
+        } catch (e) {
+            reject(e);
+        }
+    });
 }
