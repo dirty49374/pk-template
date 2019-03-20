@@ -38,8 +38,8 @@ export default (pk: IPkCommandInfo) => ({
                     required: ['env', 'cluster', 'namespace'],
                 },
                 routine: [
-                    { comment: '--- BEGIN CODE ---' },
-                    { comment: '--- END CODE ---' },
+                    { comment: '--- APP BEGIN ---' },
+                    { comment: '--- APP END ---' },
                 ],
             };
             const yaml = dumpYaml(data);

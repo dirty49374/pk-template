@@ -28,6 +28,11 @@ const handlers: any = {
             const patched = handlers.patch(prev, o);
             writeFileSync(o.file, JSON.stringify(patched, null, o.indent ? o.indent : 0), 'utf8');
         }
+        if (o.func) {
+            const prev = parseYaml(readFileSync(o.file, 'utf8'));
+            o.func(prev);
+            writeFileSync(o.file, JSON.stringify(prev, null, o.indent ? o.indent : 0), 'utf8');
+        }
     },
     yaml: (o: any) => {
         if ('write' in o) {
@@ -37,6 +42,11 @@ const handlers: any = {
             const prev = parseYaml(readFileSync(o.file, 'utf8'));
             const patched = handlers.patch(prev, o);
             writeFileSync(o.file, dumpYaml(patched), 'utf8');
+        }
+        if (o.func) {
+            const prev = parseYaml(readFileSync(o.file, 'utf8'));
+            o.func(prev);
+            writeFileSync(o.file, dumpYaml(prev), 'utf8');
         }
     }
 }

@@ -28,7 +28,7 @@ export function loadModuleGenerators(yargs: any, root: string, name: string, pk:
             handler: async (argv: any) => {
                 await pk.tryCatch(async () => {
                     const result = pk.generate({
-                        files: [join(dir, file)],
+                        file: join(dir, file),
                         values: argv,
                     });
                     if (argv.dry) {
@@ -37,11 +37,13 @@ export function loadModuleGenerators(yargs: any, root: string, name: string, pk:
                         const patches = result.map((o: any) => ({
                             type: 'yaml',
                             file: 'app.pkt',
-                            patch: {
-                                op: 'add',
-                                path: '/routine/-',
-                                value: {
-                                    add: o,
+                            func: (obj: any) => {
+                                const routine = obj.routine || (obj.routine = []);
+                                const idx = routine.findIndex((r: any) => r.comment == '--- APP END ---');
+                                if (idx == -1) {
+                                    routine.push(o);
+                                } else {
+                                    routine.splice(idx - 1, 0, o);
                                 }
                             }
                         }));
