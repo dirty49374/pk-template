@@ -10,33 +10,26 @@ import { Scope } from '../pk-template/scope';
 import { exceptionHandler } from '../pk-util/exception';
 import { IResult } from '../pk-template/types';
 
-function _generate(objects: IObject[], values: IValues, files: string[]): IObject[] {
+function _generate(objects: IObject[], values: IValues, file: string): IObject[] {
     objects = objects || [];
     const scope = Scope.CreateRoot(objects, values);
-    for (const path of files) {
-        Runtime.Run(scope, path);
-    }
+    Runtime.Run(scope, file);
 
     return scope.objects;
 }
 
 export function generate(args: IPktArgs): IObject[] {
-    return _generate([], args.values, args.files);
+    return _generate([], args.values, args.file);
 }
 
 export async function generateWithStdin(args: IPktArgs): Promise<IObject[]> {
     const text = await readStdin();
     const inputObjects = pkyaml.parseYamlAll(text);
-    const objects = _generate(inputObjects, args.values, args.files);
+    const objects = _generate(inputObjects, args.values, args.file);
     return objects;
 }
 
 export async function execCommand(argv: any, print: boolean): Promise<IResult | null> {
-
-    if (argv.length == 0) {
-        help([]);
-        return null;
-    }
 
     let args = new ArgsBuilder().build(argv);
 
@@ -46,7 +39,7 @@ export async function execCommand(argv: any, print: boolean): Promise<IResult | 
     }
 
     if (args.options.help) {
-        help(args.files);
+        help(args.file);
         return null;
     }
 

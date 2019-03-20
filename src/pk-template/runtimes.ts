@@ -7,12 +7,12 @@ import { StyleSheet } from './styles/styleSheet';
 import { Schema } from './schema';
 import { Trace } from './trace';
 
-export function buildInput(input: any, parentValues: IValues): any {
+export function buildProperties(properties: any, parentValues: IValues): any {
     const values = {
         cluster: null,
         env: null,
         namespace: null,
-        ...(input || {}),
+        ...(properties || {}),
     };
     for (const k in parentValues) {
         if (k in values)
@@ -300,9 +300,9 @@ export class Runtime {
                 if (withObject)
                     scope.objects = [...parentScope.objects];
 
-                // 2. build input
-                this.trace.step('input');
-                scope.values = buildInput(file.input, parentScope.values);
+                // 2. build properties
+                this.trace.step('properties');
+                scope.values = buildProperties(file.properties || file.input, parentScope.values);
 
                 // 3. validate schema
                 if (file.schema) {
@@ -310,7 +310,7 @@ export class Runtime {
                     const schema = new Schema(file.schema);
                     const errors = schema.validate(scope.values);
                     if (errors) {
-                        throw utils.pktError(scope, new Error(errors), 'input validation failed');
+                        throw utils.pktError(scope, new Error(errors), 'property validation failed');
                     }
                 }
 

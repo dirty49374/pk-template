@@ -43,7 +43,7 @@ export const buildPkd = async (conf: PkProjectConf, appName: string, envName: st
 
     const args: IPktArgs = {
         options: {},
-        files: [`app.pkt`],
+        file: `app.pkt`,
         env: env.name,
         values: env.values,
     }

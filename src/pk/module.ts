@@ -2,6 +2,7 @@ import { MODULE_DIR } from '../pk-conf/module';
 import { join } from 'path';
 import { existsSync, readdirSync, readFileSync } from 'fs';
 import { writeObject } from '../pk-writeutil';
+import { bindYargsOption, buildCommandDescription } from '../pk-yargs/bindOption';
 
 export function loadModuleCommands(yargs: any, root: string, name: string, pk: any) {
     const mcd = join(root, MODULE_DIR, name, 'commands');
@@ -16,58 +17,14 @@ export function loadModuleCommands(yargs: any, root: string, name: string, pk: a
 
 export function loadModuleGenerators(yargs: any, root: string, name: string, pk: any) {
 
-    const buildOptionsFromInput = (yargs: any, input: any) => {
-        if (!input) {
-            return;
-        }
-
-        yargs.options('dry', { description: 'dry run this command' });
-        for (const name of Object.keys(input)) {
-            const value = input[name];
-            const opt = {
-                description: `${name} option`,
-                default: value,
-            };
-            yargs.option(name, opt);
-        }
-    }
-
-    const buildOptionsFromSchema = (yargs: any, schema: any, input: any) => {
-        if (!schema.properties) {
-            return;
-        }
-
-        yargs.options('dry', { description: 'dry run this command' });
-        for (const name of Object.keys(schema.properties)) {
-            const prop = schema.properties[name];
-            const opt: any = {
-                description: prop.description || name,
-            };
-            if (prop.enum) {
-                opt.choices = prop.enum;
-            }
-            if (schema.required && schema.required.includes(name)) {
-                opt.demandOption = true;
-            } else if (input[name] == null) {
-                if (!Array.isArray(prop.type) || prop.type.indexOf('null') == -1) {
-                    opt.demandOption = true;
-                }
-            } else {
-                opt.default = input[name];
-            }
-            yargs.option(name, opt);
-        }
-    }
-
     const buildCommand = (pk: any, dir: string, file: string) => {
         const name = file.substr(0, file.length - 4);
         const pkt = pk.yaml.parseYamlAsPkt(readFileSync(join(dir, file), 'utf8'));
         return {
             command: `gen-${name}`,
-            desc: pkt && pkt.schema && pkt.schema.title || name,
-            builder: (yargs: any) => pkt.schema
-                ? buildOptionsFromSchema(yargs, pkt.schema, pkt.input || {})
-                : buildOptionsFromInput(yargs, pkt.input),
+            desc: buildCommandDescription(pkt),
+            builder: (yargs: any) => bindYargsOption(yargs, pkt)
+                .options('dry', { description: 'dry run this command' }),
             handler: async (argv: any) => {
                 await pk.tryCatch(async () => {
                     const result = pk.generate({

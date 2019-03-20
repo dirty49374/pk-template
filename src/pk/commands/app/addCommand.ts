@@ -22,12 +22,25 @@ export default (pk: IPkCommandInfo) => ({
             existsSync(app.name) || mkdirSync(app.name);
 
             const data = {
-                input: {
+                properties: {
+                    env: null,
                     cluster: null,
                     namespace: null,
                 },
-                schema: {},
-                routine: [],
+                schema: {
+                    title: `${argv.appName} in ${projectConf.data.project.name} project`,
+                    description: `describe app details here`,
+                    properties: {
+                        env: { type: 'string', description: 'pk environment name', },
+                        cluster: { type: 'string', description: 'pk cluster name', },
+                        namespace: { type: 'string', description: 'prefered namespace name', },
+                    },
+                    required: ['env', 'cluster', 'namespace'],
+                },
+                routine: [
+                    { comment: '--- BEGIN CODE ---' },
+                    { comment: '--- END CODE ---' },
+                ],
             };
             const yaml = dumpYaml(data);
             writeFileSync(`${app.name}/app.pkt`, yaml, 'utf8');

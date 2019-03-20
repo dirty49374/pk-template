@@ -59,5 +59,4 @@ routine:
     apiVersion: v1
     kind: Namespace
     metadata:
-      name: !js namespace
-
+      # name: !js namespace

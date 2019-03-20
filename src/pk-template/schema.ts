@@ -13,7 +13,7 @@ export class Schema {
     validate(values: any): string | null {
         const valid = this.validator(values);
         if (!valid) {
-            const error = this.ajv.errorsText(this.validator.errors, { dataVar: 'input' });
+            const error = this.ajv.errorsText(this.validator.errors, { dataVar: 'properties' });
             return error;
         }
         return null;

@@ -2,11 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import { IValues, IPktOptions } from '../pk-template';
 import { loadYamlFile } from '../pk-yaml';
+import { bindYargsOption, buildCommandDescription } from '../pk-yargs/bindOption';
 
 
 export interface IPktArgs {
     options: IPktOptions;
-    files: string[];
+    file: string;
     env?: string;
     values: IValues;
 }
@@ -42,72 +43,55 @@ export class ArgsBuilder {
         return values;
     }
 
-    private expandLibPath(p: string): string {
-        if (p.length === 0 || p[0] !== '@') {
-            return p;
-        }
-
-        p = p.substr(1)
-
-        if (fs.existsSync(p)) {
-            return p;
-        }
-
-        let cur = process.cwd();
-        while (true) {
-            const libdir = path.join(cur, "pkt_lib");
-            if (fs.existsSync(libdir)) {
-                const rpath = path.join(libdir, p);
-                if (fs.existsSync(rpath))
-                    return rpath;
-            }
-
-            const parent = path.dirname(cur)
-            if (parent == cur)
-                return p;
-            cur = parent;
-        }
-    }
-
-    private buildFiles(argv: any): string[] {
-        return argv._.reduce((sum: string[], list: string[]) => sum.concat(list), [])
-            .map((p: string) => this.expandLibPath(p))
-    }
-
-    buildOptions(argv: string[], yargv: any) {
+    buildOptions(yargv: any) {
         const options: IPktOptions = {};
-        if (yargv.h) options.help = true;
-        if (yargv.v) options.version = true;
-        if (yargv.d) options.debug = true;
-
         if (yargv.i) options.stdin = true;
-
-        if (yargv.J) options.json = true;
-        if (yargv.T) options.pkt = true;
-
-        if (yargv.e) options.env = yargv.e;
-
-        // if ('1' in yargv) options.json1 = !!yargv.J;
-        // if ('n' in yargv) options.indent = !!yargv.n;
+        if (yargv.j) options.json = true;
+        if (yargv.d) options.debug = true;
+        if (yargv.v) options.version = true;
+        if (yargv.h) options.help = true;
 
         return options;
     }
 
     build(argv: string[]): IPktArgs {
-        const yargv = require('yargs/yargs')(argv)
-            .version(false)
-            .help(false)
-            .boolean([
-                'h', 'v', 'd',
-                'i',
-                'J', 'T',
-            ])
-            .argv;
+        const baseOption = (argv: string[]) => {
+            return require('yargs/yargs')(argv)
+                .scriptName("pkt")
+                .option('i', { description: 'read yaml initial objects from stdin', boolean: true })
+                .option('j', { description: 'json output', boolean: true })
+                .option('d', { description: 'show nodejs errors and callstacks', boolean: true })
+                .option('v', { description: 'show version', boolean: true })
+                .option('h', { description: 'show help', boolean: true })
+                .version(false)
+                .help(false)
+                ;
+        };
 
+        let yargs = baseOption(argv).usage('pkt file');
+        let yargv = yargs.argv;
+        if (yargv._.length === 1) {
+            const file = yargv._[0];
+            const pkt = loadYamlFile(file);
+
+            yargs = bindYargsOption(baseOption(argv), pkt);
+            const desc = buildCommandDescription(pkt);
+            let usage = desc
+                ? `pkt ${file} - ${desc}`
+                : `pkt ${file}`;
+            yargs.usage(usage);
+            yargv = yargs.argv;
+        }
+
+        if (yargv.h || yargv._.length !== 1) {
+            yargs.showHelp();
+            process.exit(0);
+        }
+
+        const file = yargv._[0];
         const values = this.buildValues(yargv)
-        const files = this.buildFiles(yargv)
-        const options = this.buildOptions(argv, yargv)
+        const options = this.buildOptions(yargv)
 
-        return { options, values, files, env: options.env };
+        return { options, values, file, env: options.env };
     }
 }

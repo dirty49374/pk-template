@@ -4,7 +4,8 @@ import { IPkEnv } from "../pk-conf";
 
 export type IConfig = any;
 export interface IPkt {
-    input: any;
+    properties: any;
+    input: any;         // depricated, use properties instead
     schema: any;
     import?: string[] | string;
     style: object[];
