@@ -266,6 +266,9 @@ export class Runtime {
                 if (stmt.if && !scope.evalScript(stmt.if)) {
                     continue;
                 }
+                if (stmt.unless && scope.evalScript(stmt.unless)) {
+                    continue;
+                }
                 if (stmt.select) {
                     const predicate = selectors.compile(stmt.select);
                     const objects = scope.objects.filter(predicate);

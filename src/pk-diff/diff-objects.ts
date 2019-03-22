@@ -21,7 +21,7 @@ function printDiffPart(encolor: any, prefix: string, value: string, print: strin
 }
 
 export function diffObject(key: string, prev: string, curr: string, indent: string = '') {
-    console.log(indent + '*', key + ':');
+    console.log(indent + '-', key + ':');
 
     var diff = Diff.diffLines(prev, curr);
     for (let i = 0; i < diff.length; ++i) {
@@ -39,7 +39,7 @@ export function diffObject(key: string, prev: string, curr: string, indent: stri
     }
 }
 
-export function diffObjects(prev: IObject[], curr: IObject[], indent: string = '') {
+export function diffObjects(prev: IObject[], curr: IObject[], indent: string = '', header: string = '') {
     const keyMapreducer = (sum: IObject, o: IObject) => ({ ...sum, [`${o.metadata.namespace || ''}/${o.metadata.name}/${o.apiVersion}/${o.kind}`]: o });
     const nonPkzFilter = (o: IObject) =>
         (o.kind !== 'ConfigMap' || o.metadata.namespace !== 'pk-deployments') &&
@@ -53,10 +53,18 @@ export function diffObjects(prev: IObject[], curr: IObject[], indent: string = '
             const prevYaml = pkyaml.dumpYamlSortedKey(prevmap[key]);
             const currYaml = pkyaml.dumpYamlSortedKey(currmap[key]);
             if (prevYaml !== currYaml) {
+                if (header) {
+                    console.log(header);
+                    header = '';
+                }
                 diffObject(key, prevYaml, currYaml, indent);
                 same = false;
             }
         } else {
+            if (header) {
+                console.log(header);
+                header = '';
+            }
             console.log(`${indent}*`, key + ':');
             console.log(chalk.red(`${indent}  - `, 'deleted'));
             //diffObject(key, pkyaml.dumpYamlSortedKey(prevmap[key]), '');
@@ -67,14 +75,15 @@ export function diffObjects(prev: IObject[], curr: IObject[], indent: string = '
         if (key in prevmap) {
             continue;
         } else {
+            if (header) {
+                console.log(header);
+                header = '';
+            }
             console.log(`${indent}*`, key + ':');
             console.log(chalk.green(`${indent}  + `, 'created'));
             // diffObject(key, '', pkyaml.dumpYamlSortedKey(currmap[key]));
             same = false;
         }
-    }
-    if (same) {
-        // console.log(`${indent}all ${Object.keys(currmap).length} objects are same !`)
     }
     return same;
 }

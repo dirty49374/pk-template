@@ -46,6 +46,7 @@
         "json-patch": "^0.7.0",
         "jsonpath": "^1.0.0",
         "livescript": "^1.6.0",
+        "nodemon": "^1.18.10",
         "readline-sync": "^1.4.9",
         "source-map": "^0.7.3",
         "sync-request": "^6.0.0",

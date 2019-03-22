@@ -64,6 +64,7 @@ export class PkProjectConf {
         return {
             name: envName,
             values: {
+                ...(this.data.values || {}),
                 ...(env && env.values || {}),
                 ...(appEnv && appEnv.values || {}),
             },
@@ -106,6 +107,7 @@ export class PkProjectConf {
                 name: projectName,
                 owner: owner,
             },
+            values: {},
             apps: [],
             envs: [],
             modules: [],

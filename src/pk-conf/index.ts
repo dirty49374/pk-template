@@ -25,6 +25,7 @@ export interface IPkModule {
 
 export interface IPkProjectConf {
     project: IPkProject;
+    values: IValues;
     apps: IPkApp[];
     envs: IPkEnv[];
     modules: IPkModule[];

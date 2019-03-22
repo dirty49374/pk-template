@@ -70,6 +70,7 @@ export class Evaluator {
         object = this.evalAllCustomTags(object);
         this.expandCaretPath(object);
         this.expandStyleSheet(object);
+        this.deleteUndefined(object);
 
         return object;
     }
@@ -97,6 +98,33 @@ export class Evaluator {
             return clone;
         }
         return node;
+    }
+
+    deleteUndefined(node: any) {
+        if (node === undefined) {
+            return;
+        }
+        if (Array.isArray(node)) {
+            for (let i = node.length - 1; i >= 0; --i) {
+                const val = node[i];
+                if (val === undefined) {
+                    node.splice(i, 1);
+                } else {
+                    this.deleteUndefined(node[i]);
+                }
+            }
+        } else if (typeof node === 'object') {
+            if (node === null) return node;
+            Object.keys(node)
+                .forEach((key: string) => {
+                    const val = node[key];
+                    if (val === undefined) {
+                        delete node[key];
+                    } else {
+                        this.deleteUndefined(node[key]);
+                    }
+                });
+        }
     }
 
     expandStyleSheet(object: any): void {

@@ -8,43 +8,41 @@ import { diffObjects } from '../../../pk-diff/diff-objects';
 import { IPkCommandInfo } from "../../types";
 
 export default (pk: IPkCommandInfo) => ({
-    command: 'update',
-    desc: 'update a deployment for environment',
+    command: 'update [app] [env]',
+    desc: 'update a pkd deployment file (update does not apply to clusters)',
     builder: (yargs: any) => yargs
-        .option('app', { aliases: ['a'], describe: 'app name, (default = *)', default: '*' })
-        .option('env', { aliases: ['e'], describe: 'environment name (default = *)', default: '*' })
-        .option('force', { aliases: ['f'], describe: 'environment name (default = *)' })
+        .option('all', { describe: 'all apps ane envs', boolean: false })
+        .option('force', { aliases: ['f'], describe: 'overwrite pkd file when content is identical (changes timestamp)' })
         .option('yes', { aliases: ['y'], describe: 'overwrite without confirmation', boolean: true }),
     handler: async (argv: any): Promise<any> => {
         await tryCatch(async () => {
-
+            if (!argv.app && !argv.env && !argv.all) {
+                throw new Error('use --all options');
+            }
             await visitEachAppAndEnv(argv.app, argv.env, async (projectRoot, projectConf, app, envName) => {
                 if (!existsPkd(envName)) {
                     return;
                 }
 
-                console.log(`* app = ${app.name}, env = ${envName}`);
-
+                const header = `* app = ${app.name}, env = ${envName}`.padEnd(30);
                 const oldDeployment = loadPkd(envName);
                 const newDeployment = await buildPkd(projectConf, app.name, envName);
                 if (newDeployment != null) {
-                    const same = diffObjects(oldDeployment.objects, newDeployment.objects, '  ');
+                    const same = diffObjects(oldDeployment.objects, newDeployment.objects, '  ', header);
                     if (same) {
                         if (argv.force) {
                             savePkd(newDeployment);
-                            console.log(getChalk().green(`  same, force write !!!`));
+                            console.log(header, getChalk().green(` - same, force write !!!`));
                         } else {
-                            console.log(getChalk().green(`  same, skipped !!!`));
+                            console.log(header, getChalk().green(` - same, skipped !!!`));
                         }
                     } else {
                         savePkd(newDeployment);
-                        console.log(getChalk().green(`  updated !!!`));
+                        console.log(header, getChalk().green(` - updated !!!`));
                     }
                 } else {
-                    console.error(getChalk().red(`  failed to create package ${envName}`));
+                    console.error(header, getChalk().red(` - failed to create package ${envName}`));
                 }
-
-                console.log();
             });
         }, !!argv.d);
 

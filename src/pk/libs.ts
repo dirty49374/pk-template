@@ -106,15 +106,22 @@ export const visitEachAppAndEnv = async (
     cbb: (projectRoot: string, projectConf: PkProjectConf, app: IPkApp, envName: string) => Promise<any>) => {
 
     const cwd = process.cwd();
-    const targetAppNames = (projectRoot: string, projectConf: PkProjectConf) => appName === '*'
-        ? projectConf.data.apps.map(app => app.name)
-        : (appName
-            ? [appName as string]
-            : [getCurrentDirectoryApp(projectConf.data.apps, projectRoot, cwd).name]);
-    const targetEnvNames = (projectConf: PkProjectConf, app: IPkApp) => envName === '*'
-        ? getEnvNames(projectConf, app)
-        : [envName];
+    const targetAppNames = (projectRoot: string, projectConf: PkProjectConf) => {
+        if (!appName || appName === '*' || appName === 'all') {
+            return projectConf.data.apps.map(app => app.name);
+        }
+        if (appName == '.') {
+            return [getCurrentDirectoryApp(projectConf.data.apps, projectRoot, cwd).name];
+        }
+        return [appName as string];
+    };
 
+    const targetEnvNames = (projectConf: PkProjectConf, app: IPkApp) => {
+        if (!envName || envName === '*' || envName == 'all') {
+            return getEnvNames(projectConf, app);
+        }
+        return [envName];
+    };
 
     await atProjectDir(async (projectRoot, projectConf) => {
         if (!projectConf.data.apps || projectConf.data.apps.length == 0) {
