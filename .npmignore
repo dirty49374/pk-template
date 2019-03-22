@@ -1,10 +1,6 @@
 examples/
 quickstarts/
 src/
-dist/pkt/
-dist/pktctl/
-dist/pktlib/
-dist/pk-kubectl/
 dist/test/
 dist/testcases/
 pkt_lib/
