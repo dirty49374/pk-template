@@ -37,7 +37,6 @@ export const buildPkd = async (conf: PkProjectConf, appName: string, envName: st
             return env.values[key];
         })
         : `${conf.data.project.name}-${app.name}-${envName}`;
-
     const deploymentName = `${conf.data.project.name}-${appName}-${envName}`;
     const deploymentId = `${app.id}-${envName}`;
 

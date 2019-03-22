@@ -11,6 +11,7 @@ import { join } from 'path';
 import { homedir } from 'os';
 import { visitEachAppAndEnv, tryCatch } from '../../libs';
 import { IPkCommandInfo } from "../../types";
+import { existsPkd } from '../../../pk-deploy/exists';
 
 interface IApplyStep {
     name: string;
@@ -231,6 +232,9 @@ export default (pk: IPkCommandInfo) => ({
             }
 
             await visitEachAppAndEnv(argv.app, argv.env, async (projectRoot, projectConf, app, envName) => {
+                if (!existsPkd(envName)) {
+                    return;
+                }
                 await new Command(argv, app.name, envName).execute();
             })
         }, !!argv.d);

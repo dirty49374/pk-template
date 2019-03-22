@@ -20,25 +20,31 @@ export default (pk: IPkCommandInfo) => ({
                 throw new Error('use --all options');
             }
             await visitEachAppAndEnv(argv.app, argv.env, async (projectRoot, projectConf, app, envName) => {
-                if (!existsPkd(envName)) {
-                    return;
-                }
-
                 const header = `* app = ${app.name}, env = ${envName}`.padEnd(30);
-                const oldDeployment = loadPkd(envName);
+
+                const oldDeployment = existsPkd(envName) ? loadPkd(envName) : null;
                 const newDeployment = await buildPkd(projectConf, app.name, envName);
                 if (newDeployment != null) {
-                    const same = diffObjects(oldDeployment.objects, newDeployment.objects, '  ', header);
-                    if (same) {
-                        if (argv.force) {
-                            savePkd(newDeployment);
-                            console.log(header, getChalk().green(` - same, force write !!!`));
+                    if (oldDeployment) {
+                        const same = diffObjects(oldDeployment.objects, newDeployment.objects, '  ', header);
+                        if (same) {
+                            if (argv.force) {
+                                savePkd(newDeployment);
+                                console.log(header, getChalk().green(` - same, force write !!!`));
+                            } else {
+                                console.log(header, getChalk().green(` - same, skipped !!!`));
+                            }
                         } else {
-                            console.log(header, getChalk().green(` - same, skipped !!!`));
+                            savePkd(newDeployment);
+                            console.log(header, getChalk().green(` - updated !!!`));
                         }
                     } else {
-                        savePkd(newDeployment);
-                        console.log(header, getChalk().green(` - updated !!!`));
+                        if (newDeployment.objects.length > 2) {
+                            savePkd(newDeployment);
+                            console.log(header, getChalk().green(` - created !!!`));
+                        } else {
+                            console.log(header, getChalk().grey(` - no data !!!`));
+                        }
                     }
                 } else {
                     console.error(header, getChalk().red(` - failed to create package ${envName}`));

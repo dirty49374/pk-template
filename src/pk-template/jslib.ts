@@ -2,12 +2,21 @@ import path from 'path';
 import { parseKvps, parseList, pktError } from './utils';
 import { IScope } from './types';
 import { log } from './logger';
+import { createHash } from 'crypto';
+import { dumpYamlSortedKey } from '../pk-yaml';
 
 const jslib = (scope: IScope) => {
     const lib = {
         indent: () => scope.trace ? ''.padEnd(scope.trace.depth() * 2) : '',
         envVar: (name: string) => process.env[name],
         log: (...msg: any[]) => log(...msg),
+        last: () => scope.objects.length == 0 ? undefined : scope.objects[scope.objects.length - 1],
+        sha256: (obj: any) => {
+            var yaml = dumpYamlSortedKey(obj)
+            const hash = createHash('sha256');
+            hash.update(yaml);
+            return hash.digest('hex');
+        },
         files: (path: string) => scope.listFiles(path).data,
         loadText: (path: string) => scope.loadText(path).data,
         loadPkt: (path: string) => scope.loadPkt(path).data,
