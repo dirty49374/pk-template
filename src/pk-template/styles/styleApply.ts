@@ -1,6 +1,6 @@
 import { IObject } from "../../common";
 import { pktError } from "../utils";
-import { IScope, IStyle } from "../types";
+import { IScope, IStyle, ILanguageVmBase } from "../types";
 import { CustomYamlTag } from "../../pk-yaml/customTags";
 
 export class StyleApply {
@@ -12,10 +12,10 @@ export class StyleApply {
         }
     }
 
-    applyStyle(scope: IScope, object: IObject, node: object, style: IStyle) {
+    applyStyle(vm: ILanguageVmBase, scope: IScope, object: IObject, node: object, style: IStyle) {
         try {
             let success = true;
-            scope.eval(this.tag, {
+            vm.eval(this.tag, scope, {
                 object,
                 style,
                 node,

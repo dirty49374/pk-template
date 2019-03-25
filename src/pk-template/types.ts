@@ -44,8 +44,8 @@ export interface IStyle extends Array<{ k: string, v: string, kv: string }> {
 
 
 export interface IStyleSheet {
-    applyStyle(scope: IScope, object: IObject, parent: object, styles: IStyle): boolean;
-    apply(scope: IScope, orject: any): void;
+    applyStyle(vm: ILanguageVmBase, scope: IScope, object: IObject, parent: object, styles: IStyle): boolean;
+    apply(vm: ILanguageVmBase, scope: IScope, orject: any): void;
     //   loadStyles(styles: object[]): void;
 }
 
@@ -94,7 +94,6 @@ export interface IScope {
     resolve(relpath: string): string;
     add(object: any): void;
     child({ uri, objects }: any, handler: IScopeHandler): any;
-    eval(tag: CustomYamlTag, additionalValues?: any): any;
 
     defineValues(values: IValues): void;
     assignValues(values: IValues): void;
@@ -109,46 +108,59 @@ export interface IScope {
     listFiles(uri: string): { uri: string, data: string[] };
 
     // evaluater
-    evalTemplate(tpl: string): string;
-    evalTemplateAll(text: string): any[];
+    // evalTemplate(tpl: string): string;
+    // evalTemplateAll(text: string): any[];
 
     // evalCustomYamlTag(code: CustomYamlTag): any;
     // evalScript(script: CustomYamlTag | string): any;
 
-    evalAllCustomTags(node: any): any;
-    expandCaretPath(object: any): void;
-    evalObject(object: any): any;
-
-    // style
-    expandStyle(orject: any): void;
+    // evalAllCustomTags(node: any, vm: ILanguageVmBase): any;
+    // expandCaretPath(object: any): void;
+    // evalObject(object: any, vm: ILanguageVmBase): any;
 
     // logging
     log(...args: any): void;
 
-    error(msg: string): Error;
+    error(msg: string, error?: Error): Error;
 }
 
-export interface IStatementSpec {
+export interface IStatementSpec<T extends ILanguageRuntime> {
     name: string;
     mandotories?: string[];
     optionals?: string[];
     order: number;
-    handler: (runtime: IRuntime, scope: IScope, stmt: any, netx: any) => IPkStatementResult;
+    handler: (vm: ILanguageVm<T>, scope: IScope, stmt: any, netx: any) => IPkStatementResult;
 }
 
-export interface IStatementSpecs {
-    [id: string]: IStatementSpec;
-}
-
-export interface PkStatement {
-
+export interface IStatementSpecs<T extends ILanguageRuntime> {
+    [id: string]: IStatementSpec<T>;
 }
 
 export interface IPkStatementResult {
     exit?: boolean;
 }
 
-export interface IRuntime {
+export interface ILanguageSpec<T extends ILanguageRuntime> {
+    createRuntime: () => T;
+    compile(scope: IScope, src: string, uri: string): any;
+    initialState: string;
+    states: {
+        [state: string]: IStatementSpecs<T>;
+    },
+    sandbox(scope: IScope, values: IValues): any;
+}
+
+export interface ILanguageRuntime {
+}
+
+export interface ILanguageVmBase {
+    eval(tag: CustomYamlTag, scope: IScope, values?: IValues): any;
+    sandbox(scope: IScope, values?: IValues): any;
+}
+
+export interface ILanguageVm<T extends ILanguageRuntime> extends ILanguageVmBase {
+    runtime: T;
+    run(scope: IScope, path: string): void;
     execute(scope: IScope, stmt: any, state: string): IPkStatementResult;
 }
 

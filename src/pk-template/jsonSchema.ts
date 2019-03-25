@@ -1,6 +1,6 @@
 import { getAjv } from "../lazy";
 
-export class Schema {
+export class JsonSchema {
     private ajv: any;
     private validator: any;
 
