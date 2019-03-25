@@ -1,11 +1,12 @@
-routine:
-- include: 00-hello-yaml.yaml
-- include: 00-hello-yaml.yaml
-- script: !js | # javascript
-    $.objects.forEach((o, i) => o.hello = `${o.hello}-js${i}`)
-- script: !cs | # coffeescript
-    for o, i in $.objects
-      o.hello = o.hello + "-cs#{i}"
-- script: !ls | # livescript
-    for o, i in $.objects
-      o.hello = o.hello + "-ls#{i}"
+/include: 00-hello-yaml.yaml
+---
+/include: 00-hello-yaml.yaml
+---
+/script: !js | # javascript
+  $.objects.forEach((o, i) => o.hello = `${o.hello}-js${i}`)
+/script: !cs | # coffeescript
+  for o, i in $.objects
+    o.hello = o.hello + "-cs#{i}"
+/script: !ls | # livescript
+  for o, i in $.objects
+    o.hello = o.hello + "-ls#{i}"

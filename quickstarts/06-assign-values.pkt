@@ -1,9 +1,9 @@
-input:
+/properties:
   name: pkt
 
-assign:
+/assign:
   greet: welcome
 
-routine:
-- template: |
-    <<<= greet >>>: <<<= name >>>
+---
+/template: |
+  <<<= greet >>>: <<<= name >>>

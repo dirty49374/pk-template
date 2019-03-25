@@ -1,10 +1,11 @@
-input:
+/properties:
   world: 1
 
-routine:
-- if: world == 1
-  template: |
-    hello: world1
-- if: !js world == 2
-  template: |
-    hello: world2
+---
+/if: world == 1
+/template: |
+  hello: world1
+---
+/if: !js world == 2
+/template: |
+  hello: world2

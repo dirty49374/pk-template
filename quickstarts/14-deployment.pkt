@@ -1,26 +1,24 @@
-input:
+/properties:
   name: null
   image: null
-
-routine:
-- template: |
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
+---
+/template: |
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: <<<= name >>>
+    labels:
       name: <<<= name >>>
-      labels:
+      instance-type: c1
+  spec:
+    selector:
+      matchLabels:
         name: <<<= name >>>
-        instance-type: c1
-    spec:
-      selector:
-        matchLabels:
+    template:
+      metadata:
+        labels:
           name: <<<= name >>>
-      template:
-        metadata:
-          labels:
-            name: <<<= name >>>
-        spec:
-          containers:
-          - name: <<<= name >>>
-            image: <<<= image >>>
-
+      spec:
+        containers:
+        - name: <<<= name >>>
+          image: <<<= image >>>

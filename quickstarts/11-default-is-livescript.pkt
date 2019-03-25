@@ -1,6 +1,7 @@
-routine:
-- include: 00-hello-yaml.yaml
-- include: 00-hello-yaml.yaml
-- script: |
-    for o, i in $.objects
-        o.hello = "#{o.hello}-#{i}"
+/include: 00-hello-yaml.yaml
+---
+/include: 00-hello-yaml.yaml
+---
+/script: |
+  for o, i in $.objects
+      o.hello = "#{o.hello}-#{i}"

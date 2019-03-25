@@ -1,10 +1,13 @@
-input:
+/properties:
   greet: hello
 
-routine:
-- var:
+---
+/values:
     name: john
-- include: 02-interpolation.yaml
-- assign:
+---
+/include: 02-interpolation.yaml
+---
+/assign:
     name: jane
-- include: 02-interpolation.yaml
+---
+/include: 02-interpolation.yaml

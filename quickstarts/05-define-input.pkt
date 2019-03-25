@@ -1,7 +1,6 @@
-input: # assign --> input
+/properties: # assign --> input
   greet: hi
   name: pkt
-
-routine:
-- template: |
-    <<<= $.values.greet || 'hello' >>>: <<<= name >>>
+---
+/template: |
+  <<<= $.values.greet || 'hello' >>>: <<<= name >>>

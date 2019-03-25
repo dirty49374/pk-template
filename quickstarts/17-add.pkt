@@ -1,12 +1,10 @@
-routine:
-- add:
-    kind: Pod
-    apiVersion: v1
-    metadata:
-      name: alpine
-      labels:
-        name: alpine
-    spec:
-      containers:
-      - name: alpine
-        image: alpine
+kind: Pod
+apiVersion: v1
+metadata:
+  name: alpine
+  labels:
+    name: alpine
+spec:
+  containers:
+  - name: alpine
+    image: alpine

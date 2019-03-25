@@ -1,5 +1,5 @@
 
-import { IScope, IValues, IStatement, IRuntime, IStatementSpec, IStatementSpecs, PkStatementResult } from './types';
+import { IScope, IValues, IStatement, IRuntime, IStatementSpec, IStatementSpecs, IPkStatementResult } from './types';
 import { Trace } from './trace';
 import { languageSpec } from './languageSpec';
 
@@ -95,7 +95,7 @@ export class Runtime implements IRuntime {
 
             const specs = this.findStatementSpec(stmt);
             if (specs.length != 0) {
-                const run = (scope: IScope, left: IStatementSpec[]): PkStatementResult => {
+                const run = (scope: IScope, left: IStatementSpec[]): IPkStatementResult => {
                     const spec = left.splice(0, 1)[0];
                     return spec.handler(this, scope, stmt, (scope: IScope) => left.length != 0 ? run(scope, left) : {});
                 }
@@ -117,7 +117,7 @@ export class Runtime implements IRuntime {
             const { uri, data } = scope.loadPkt(rpath);
             new Runtime(uri).execute(scope, {
                 uri,
-                file: data,
+                pkt: data,
                 withObject: true,
             }, 'pkt:/pkt');
         } else {

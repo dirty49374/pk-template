@@ -27,7 +27,7 @@ export class StyleSheet implements IStyleSheet {
     private import(scope: IScope, rpath: string) {
         const { uri, data } = scope.loadPkt(rpath);
         scope.child({ uri }, cscope => {
-            this.load(cscope, data[0] as IPktHeader);
+            this.load(cscope, data.header);
         });
     }
 

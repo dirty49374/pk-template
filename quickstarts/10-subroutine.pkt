@@ -1,15 +1,16 @@
-routine:
-- var:
-    greet: hello              # greet = hello
-    name: world               # name = world
-- template: |
+/values:
+  greet: hello              # greet = hello
+  name: world               # name = world
+---
+/template: |
+  msg: <<<= greet >>> <<<= name >>>
+---
+/routine:
+- /assign:
+    greet: hi               # greet = hi
+- /values:
+    name: universe          # name = universe ( declared new variable name )
+- /template: |
     msg: <<<= greet >>> <<<= name >>>
-- routine:
-  - assign:
-      greet: hi               # greet = hi
-  - var:
-      name: universe          # name = universe ( declared new variable name )
-  - template: |
-      msg: <<<= greet >>> <<<= name >>>
-- template: |                 # scope is restored
+- /template: |                 # scope is restored
     msg: <<<= greet >>> <<<= name >>>

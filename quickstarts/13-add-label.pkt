@@ -1,9 +1,8 @@
-input:
+/properties:
   name: null
   value: null
-
-routine:
-- if: name && value
-  script: |
-    for o in $.objects
-      o.{}metadata.{}labels[name] = value
+---
+/if: name && value
+/script: !ls |
+  for o in $.objects
+    o.{}metadata.{}labels[name] = value

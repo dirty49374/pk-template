@@ -5,12 +5,15 @@ import { CustomYamlTag } from "../pk-yaml/customTags";
 
 export type IConfig = any;
 export interface IPktHeader {
-    ['/properties']: any;
-    ['/schema']: any;
+    ['/properties']?: any;
+    ['/schema']?: any;
     ['/import']?: string[] | string;
-    ['/style']: object[];
-    ['/values']: any;
-    ['/assign']: any;
+    ['/style']?: object[];
+}
+
+export interface IPkt {
+    header: IPktHeader;
+    statements: any[];
 }
 
 export type IStatement = any;
@@ -51,7 +54,7 @@ export interface ILoader {
     loadYaml(uri: string): { uri: string, data: any };
     loadYamlAll(uri: string): { uri: string, data: any[] };
 
-    loadPkt(uri: string): { uri: string, data: any[] };
+    loadPkt(uri: string): { uri: string, data: IPkt };
     loadTemplate(uri: string): { uri: string, data: string };
     listFiles(uri: string): { uri: string, data: string[] };
 }
@@ -101,7 +104,7 @@ export interface IScope {
     loadYaml(uri: string): { uri: string, data: any };
     loadYamlAll(uri: string): { uri: string, data: any[] };
 
-    loadPkt(uri: string): { uri: string, data: any[] };
+    loadPkt(uri: string): { uri: string, data: IPkt };
     loadTemplate(uri: string): { uri: string, data: string };
     listFiles(uri: string): { uri: string, data: string[] };
 
@@ -121,6 +124,8 @@ export interface IScope {
 
     // logging
     log(...args: any): void;
+
+    error(msg: string): Error;
 }
 
 export interface IStatementSpec {
@@ -128,7 +133,7 @@ export interface IStatementSpec {
     mandotories?: string[];
     optionals?: string[];
     order: number;
-    handler: (runtime: IRuntime, scope: IScope, stmt: any, netx: any) => PkStatementResult;
+    handler: (runtime: IRuntime, scope: IScope, stmt: any, netx: any) => IPkStatementResult;
 }
 
 export interface IStatementSpecs {
@@ -139,13 +144,12 @@ export interface PkStatement {
 
 }
 
-export interface PkStatementResult {
+export interface IPkStatementResult {
     exit?: boolean;
 }
 
-
 export interface IRuntime {
-    execute(scope: IScope, stmt: any, state: string): PkStatementResult;
+    execute(scope: IScope, stmt: any, state: string): IPkStatementResult;
 }
 
 export const PKMODULE_FILE_NAME = 'pkt.conf';

@@ -1,6 +1,6 @@
 import * as vm from 'vm';
 import jslib from './jslib';
-import { IScope, IValues, IStyleSheet, ITrace } from './types';
+import { IScope, IValues, IStyleSheet, ITrace, IPkt } from './types';
 import { IObject } from '../common';
 import { Evaluator } from './evaluator';
 import { Loader } from './loader';
@@ -52,7 +52,7 @@ export class Scope extends PathResolver implements IScope {
 
     child<T>({ uri, objects, values }: any, handler: (scope: IScope) => T): T {
         const scope = new Scope({
-            objects: objects || [],
+            objects: objects ? [...objects] : [],
             values: values || this.values,
             uri: uri || this.uri,
             parent: this,
@@ -110,7 +110,7 @@ export class Scope extends PathResolver implements IScope {
     loadYaml = (uri: string): { uri: string, data: any } => this.loader.loadYaml(uri);
     loadYamlAll = (uri: string): { uri: string, data: any[] } => this.loader.loadYamlAll(uri);
 
-    loadPkt = (uri: string): { uri: string, data: any[] } => this.loader.loadPkt(uri);
+    loadPkt = (uri: string): { uri: string, data: IPkt } => this.loader.loadPkt(uri);
     loadTemplate = (uri: string): { uri: string, data: string } => this.loader.loadTemplate(uri);
     listFiles = (uri: string): { uri: string, data: string[] } => this.loader.listFiles(uri);
 
@@ -129,6 +129,11 @@ export class Scope extends PathResolver implements IScope {
     expandStyle = (object: any): void => this.styleSheet.apply(this, object);
 
     log = (...args: any) => this.trace.log(...args);
+
+    error(msg: string): Error {
+        const err = pktError(this, new Error(msg), msg);
+        return err;
+    }
 
     static Create(values: IValues, uri: string, parent: IScope | null, objects: IObject[], styleSheet: IStyleSheet): IScope {
         const scope = new Scope({

@@ -1,4 +1,4 @@
-import { IStatementSpecs, IRuntime, IScope, PkStatementResult } from "./types";
+import { IStatementSpecs, IRuntime, IScope, IPkStatementResult, IPkt } from "./types";
 import { Runtime, IValues } from ".";
 import { getJsonPath, getJsonPatch } from "../lazy";
 import { pktError } from "./utils";
@@ -11,12 +11,12 @@ const pktLanguage = {
         ['/pkt']: {
             name: '/pkt',
             order: 100,
-            handler: (runtime: IRuntime, scope: IScope, stmt: any): PkStatementResult => {
+            handler: (runtime: IRuntime, scope: IScope, stmt: any): IPkStatementResult => {
                 if (!stmt) return {};
-                if (!stmt.file.length) return {};
                 if (!scope) throw 'no parent scope';
 
                 const uri = stmt.uri;
+                const pkt = stmt.pkt as IPkt;
                 const withObject = stmt.withObject;
 
                 scope.trace.into(() => {
@@ -26,23 +26,15 @@ const pktLanguage = {
                             cscope.objects = [...scope.objects];
                         }
 
-                        for (let i = 0; i < stmt.file.length; ++i) {
+                        cscope.trace.step('header');
+                        const rst = runtime.execute(cscope, pkt.header, 'pkt:/pkt-header');
+                        if (rst.exit) {
+                            return {};
+                        }
+
+                        for (let i = 0; i < pkt.statements.length; ++i) {
                             cscope.trace.step(i);
-                            if (i == 0) {
-                                if (stmt.file[0]['/properties'] || stmt.file[0]['/schema']) {
-                                    const rst = runtime.execute(cscope, stmt.file[i], 'pkt:/pkt-header');
-                                    if (rst.exit) {
-                                        return {};
-                                    }
-                                    continue;
-                                } else {
-                                    const rst = runtime.execute(cscope, {}, 'pkt:/pkt-header');
-                                    if (rst.exit) {
-                                        return {};
-                                    }
-                                }
-                            }
-                            const rst = runtime.execute(cscope, stmt.file[i], 'pkt-statement');
+                            const rst = runtime.execute(cscope, pkt.statements[i], 'pkt-statement');
                             if (rst.exit) {
                                 return {};
                             }
@@ -55,7 +47,7 @@ const pktLanguage = {
         ['/pkt-header']: {
             name: '/pkt-header',
             order: 100,
-            handler: (runtime: IRuntime, scope: IScope, stmt: any): PkStatementResult => {
+            handler: (runtime: IRuntime, scope: IScope, stmt: any): IPkStatementResult => {
                 const buildProperties = (properties: any, parentValues: IValues): any => {
                     const values = {
                         cluster: null,
@@ -86,26 +78,28 @@ const pktLanguage = {
                     const schema = new Schema(stmt['/schema']);
                     const errors = schema.validate(scope.values);
                     if (errors) {
-                        throw pktError(scope, new Error(errors), 'property validation failed');
+                        throw scope.error('property validation failed');
                     }
                 }
 
                 // 4. build values
                 if (stmt['/values']) {
-                    scope.trace.step('/values');
-                    scope.values = {
-                        ...scope.values,
-                        ...scope.evalObject(stmt['/values'] || {}),
-                    };
+                    throw scope.error('header cannot have /values statement');
+                    // scope.trace.step('/values');
+                    // scope.values = {
+                    //     ...scope.values,
+                    //     ...scope.evalObject(stmt['/values'] || {}),
+                    // };
                 }
 
                 // 4. build values
                 if (stmt['/assign']) {
-                    scope.trace.step('/assign');
-                    scope.values = {
-                        ...scope.values,
-                        ...scope.evalObject(stmt['/assign'] || {}),
-                    };
+                    throw scope.error('header cannot have /assign statement');
+                    // scope.trace.step('/assign');
+                    // scope.values = {
+                    //     ...scope.values,
+                    //     ...scope.evalObject(stmt['/assign'] || {}),
+                    // };
                 }
 
                 return {};
@@ -116,30 +110,30 @@ const pktLanguage = {
         ['/if']: {
             name: '/if',
             order: 0,
-            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): PkStatementResult =>
+            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): IPkStatementResult =>
                 scope.evalObject(stmt['/if']) ? next(scope) : {},
         },
         ['/unless']: {
             name: '/unless',
             order: 1,
-            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): PkStatementResult =>
+            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): IPkStatementResult =>
                 scope.evalObject(stmt['/unless']) ? {} : next(scope),
         },
         ['/endIf']: {
             name: '/endIf',
             order: 3,
-            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): PkStatementResult =>
+            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): IPkStatementResult =>
                 scope.evalObject(stmt['/endIf']) ? { exit: true } : {},
         },
         ['/end']: {
             name: '/end',
             order: 4,
-            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): PkStatementResult => ({ exit: true }),
+            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): IPkStatementResult => ({ exit: true }),
         },
         ['/select']: {
             name: '/select',
             order: 10,
-            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): PkStatementResult => {
+            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): IPkStatementResult => {
                 const predicate = selectors.compile(stmt['/select']);
                 const objects = scope.objects.filter(predicate);
                 const rst = scope.child({ objects }, cscope => {
@@ -154,7 +148,7 @@ const pktLanguage = {
         ['/foreach']: {
             name: '/foreach',
             order: 100,
-            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): PkStatementResult => {
+            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): IPkStatementResult => {
                 scope.trace.into(() => {
                     scope.objects.forEach((o, i) => {
                         scope.trace.step(i);
@@ -169,7 +163,7 @@ const pktLanguage = {
         ['/values']: {
             name: '/values',
             order: 100,
-            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): PkStatementResult => {
+            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): IPkStatementResult => {
                 scope.defineValues(stmt['/values'] || {});
                 return {};
             },
@@ -177,7 +171,7 @@ const pktLanguage = {
         ['/assign']: {
             name: '/assign',
             order: 100,
-            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): PkStatementResult => {
+            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): IPkStatementResult => {
                 const values = scope.evalObject(stmt['/assign'] || {});
                 for (const key of Object.keys(values)) {
                     if (key in scope.values) {
@@ -193,7 +187,7 @@ const pktLanguage = {
         ['/exit']: {
             name: '/exit',
             order: 100,
-            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): PkStatementResult => {
+            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): IPkStatementResult => {
                 const value = scope.evalObject(stmt['/exit']);
                 if (value) {
                     return { exit: true };
@@ -205,7 +199,7 @@ const pktLanguage = {
         ['/add']: {
             name: '/add',
             order: 100,
-            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): PkStatementResult => {
+            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): IPkStatementResult => {
                 const object = scope.evalObject(stmt['/add']);
                 scope.add(object);
                 return {};
@@ -214,7 +208,7 @@ const pktLanguage = {
         ['/script']: {
             name: '/script',
             order: 100,
-            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): PkStatementResult => {
+            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): IPkStatementResult => {
                 scope.eval(stmt['/script']);
                 return {};
             },
@@ -223,7 +217,7 @@ const pktLanguage = {
         ['/template']: {
             name: '/template',
             order: 100,
-            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): PkStatementResult => {
+            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): IPkStatementResult => {
                 const objects = scope.evalTemplateAll(stmt['/template']);
                 objects.forEach(object => scope.add(object));
                 return {};
@@ -232,25 +226,40 @@ const pktLanguage = {
         ['/include']: {
             name: '/include',
             order: 100,
-            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): PkStatementResult => {
+            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): IPkStatementResult => {
                 const rpath = stmt['/include'];
-                if (rpath.toLowerCase().endsWith('.pkt')) {
-                    const { uri, data } = scope.loadPkt(rpath);
-                    runtime.execute(scope, { uri, file: data }, 'pkt:/pkt');
-                } else {
-                    const { data } = scope.loadText(rpath);
-                    const objects = scope.evalTemplateAll(data);
-                    objects.forEach(object => scope.add(object));
+                const _with = stmt['/with'] || {};
+                const { uri, data } = scope.loadPkt(rpath);
+                if (data.header['/properties']) {
+                    const undefinedKey = Object.keys(_with).find(k => !(k in data.header['/properties']));
+                    if (undefinedKey) {
+                        throw new Error(`${undefinedKey} is not defined at ${uri}`);
+                    }
                 }
+                scope.child({ objects: scope.objects }, cscope => {
+                    cscope.defineValues(_with);
+                    runtime.execute(cscope, { uri, pkt: data, withObject: false }, 'pkt:/pkt');
+                });
                 return {};
             },
         },
         ['/apply']: {
             name: '/apply',
             order: 100,
-            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): PkStatementResult => {
+            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): IPkStatementResult => {
                 const rpath = stmt['/apply'];
-                Runtime.Run(scope, rpath);
+                const _with = stmt['/with'] || {};
+                const { uri, data } = scope.loadPkt(rpath);
+                if (data.header['/properties']) {
+                    const undefinedKey = Object.keys(_with).find(k => !(k in data.header['/properties']));
+                    if (undefinedKey) {
+                        throw new Error(`${undefinedKey} is not defined at ${uri}`);
+                    }
+                }
+                scope.child({ objects: scope.objects }, cscope => {
+                    cscope.defineValues(_with);
+                    runtime.execute(cscope, { uri, pkt: data, withObject: true }, 'pkt:/pkt');
+                });
                 return {};
             },
         },
@@ -258,7 +267,7 @@ const pktLanguage = {
             name: '/jsonpath',
             mandotories: [],
             optionals: ['.apply', '.merge', '.exec'],
-            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): PkStatementResult => {
+            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): IPkStatementResult => {
                 const query = stmt['/jsonpath'];
                 const apply = stmt['.apply'];
                 const merge = stmt['.merge'];
@@ -295,7 +304,7 @@ const pktLanguage = {
         ['/jsonpatch']: {
             name: '/jsonpatch',
             order: 100,
-            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): PkStatementResult => {
+            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): IPkStatementResult => {
 
                 const jsonpatch = getJsonPatch();
                 const patch = Array.isArray(stmt['/jsonpatch']) ? stmt['/jsonpatch'] : [stmt['/jsonpatch']];
@@ -315,7 +324,7 @@ const pktLanguage = {
         ['/routine']: {
             name: '/routine',
             order: 100,
-            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): PkStatementResult => {
+            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): IPkStatementResult => {
                 scope.child({}, scope => {
                     const rst = runtime.execute(scope, stmt['/routine'], 'pkt-statement');
                     if (rst.exit) {
@@ -329,7 +338,7 @@ const pktLanguage = {
         ['default']: {
             name: '/default',
             order: 5,
-            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): PkStatementResult => {
+            handler: (runtime: IRuntime, scope: IScope, stmt: any, next: any): IPkStatementResult => {
                 if (!stmt) {
                     return {};
                 }

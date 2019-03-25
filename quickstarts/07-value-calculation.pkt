@@ -1,10 +1,9 @@
-input:
+/properties:
   name: world
 
-assign:
+/assign:
   greet: welcome
   name: !js name.toUpperCase()
-
-routine:
-- template: |
-    <<<= greet >>>: <<<= name >>>
+---
+/template: |
+  <<<= greet >>>: <<<= name >>>
