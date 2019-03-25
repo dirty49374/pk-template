@@ -1,7 +1,7 @@
 import fs from "fs";
 import url from 'url';
 import * as utils from './utils';
-import { IScope, IPkt, ILoader } from './types';
+import { IScope, ILoader } from './types';
 import { getUnderscore, getSyncRequest } from '../lazy';
 import { parseYaml, parseYamlAll, parseYamlAsPkt } from "../pk-yaml";
 
@@ -51,14 +51,10 @@ export class Loader implements ILoader {
         }
     }
 
-    loadPkt(uri: string): { uri: string, data: IPkt } {
+    loadPkt(uri: string): { uri: string, data: any[] } {
         const rst = this.loadText(uri);
         try {
-            const objs = parseYamlAsPkt(rst.data, rst.uri);
-            var pkt = objs[0];
-            const routine = pkt['/routine'] || (pkt['/routine'] = []);
-            routine.push(...objs.slice(1));
-
+            const pkt = parseYamlAsPkt(rst.data, rst.uri);
             return {
                 uri: rst.uri,
                 data: pkt,

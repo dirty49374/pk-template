@@ -1,11 +1,7 @@
 
-import * as utils from './utils';
-import selectors from './selectors';
-import { IScope, IValues, IPkt, IStatement } from './types';
-import { getJsonPath, getJsonPatch } from '../lazy';
-import { StyleSheet } from './styles/styleSheet';
-import { Schema } from './schema';
+import { IScope, IValues, IStatement, IRuntime, IStatementSpec, IStatementSpecs, PkStatementResult } from './types';
 import { Trace } from './trace';
+import { languageSpec } from './languageSpec';
 
 export function buildProperties(properties: any, parentValues: IValues): any {
     const values = {
@@ -21,343 +17,109 @@ export function buildProperties(properties: any, parentValues: IValues): any {
     return values;
 }
 
-export class Runtime {
-
+export class Runtime implements IRuntime {
+    mode: string;
     trace: Trace;
     constructor(uri: string) {
+        this.mode = '';
         this.trace = new Trace(uri);
     }
-    break(stmt: IStatement) {
-        if (!('/break' in stmt)) return false;
-        this.trace.step('break');
-        return true;
-    }
-    scriptStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt['/script']) return false;
-        this.trace.step('script');
-        scope.eval(stmt['/script']);
-        return true;
-    }
-    eachStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt['/each']) return false;
-        this.trace.step('each');
 
-        this.trace.into(() => {
-            scope.objects.forEach((o, i) => {
-                this.trace.step(i);
-                scope.object = o;
-                scope.eval(stmt['/each']);
-            });
-        });
-        delete scope.object;
-        return true;
-    }
-    varStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt['/var']) return false;
-
-        this.trace.step('var');
-        scope.defineValues(stmt['/var'] || {});
-
-        return true;
-    }
-    assignStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt['/assign']) return false;
-        this.trace.step('assign');
-
-        const values = scope.evalObject(stmt['/assign'] || {});
-        for (const key of Object.keys(values)) {
-            if (key in scope.values) {
-                scope.values[key] = values[key];
-            } else {
-                const msg = `value ${key} is not defined`;
-                throw utils.pktError(scope, new Error(msg), msg);
+    findStatementSpec(stmt: IStatement): IStatementSpec[] {
+        const stmtSpecs = (languageSpec as any)[this.mode] as IStatementSpecs;
+        if (!stmt) {
+            if (stmtSpecs['default']) {
+                return [stmtSpecs['default']];
             }
+            return [];
         }
-        return true;
-    }
-    addStatement(scope: IScope, stmt: IStatement) {
-        if (!('/add' in stmt)) return false;
 
-        this.trace.step('add');
-        const object = scope.evalObject(stmt['/add']);
-        scope.add(object);
-        return true;
-    }
-    includeStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt['/include']) return false;
-        this.trace.step('include');
+        let specs = Object.keys(stmt)
+            .map(k => stmtSpecs[k])
+            .filter(s => s)
+            .sort((a, b) => a.order - b.order);
 
-        const rpath = stmt['/include'];
-        if (rpath.toLowerCase().endsWith(".pkt")) {
-            const { uri, data } = scope.loadPkt(rpath);
-            this.execPkt(data, scope, uri);
+        if (stmtSpecs['default']) {
+            specs.push(stmtSpecs['default']);
+        }
+
+        return specs;
+
+        // for (const key of Object.keys(specs)) {
+        //     if (!(key in stmt)) {
+        //         continue;
+        //     }
+        //     const def = specs[key];
+        //     for (const k of Object.keys(stmt)) {
+        //         if (k === key) {
+        //             continue;
+        //         }
+        //         throw new Error(`cannot use '${k}' in ${key}`);
+        //     }
+        //     if (def.mandotories) {
+        //         for (const k of def.mandotories) {
+        //             if (!(k in stmt)) {
+        //                 throw new Error(`${key} statement requires ${k} field`);
+        //             }
+        //         }
+        //     }
+
+        //     return def;
+        // }
+        // const slashKey = Object.keys(stmt).find(k => k.length > 0 && k[0] == '/');
+        // if (slashKey) {
+        //     throw new Error(`unknown statement ${slashKey}`)
+        // }
+        // return null;
+    }
+
+    execute(scope: IScope, stmt: any, mode: string) {
+        let key = null;
+        const idx = mode.indexOf(':');
+        if (idx != -1) {
+            key = mode.substr(idx + 1);
+            mode = mode.substr(0, idx);
+        }
+        if (key) {
+            const lastMode = this.mode;
+            this.mode = mode;
+
+            const spec = (languageSpec as any)[mode][key] as IStatementSpec;
+            const rst = spec.handler(this, scope, stmt, () => { });
+
+            this.mode = lastMode;
+            return rst;
         } else {
-            const { data } = scope.loadText(rpath);
-            const objects = scope.evalTemplateAll(data);
-            objects.forEach(object => scope.add(object));
+            const lastMode = this.mode;
+            this.mode = mode;
+
+            const specs = this.findStatementSpec(stmt);
+            if (specs.length != 0) {
+                const run = (scope: IScope, left: IStatementSpec[]): PkStatementResult => {
+                    const spec = left.splice(0, 1)[0];
+                    return spec.handler(this, scope, stmt, (scope: IScope) => left.length != 0 ? run(scope, left) : {});
+                }
+                const rst = run(scope, specs);
+                if (rst.exit) {
+                    this.mode = lastMode;
+                    return rst;
+                }
+                this.mode = lastMode;
+                return rst;
+            }
+            this.mode = lastMode;
+            return {};
         }
-        return true;
-    }
-    includeWithStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt['/includeWith']) return false;
-        this.trace.step('includeWith');
-
-        const idx = stmt['/includeWith'].indexOf(' ')
-        const rpath = idx >= 0
-            ? stmt['/includeWith'].substring(0, idx)
-            : stmt['/includeWith'];
-        const kvps = idx >= 0
-            ? stmt['/includeWith'].substring(idx)
-            : "";
-        const values = utils.parseKvps(kvps);
-        scope.child({}, (cscope: IScope) => {
-            cscope.values = { ...scope.values, ...values };
-
-            if (rpath.toLowerCase().endsWith(".pkt")) {
-                const { uri, data } = cscope.loadPkt(rpath);
-                this.execPkt(data, cscope, uri);
-            } else {
-                const { data } = cscope.loadText(rpath);
-                const objects = cscope.evalTemplateAll(data);
-                objects.forEach(object => cscope.add(object));
-            }
-        });
-
-        return true;
-    }
-    jsonpathStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt['/jsonpath']) return false;
-        this.trace.step('jsonpath');
-
-        const jsonpath = getJsonPath();
-        this.trace.into(() => {
-            scope.objects.forEach((o, i) => {
-                this.trace.step(i);
-                const nodes = jsonpath.nodes(o, stmt['/jsonpath'].query);
-                nodes.forEach((node: any) => {
-                    scope.child({}, cscope => {
-                        cscope.object = o;
-                        cscope.value = node.value;
-                        if (stmt['/jsonpath'].apply) {
-                            const value = cscope.evalObject(stmt['/jsonpath'].apply);
-                            jsonpath.apply(o, jsonpath.stringify(node.path), () => value);
-                        }
-                        if (stmt['/jsonpath'].merge) {
-                            const value = cscope.evalObject(stmt['/jsonpath'].merge);
-                            const merged = { ...node.value, ...value };
-                            jsonpath.apply(o, jsonpath.stringify(node.path), () => merged);
-                        }
-                        if (stmt['/jsonpath'].exec) {
-                            cscope.eval(stmt['/jsonpath'].exec);
-                        }
-                    });
-                })
-            });
-        });
-    }
-    applyStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt['/apply']) return false;
-        this.trace.step('apply');
-
-        const rpath = stmt['/apply'];
-        Runtime.Run(scope, rpath);
-
-        return true;
-    }
-    applyWithStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt['/applyWith']) return false;
-        this.trace.step('applyWith');
-
-        const idx = stmt['/applyWith'].indexOf(' ')
-        const rpath = idx >= 0
-            ? stmt['/applyWith'].substring(0, idx)
-            : stmt['/applyWith'];
-        const kvps = idx >= 0
-            ? stmt['/applyWith'].substring(idx)
-            : "";
-        const values = utils.parseKvps(kvps);
-        scope.child({ objects: scope.objects }, cscope => {
-            cscope.values = { ...scope.values, ...values };
-
-            if (rpath.toLowerCase().endsWith(".pkt")) {
-                const { uri, data } = scope.loadPkt(rpath);
-                this.execPkt(data, scope, uri, true);
-            } else {
-                const { data } = scope.loadText(rpath);
-                const objects = scope.evalTemplateAll(data);
-                scope.objects.push(...objects);
-            }
-        });
-        return true;
-    }
-    patchStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt['/patch']) return false;
-        this.trace.step('patch');
-
-        const jsonpatch = getJsonPatch();
-        const patch = Array.isArray(stmt['/patch']) ? stmt['/patch'] : [stmt['/patch']];
-        this.trace.into(() => {
-            scope.objects.forEach((o, i) => {
-                this.trace.step(i);
-                scope.object = o;
-                const p = scope.evalObject(patch);
-                jsonpatch.apply(o, p);
-                delete scope.object;
-            });
-        });
-        delete scope.object;
-        return true;
-    }
-    routineStatement(parentScope: IScope, stmt: IStatement) {
-        if (!stmt['/routine']) return false;
-        this.trace.step('routine');
-
-        parentScope.child({}, scope => {
-            this.execRoutine(scope, stmt['/routine']);
-        });
-        return true;
-    }
-    routineWithStatement(parentScope: IScope, stmt: IStatement) {
-        if (!stmt['/routineWith']) return false;
-        this.trace.step('routineWith');
-
-        parentScope.child({ objects: parentScope.objects }, scope => {
-            this.execRoutine(scope, stmt['/routineWith']);
-        });
-        return true;
-    }
-    templateStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt['/template']) return false;
-        this.trace.step('template');
-
-        const objects = scope.evalTemplateAll(stmt['/template']);
-        objects.forEach(object => scope.add(object));
-        return true;
-    }
-
-    plainObjectStatement(scope: IScope, stmt: IStatement) {
-        this.trace.step('object');
-        const object = scope.evalObject(stmt);
-        scope.add(object);
-        return true;
-    }
-
-    execStatement(scope: IScope, stmt: IStatement) {
-        this.trace.into(() => {
-            this.eachStatement(scope, stmt);
-            this.jsonpathStatement(scope, stmt);
-            this.scriptStatement(scope, stmt);
-            this.varStatement(scope, stmt);
-            this.assignStatement(scope, stmt);
-            this.includeStatement(scope, stmt);
-            this.includeWithStatement(scope, stmt);
-            this.applyStatement(scope, stmt);
-            this.applyWithStatement(scope, stmt);
-            this.addStatement(scope, stmt);
-            this.patchStatement(scope, stmt);
-            this.templateStatement(scope, stmt);
-            this.routineStatement(scope, stmt);
-            this.routineWithStatement(scope, stmt);
-        });
-    }
-
-    execRoutine(scope: IScope, routine: IStatement) {
-        if (!routine)
-            return;
-        this.trace.into(() => {
-            for (const i in routine) {
-                this.trace.step(i);
-                const stmt = routine[i];
-                if (!stmt) {
-                    continue;
-                }
-                const hasStatement = Object.keys(stmt).find(k => k.length > 0 && k[0] == '/');
-                if (!hasStatement) {
-                    this.plainObjectStatement(scope, stmt);
-                } else {
-                    if (stmt['/if']) {
-                        const rst = !scope.eval(stmt['/if']);
-                        console.log(rst);
-                        if (rst) continue;
-                    }
-                    if (stmt['/unless'] && scope.eval(stmt['/unless'])) {
-                        continue;
-                    }
-                    if (stmt['/select']) {
-                        const predicate = selectors.compile(stmt['/select']);
-                        const objects = scope.objects.filter(predicate);
-                        scope.child({ objects }, cscope => {
-                            this.execStatement(cscope, stmt)
-                        });
-                    } else {
-                        this.execStatement(scope, stmt)
-                    }
-
-                    if (this.break(stmt))
-                        return;
-                }
-            }
-        });
-    }
-
-    execPkt(file: IPkt, parentScope: IScope, uri: string, withObject: boolean = false) {
-        if (!file) return;
-
-        if (!parentScope) throw 'no parent scope';
-        uri = uri || '.';
-
-        this.trace.into(() => {
-            parentScope.child({ uri }, scope => {
-                scope.trace = this.trace;
-
-                // 0. style sheets
-                this.trace.step('stylesheet');
-                scope.styleSheet = StyleSheet.Build(scope, file);
-
-                // 1. bind objects
-                if (withObject)
-                    scope.objects = [...parentScope.objects];
-
-                // 2. build properties
-                this.trace.step('properties');
-                scope.values = buildProperties(file['/properties'] || file['/input'], parentScope.values);
-
-                // 3. validate schema
-                if (file['/schema']) {
-                    this.trace.step('schema');
-                    const schema = new Schema(file['/schema']);
-                    const errors = schema.validate(scope.values);
-                    if (errors) {
-                        throw utils.pktError(scope, new Error(errors), 'property validation failed');
-                    }
-                }
-
-                // 4. build values
-                this.trace.step('var');
-                scope.values = {
-                    ...scope.values,
-                    ...scope.evalObject(file['/var'] || {}),
-                };
-
-                // 4. build values
-                this.trace.step('assign');
-                scope.values = {
-                    ...scope.values,
-                    ...scope.evalObject(file['/assign'] || {}),
-                };
-
-                // 5. run routine
-                this.trace.step('routine');
-                this.execRoutine(scope, file['/routine']);
-            });
-        });
-        return parentScope.objects;
     }
 
     static Run(scope: IScope, rpath: string) {
-        if (rpath.toLowerCase().endsWith(".pkt")) {
+        if (rpath.toLowerCase().endsWith('.pkt')) {
             const { uri, data } = scope.loadPkt(rpath);
-            new Runtime(uri).execPkt(data, scope, uri, true);
+            new Runtime(uri).execute(scope, {
+                uri,
+                file: data,
+                withObject: true,
+            }, 'pkt:/pkt');
         } else {
             const { data } = scope.loadText(rpath);
             const objects = scope.evalTemplateAll(data);
@@ -365,5 +127,4 @@ export class Runtime {
         }
         return true;
     }
-
 }

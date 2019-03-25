@@ -1,4 +1,4 @@
-import { IPkt } from "../pk-template/types";
+import { IPktHeader } from "../pk-template/types";
 
 export const buildOptionsFromProperties = (yargs: any, properties: any) => {
     if (!properties) {
@@ -52,13 +52,13 @@ export const buildOptionsFromSchema = (yargs: any, schema: any, properties: any)
     return yargs;
 }
 
-export const bindYargsOption = (yargs: any, pkt: IPkt) => {
+export const bindYargsOption = (yargs: any, pkt: IPktHeader) => {
     return pkt['/schema']
-        ? buildOptionsFromSchema(yargs, pkt['/schema'], pkt['/properties'] || pkt['/input'] || {})
-        : buildOptionsFromProperties(yargs, pkt['/properties'] || pkt['/input']);
+        ? buildOptionsFromSchema(yargs, pkt['/schema'], pkt['/properties'] || {})
+        : buildOptionsFromProperties(yargs, pkt['/properties']);
 }
 
-export const buildCommandDescription = (pkt: IPkt) => {
+export const buildCommandDescription = (pkt: IPktHeader) => {
     let desc = '';
     if (pkt['/schema']) {
         if (pkt['/schema'].title) {

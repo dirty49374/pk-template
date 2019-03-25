@@ -1,19 +1,7 @@
-import { IPkctlApplyOptions } from '../../types';
-import { Progress } from '../../../pk-ui/progress';
-import { IObject, IKubeCtlConfig, IResourceKey, delay } from '../../../common';
-import * as pkyaml from '../../../pk-yaml';
-import { PkKubeCtl } from '../../../pk-kubectl/pk-kubectl';
-import { PkdCatalog } from '../../../pk-deploy/catalog';
-import { getChalk } from '../../../lazy';
-import { loadPkd } from '../../../pk-deploy/load';
-import { IPkDeployment } from '../../../pk-deploy';
-import { join } from 'path';
-import { homedir } from 'os';
 import { visitEachAppAndEnv, tryCatch, atAppDir } from '../../libs';
 import { IPkCommandInfo } from "../../types";
 import { deletePkd } from '../../../pk-deploy/delete';
 import { IPkdApplierOption } from '../../../pk-deploy/options';
-import { execStdin } from '../../../pk-kubectl/exec';
 import { execSync } from 'child_process';
 
 export default (pk: IPkCommandInfo) => ({

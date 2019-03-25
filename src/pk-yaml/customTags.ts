@@ -1,7 +1,8 @@
-import { getLiveScript, getCoffeeScript } from "../lazy";
+import { getLiveScript, getCoffeeScript, getUnderscore } from "../lazy";
 import { IScope, IValues } from "../pk-template/types";
 import * as vm from 'vm';
-import _ from "underscore";
+import { tpl } from "../pk/libs";
+const _ = getUnderscore();
 
 const compileCoffee = (data: string): string => {
     try {
@@ -26,7 +27,9 @@ const compileLive = (data: string): string => {
 export class CustomYamlTag {
     constructor(public type: string, public src: string, public uri: string) { }
     represent = () => this.src;
-    evaluate = (scope: IScope, sandbox: IValues): any => null;
+    evaluate = (scope: IScope, sandbox: IValues): any => {
+        throw new Error('Custom Tag must implement evaluate() function');
+    };
     isScript = () => false;
 }
 
@@ -72,10 +75,14 @@ export class CustomYamlLsTag extends CustomYamlScriptTag {
     }
 }
 
-export class CustomYamlTemplateTag extends CustomYamlScriptTag {
+export class CustomYamlTemplateTag extends CustomYamlTag {
     private tpl: any;
     constructor(src: string, uri: string) {
-        super('template', src, uri, _.template);
+        super('template', src, uri);
+        this.tpl = _.template(src);
+    }
+    evaluate = (scope: IScope, sandbox: IValues): any => {
+        return this.tpl(sandbox);
     }
 }
 
@@ -83,7 +90,10 @@ export class CustomYamlFileTag extends CustomYamlTag {
     constructor(src: string, uri: string) {
         super('file', src, uri);
     }
-    evaluate = (scope: IScope, sandbox: IValues) => { }
+    evaluate = (scope: IScope, sandbox: IValues) => {
+        const result = scope.loadText(this.src);
+        return result.data;
+    }
 }
 
 export class CustomYamlConcatTag extends CustomYamlTag {

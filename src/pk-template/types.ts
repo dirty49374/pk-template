@@ -4,15 +4,13 @@ import { IPkEnv } from "../pk-conf";
 import { CustomYamlTag } from "../pk-yaml/customTags";
 
 export type IConfig = any;
-export interface IPkt {
+export interface IPktHeader {
     ['/properties']: any;
-    ['/input']: any;         // depricated, use properties instead
     ['/schema']: any;
     ['/import']?: string[] | string;
     ['/style']: object[];
-    ['/var']: any;
+    ['/values']: any;
     ['/assign']: any;
-    ['/routine']: any;
 }
 
 export type IStatement = any;
@@ -53,7 +51,7 @@ export interface ILoader {
     loadYaml(uri: string): { uri: string, data: any };
     loadYamlAll(uri: string): { uri: string, data: any[] };
 
-    loadPkt(uri: string): { uri: string, data: IPkt };
+    loadPkt(uri: string): { uri: string, data: any[] };
     loadTemplate(uri: string): { uri: string, data: string };
     listFiles(uri: string): { uri: string, data: string[] };
 }
@@ -75,6 +73,7 @@ export interface ITrace {
     step(name: string | number): void;
     pos(): string;
     depth(): number;
+    log(...args: any): void;
 }
 
 export interface IScope {
@@ -87,7 +86,7 @@ export interface IScope {
     parent: IScope;
     $buildLib: any;
     styleSheet: IStyleSheet;
-    trace?: ITrace;
+    trace: ITrace;
 
     resolve(relpath: string): string;
     add(object: any): void;
@@ -102,7 +101,7 @@ export interface IScope {
     loadYaml(uri: string): { uri: string, data: any };
     loadYamlAll(uri: string): { uri: string, data: any[] };
 
-    loadPkt(uri: string): { uri: string, data: IPkt };
+    loadPkt(uri: string): { uri: string, data: any[] };
     loadTemplate(uri: string): { uri: string, data: string };
     listFiles(uri: string): { uri: string, data: string[] };
 
@@ -119,6 +118,34 @@ export interface IScope {
 
     // style
     expandStyle(orject: any): void;
+
+    // logging
+    log(...args: any): void;
+}
+
+export interface IStatementSpec {
+    name: string;
+    mandotories?: string[];
+    optionals?: string[];
+    order: number;
+    handler: (runtime: IRuntime, scope: IScope, stmt: any, netx: any) => PkStatementResult;
+}
+
+export interface IStatementSpecs {
+    [id: string]: IStatementSpec;
+}
+
+export interface PkStatement {
+
+}
+
+export interface PkStatementResult {
+    exit?: boolean;
+}
+
+
+export interface IRuntime {
+    execute(scope: IScope, stmt: any, state: string): PkStatementResult;
 }
 
 export const PKMODULE_FILE_NAME = 'pkt.conf';

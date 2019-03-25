@@ -21,4 +21,7 @@ export class Trace implements ITrace {
     }
     pos = () => this.locs.slice(0, this._depth + 1).join(' > ');
     depth = () => this._depth;
+    log = (...args: any) => {
+        console.error(''.padEnd(this._depth * 2), ...args);
+    }
 }

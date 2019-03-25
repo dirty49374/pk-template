@@ -42,7 +42,7 @@ const selectors = {
     },
     compile: (src: string[] | string): ObjectPredicate => {
         if (typeof src === 'string') {
-            src = [ src ];
+            src = [src];
         }
         const predicates = src.map(selectors.compileOne);
         return (object: any) => predicates.some(pred => pred(object));

@@ -13,7 +13,8 @@ export default (pk: IPkCommandInfo) => ({
     builder: (yargs: any) => yargs
         .option('all', { describe: 'all apps ane envs', boolean: false })
         .option('force', { aliases: ['f'], describe: 'overwrite pkd file when content is identical (changes timestamp)' })
-        .option('yes', { aliases: ['y'], describe: 'overwrite without confirmation', boolean: true }),
+        .option('yes', { aliases: ['y'], describe: 'overwrite without confirmation', boolean: true })
+        .option('d', { describe: 'enable error debugging', boolean: false }),
     handler: async (argv: any): Promise<any> => {
         await tryCatch(async () => {
             if (!argv.app && !argv.env && !argv.all) {

@@ -12,7 +12,8 @@ export default (pk: IPkCommandInfo) => ({
     desc: 'diff a deployment changes',
     builder: (yargs: any) => yargs
         .option('all', { describe: 'all apps and envs', boolean: false })
-        .option('watch', { alias: 'w', describe: 'all apps and envs', boolean: false }),
+        .option('watch', { alias: 'w', describe: 'all apps and envs', boolean: false })
+        .option('debug', { alias: 'd', describe: 'enable error debugging', boolean: true }),
     handler: async (argv: any): Promise<any> => {
         await tryCatch(async () => {
             if (!argv.app && !argv.env && !argv.all) {
@@ -20,7 +21,7 @@ export default (pk: IPkCommandInfo) => ({
             }
             if (argv.watch) {
                 nodemon({
-                    exec: `pk dep diff ${argv.app || ''} ${argv.env || ''}`,
+                    exec: `pk dep diff ${argv.app || ''} ${argv.env || ''} ${argv.debug ? ' -d' : ''}`,
                     ext: 'pkt,yaml,yml',
                 });
             } else {
@@ -41,6 +42,6 @@ export default (pk: IPkCommandInfo) => ({
                 });
             }
 
-        }, !!argv.d);
+        }, !!argv.debug);
     },
 });
