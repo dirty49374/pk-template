@@ -48,7 +48,7 @@ export class Scope extends PathResolver implements IScope {
 
     child<T>({ uri, objects, values }: any, handler: (scope: IScope) => T): T {
         const scope = new Scope({
-            objects: objects ? [...objects] : [],
+            objects: objects ? [...objects] : [...this.objects],
             values: values || this.values,
             uri: uri || this.uri,
             parent: this,
