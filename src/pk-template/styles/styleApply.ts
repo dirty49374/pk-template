@@ -1,6 +1,7 @@
 import { IObject } from "../../common";
 import { pktError } from "../utils";
-import { IScope, IStyle, CustomYamlTag } from "../types";
+import { IScope, IStyle } from "../types";
+import { CustomYamlTag } from "../../pk-yaml/customTags";
 
 export class StyleApply {
     constructor(
@@ -14,7 +15,7 @@ export class StyleApply {
     applyStyle(scope: IScope, object: IObject, node: object, style: IStyle) {
         try {
             let success = true;
-            scope.eval(this.tag.code, this.tag.uri, {
+            scope.eval(this.tag, {
                 object,
                 style,
                 node,

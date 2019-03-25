@@ -1,7 +1,7 @@
 import fs from "fs";
 import url from 'url';
 import * as utils from './utils';
-import { IScope, IPkt, ILoader } from './types';
+import { IScope, ILoader } from './types';
 import { getUnderscore, getSyncRequest } from '../lazy';
 import { parseYaml, parseYamlAll, parseYamlAsPkt } from "../pk-yaml";
 
@@ -29,7 +29,6 @@ export class Loader implements ILoader {
 
     loadYaml(uri: string): { uri: string, data: any } {
         const rst = this.loadText(uri);
-        console.log(uri);
         try {
             return {
                 uri: rst.uri,
@@ -52,12 +51,13 @@ export class Loader implements ILoader {
         }
     }
 
-    loadPkt(uri: string): { uri: string, data: IPkt } {
+    loadPkt(uri: string): { uri: string, data: any[] } {
         const rst = this.loadText(uri);
         try {
+            const pkt = parseYamlAsPkt(rst.data, rst.uri);
             return {
                 uri: rst.uri,
-                data: parseYamlAsPkt(rst.data, rst.uri),
+                data: pkt,
             };
         } catch (e) {
             throw utils.pktError(this.scope, e, `failed to parse yaml ${uri}`);

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { IValues, IPktOptions } from '../pk-template';
-import { loadYamlFile } from '../pk-yaml';
+import { parseYamlAsPkt, loadYamlFile } from '../pk-yaml';
 import { bindYargsOption, buildCommandDescription } from '../pk-yargs/bindOption';
 
 
@@ -72,7 +72,7 @@ export class ArgsBuilder {
         let yargv = yargs.argv;
         if (yargv._.length === 1) {
             const file = yargv._[0];
-            const pkt = loadYamlFile(file);
+            const pkt = parseYamlAsPkt(file, file);
 
             yargs = bindYargsOption(baseOption(argv), pkt);
             const desc = buildCommandDescription(pkt);

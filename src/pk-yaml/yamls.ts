@@ -1,6 +1,5 @@
 import jsyaml from 'js-yaml';
-import { getLiveScript, getCoffeeScript } from '../lazy';
-import { CustomYamlTag, CustomYamlTagTag, CustomYamlCsTag, CustomYamlLsTag, CustomYamlJsTag, CustomYamlFileTag, CustomYamlTemplateTag } from '../pk-template/types';
+import { CustomYamlTag, CustomYamlTagTag, CustomYamlCsTag, CustomYamlLsTag, CustomYamlJsTag, CustomYamlFileTag, CustomYamlTemplateTag } from './customTags';
 
 
 interface ITagData {
@@ -26,40 +25,63 @@ function createCustomTag<T extends CustomYamlTag>(cls: new (data: string, src: s
     });
 }
 
-const compileCoffee = (data: string): string => {
-    try {
-        return getCoffeeScript().compile(data, { bare: true });
-    } catch (e) {
-        console.log('failed to compile coffee script');
-        throw e;
-    }
-}
-
-const compileLive = (data: string): string => {
-    try {
-        const bin = getLiveScript().compile(data, { bare: true, map: 'embedded' });
-        return bin.code;
-
-    } catch (e) {
-        console.log('failed to compile live script');
-        throw e;
-    }
-}
-
 export const pktYamlOption = (uri: string) => ({
     schema: jsyaml.Schema.create([
-        createCustomTag(
-            CustomYamlCsTag,
-            'cs',
-            (data: string) => ({ type: 'js', uri, data: compileCoffee(data), src: data })),
-        createCustomTag(
-            CustomYamlLsTag,
-            'ls',
-            (data: string) => ({ type: 'js', uri, data: compileLive(data), src: data })),
-        createCustomTag(
-            CustomYamlJsTag,
-            'js',
-            (data: string) => ({ type: 'js', uri, data, src: data })),
+        new jsyaml.Type('!js', {
+            kind: 'scalar',
+            resolve: (data: any) => typeof data === 'string' || typeof data === 'number' || typeof data === null,
+            construct: (data: any) => {
+                return new CustomYamlJsTag(data, uri);
+            },
+            instanceOf: CustomYamlJsTag,
+            represent: (tag: any) => tag.represent(),
+        }),
+        new jsyaml.Type('!cs', {
+            kind: 'scalar',
+            resolve: (data: any) => typeof data === 'string' || typeof data === 'number' || typeof data === null,
+            construct: (data: any) => {
+                return new CustomYamlCsTag(data, uri);
+            },
+            instanceOf: CustomYamlCsTag,
+            represent: (tag: any) => tag.represent(),
+        }),
+        new jsyaml.Type('!ls', {
+            kind: 'scalar',
+            resolve: (data: any) => typeof data === 'string' || typeof data === 'number' || typeof data === null,
+            construct: (data: any) => {
+                return new CustomYamlLsTag(data, uri);
+            },
+            instanceOf: CustomYamlLsTag,
+            represent: (tag: any) => tag.represent(),
+        }),
+        new jsyaml.Type('!file', {
+            kind: 'scalar',
+            resolve: (data: any) => typeof data === 'string' || typeof data === 'number' || typeof data === null,
+            construct: (data: any) => {
+                return new CustomYamlFileTag(data, uri);
+            },
+            instanceOf: CustomYamlLsTag,
+            represent: (tag: any) => tag.represent(),
+        }),
+        new jsyaml.Type('!template', {
+            kind: 'scalar',
+            resolve: (data: any) => typeof data === 'string' || typeof data === 'number' || typeof data === null,
+            construct: (data: any) => {
+                return new CustomYamlTemplateTag(data, uri);
+            },
+            instanceOf: CustomYamlLsTag,
+            represent: (tag: any) => tag.represent(),
+        }),
+        new jsyaml.Type('!tag', {
+            kind: 'scalar',
+            resolve: (data: any) => typeof data === 'string' || typeof data === 'number' || typeof data === null,
+            construct: (data: any) => {
+                return new CustomYamlLsTag(data, uri);
+            },
+            instanceOf: CustomYamlLsTag,
+            represent: (tag: any) => tag.represent(),
+        }),
+
         createCustomTag(
             CustomYamlFileTag,
             'file',

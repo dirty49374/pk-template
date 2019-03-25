@@ -23,7 +23,7 @@ const loadFile = (uri: string): string => {
 export const loadYamlFile = (file: string): any => jsyaml.load(loadFile(file), pktYamlOption('.'));
 export const parseYaml = (text: string, uri?: string): any => jsyaml.load(text, pktYamlOption(uri || '.'));
 export const parseYamlAll = (text: string, uri?: string): any[] => jsyaml.loadAll(text, undefined, pktYamlOption(uri || '.'));
-export const parseYamlAsPkt = (text: string, uri: string): any => jsyaml.load(text, pktYamlOption(uri));
+export const parseYamlAsPkt = (text: string, uri: string): any => jsyaml.loadAll(text, undefined, pktYamlOption(uri));
 
 export const dumpYaml = (o: any) => {
     return hackedDump(o, pktYamlOption('.'));

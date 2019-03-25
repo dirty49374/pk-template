@@ -1,8 +1,9 @@
-import { IScope, CustomYamlTag, CustomYamlTagTag, CustomYamlJsTag, CustomYamlCsTag, CustomYamlLsTag, CustomYamlFileTag, CustomYamlTemplateTag } from "./types";
+import { IScope } from "./types";
 import { getUnderscore, getLiveScript } from "../lazy";
 import { parseYamlAll } from "../pk-yaml";
 import { forEachTreeObjectKey } from "../common";
 import * as utils from './utils';
+import { CustomYamlTag } from "../pk-yaml/customTags";
 
 export class Evaluator {
 
@@ -19,38 +20,32 @@ export class Evaluator {
         });
     }
 
-    private evalJavaScript(script: string, uri: string): any {
-        return this.scope.eval(script, uri);
-    }
+    // evalCustomYamlTag(tag: CustomYamlTag): any {
+    //     return tag.evaluate(this.scope, {
 
-    private evalLiveScript(src: string, uri: string): any {
-        const data = getLiveScript().compile(src, { bare: true, map: 'embedded' });
-        return this.evalJavaScript(data.code, uri);
-    }
+    //     });
+    //     // if (tag instanceof CustomYamlJsTag ||
+    //     //     tag instanceof CustomYamlLsTag ||
+    //     //     tag instanceof CustomYamlCsTag) {
+    //     //     return this.evalJavaScript(tag.code, tag.uri);
+    //     // } else if (tag instanceof CustomYamlFileTag) {
+    //     //     return this.scope.loadText(tag.code).data;
+    //     // } else if (tag instanceof CustomYamlTemplateTag) {
+    //     //     return this.scope.evalTemplate(tag.code);
+    //     // } else if (tag instanceof CustomYamlTagTag) {
+    //     //     return tag.convert();
+    //     // }
+    // }
 
-    evalCustomYamlTag(tag: CustomYamlTag): any {
-        if (tag instanceof CustomYamlJsTag ||
-            tag instanceof CustomYamlLsTag ||
-            tag instanceof CustomYamlCsTag) {
-            return this.evalJavaScript(tag.code, tag.uri);
-        } else if (tag instanceof CustomYamlFileTag) {
-            return this.scope.loadText(tag.code).data;
-        } else if (tag instanceof CustomYamlTemplateTag) {
-            return this.scope.evalTemplate(tag.code);
-        } else if (tag instanceof CustomYamlTagTag) {
-            return tag.convert();
-        }
-    }
-
-    evalScript(script: CustomYamlTag | string): any {
-        try {
-            if (script instanceof CustomYamlTag)
-                return this.evalCustomYamlTag(script);
-            return this.evalLiveScript(script, this.scope.uri);
-        } catch (e) {
-            throw utils.pktError(this.scope, e, `failed to evalute`);
-        }
-    }
+    // // evalScript(script: CustomYamlTag | string): any {
+    // //     try {
+    // //         if (script instanceof CustomYamlTag)
+    // //             return this.scope.evalTag(script);
+    // //         // return this.evalLiveScript(script, this.scope.uri);
+    // //     } catch (e) {
+    // //         throw utils.pktError(this.scope, e, `failed to evalute`);
+    // //     }
+    // }
 
     evalTemplateAll(text: string): any[] {
         try {
@@ -86,7 +81,7 @@ export class Evaluator {
 
     evalAllCustomTags(node: any): any {
         if (node instanceof CustomYamlTag) {
-            return this.evalCustomYamlTag(node);
+            return this.scope.eval(node);
         } else if (Array.isArray(node)) {
             return node.map(item => this.evalAllCustomTags(item));
         } else if (typeof node === 'object') {

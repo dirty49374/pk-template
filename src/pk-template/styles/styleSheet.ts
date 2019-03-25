@@ -1,7 +1,8 @@
 import { IObject, forEachTreeObjectKey } from "../../common";
-import { IScope, IStyleSheet, IStyle, CustomYamlTag, IPkt } from "../types";
+import { IScope, IStyleSheet, IStyle, IPktHeader } from "../types";
 import { StyleApply } from "./styleApply";
 import { compileStyle } from "./styleCompile";
+import { CustomYamlTag } from "../../pk-yaml/customTags";
 
 export class StyleSheet implements IStyleSheet {
     private styleSheets: { [name: string]: StyleApply };
@@ -26,22 +27,22 @@ export class StyleSheet implements IStyleSheet {
     private import(scope: IScope, rpath: string) {
         const { uri, data } = scope.loadPkt(rpath);
         scope.child({ uri }, cscope => {
-            this.load(cscope, data);
+            this.load(cscope, data[0] as IPktHeader);
         });
     }
 
-    load(scope: IScope, pkt: IPkt) {
-        if (pkt.import) {
-            if (Array.isArray(pkt.import)) {
-                for (let path of pkt.import) {
+    load(scope: IScope, pkt: IPktHeader) {
+        if (pkt['/import']) {
+            if (Array.isArray(pkt['/import'])) {
+                for (let path of pkt['/import']) {
                     this.import(scope, path);
                 }
             } else {
-                this.import(scope, pkt.import);
+                this.import(scope, pkt['/import']);
             }
         }
-        if (pkt.style) {
-            this.loadStyles(pkt.style);
+        if (pkt['/style']) {
+            this.loadStyles(pkt['/style']);
         }
     }
 
@@ -99,7 +100,7 @@ export class StyleSheet implements IStyleSheet {
             ;
     }
 
-    static Build(scope: IScope, pkt: IPkt): StyleSheet {
+    static Build(scope: IScope, pkt: IPktHeader): StyleSheet {
         const styleSheet = new StyleSheet(scope.parent.styleSheet);
         styleSheet.load(scope, pkt);
 

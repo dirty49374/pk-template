@@ -1,6 +1,6 @@
 import * as vm from 'vm';
 import jslib from './jslib';
-import { IScope, IValues, IStyleSheet, IPkt, CustomYamlTag, ITrace } from './types';
+import { IScope, IValues, IStyleSheet, ITrace } from './types';
 import { IObject } from '../common';
 import { Evaluator } from './evaluator';
 import { Loader } from './loader';
@@ -9,6 +9,7 @@ import { PathResolver } from './pathResolver';
 import { PkProjectConf } from '../pk-conf/projectConf';
 import { pktError } from './utils';
 import { Trace } from './trace';
+import { CustomYamlTag } from '../pk-yaml/customTags';
 
 const clone = (obj: any): any => JSON.parse(JSON.stringify(obj));
 
@@ -20,7 +21,7 @@ export class Scope extends PathResolver implements IScope {
     value: any;
     parent: IScope;
     $buildLib: any;
-    trace?: ITrace;
+    trace: ITrace;
     conf?: PkProjectConf;
     styleSheet: IStyleSheet;
     private evaluator: Evaluator;
@@ -38,7 +39,7 @@ export class Scope extends PathResolver implements IScope {
         this.$buildLib = jslib;
         this.evaluator = new Evaluator(this);
         this.loader = new Loader(this);
-        this.trace = parent && parent.trace;
+        this.trace = parent && parent.trace || new Trace('');
     }
 
     add(object: any): void {
@@ -97,32 +98,19 @@ export class Scope extends PathResolver implements IScope {
         }
     }
 
-    eval(src: string, uri?: string, additionalValues?: any) {
+    eval(tag: CustomYamlTag, additionalValues?: any): any {
         const $ = additionalValues
             ? { ...this, ...this.$buildLib(this), ...additionalValues }
             : { ...this, ...this.$buildLib(this) };
         const sandbox = { $, console, Buffer, ...this.values };
-        try {
-            const context = vm.createContext(sandbox);
-            const script = new vm.Script(src);
-
-            // run the script
-            return script.runInContext(context, {
-                lineOffset: 0,
-                displayErrors: true,
-            });
-        } catch (e) {
-            e.source = src;
-            e.sandbox = sandbox;
-            throw e;
-        }
+        return tag.evaluate(this, sandbox);
     }
 
     loadText = (uri: string): { uri: string, data: string } => this.loader.loadText(uri);
     loadYaml = (uri: string): { uri: string, data: any } => this.loader.loadYaml(uri);
     loadYamlAll = (uri: string): { uri: string, data: any[] } => this.loader.loadYamlAll(uri);
 
-    loadPkt = (uri: string): { uri: string, data: IPkt } => this.loader.loadPkt(uri);
+    loadPkt = (uri: string): { uri: string, data: any[] } => this.loader.loadPkt(uri);
     loadTemplate = (uri: string): { uri: string, data: string } => this.loader.loadTemplate(uri);
     listFiles = (uri: string): { uri: string, data: string[] } => this.loader.listFiles(uri);
 
@@ -130,8 +118,8 @@ export class Scope extends PathResolver implements IScope {
     evalTemplate = (tpl: string): string => this.evaluator.evalTemplate(tpl);
     evalTemplateAll = (text: string): any[] => this.evaluator.evalTemplateAll(text);
 
-    evalCustomYamlTag = (code: CustomYamlTag): any => this.evaluator.evalCustomYamlTag(code);
-    evalScript = (script: CustomYamlTag | string): any => this.evaluator.evalScript(script);
+    // evalCustomYamlTag = (code: CustomYamlTag): any => this.evaluator.evalCustomYamlTag(code);
+    // evalScript = (script: CustomYamlTag | string): any => this.evaluator.evalScript(script);
 
     evalAllCustomTags = (node: any): any => this.evaluator.evalAllCustomTags(node);
     expandCaretPath = (object: any): void => this.evaluator.expandCaretPath(object);
@@ -139,6 +127,8 @@ export class Scope extends PathResolver implements IScope {
 
     // style
     expandStyle = (object: any): void => this.styleSheet.apply(this, object);
+
+    log = (...args: any) => this.trace.log(...args);
 
     static Create(values: IValues, uri: string, parent: IScope | null, objects: IObject[], styleSheet: IStyleSheet): IScope {
         const scope = new Scope({
