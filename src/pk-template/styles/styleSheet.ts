@@ -1,7 +1,8 @@
 import { IObject, forEachTreeObjectKey } from "../../common";
-import { IScope, IStyleSheet, IStyle, CustomYamlTag, IPkt } from "../types";
+import { IScope, IStyleSheet, IStyle, IPkt } from "../types";
 import { StyleApply } from "./styleApply";
 import { compileStyle } from "./styleCompile";
+import { CustomYamlTag } from "../../pk-yaml/customTags";
 
 export class StyleSheet implements IStyleSheet {
     private styleSheets: { [name: string]: StyleApply };
@@ -31,17 +32,17 @@ export class StyleSheet implements IStyleSheet {
     }
 
     load(scope: IScope, pkt: IPkt) {
-        if (pkt.import) {
-            if (Array.isArray(pkt.import)) {
-                for (let path of pkt.import) {
+        if (pkt['/import']) {
+            if (Array.isArray(pkt['/import'])) {
+                for (let path of pkt['/import']) {
                     this.import(scope, path);
                 }
             } else {
-                this.import(scope, pkt.import);
+                this.import(scope, pkt['/import']);
             }
         }
-        if (pkt.style) {
-            this.loadStyles(pkt.style);
+        if (pkt['/style']) {
+            this.loadStyles(pkt['/style']);
         }
     }
 

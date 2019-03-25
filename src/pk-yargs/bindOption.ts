@@ -53,19 +53,19 @@ export const buildOptionsFromSchema = (yargs: any, schema: any, properties: any)
 }
 
 export const bindYargsOption = (yargs: any, pkt: IPkt) => {
-    return pkt.schema
-        ? buildOptionsFromSchema(yargs, pkt.schema, pkt.properties || pkt.input || {})
-        : buildOptionsFromProperties(yargs, pkt.properties || pkt.input);
+    return pkt['/schema']
+        ? buildOptionsFromSchema(yargs, pkt['/schema'], pkt['/properties'] || pkt['/input'] || {})
+        : buildOptionsFromProperties(yargs, pkt['/properties'] || pkt['/input']);
 }
 
 export const buildCommandDescription = (pkt: IPkt) => {
     let desc = '';
-    if (pkt.schema) {
-        if (pkt.schema.title) {
-            desc += `${pkt.schema.title}`;
+    if (pkt['/schema']) {
+        if (pkt['/schema'].title) {
+            desc += `${pkt['/schema'].title}`;
         }
-        if (pkt.schema.description) {
-            desc += `\n\n${pkt.schema.description}`;
+        if (pkt['/schema'].description) {
+            desc += `\n\n${pkt['/schema'].description}`;
         }
     }
     return desc;

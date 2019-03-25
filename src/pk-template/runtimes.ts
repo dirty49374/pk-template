@@ -28,43 +28,43 @@ export class Runtime {
         this.trace = new Trace(uri);
     }
     break(stmt: IStatement) {
-        if (!('break' in stmt)) return false;
+        if (!('/break' in stmt)) return false;
         this.trace.step('break');
         return true;
     }
     scriptStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt.script) return false;
+        if (!stmt['/script']) return false;
         this.trace.step('script');
-        scope.evalScript(stmt.script);
+        scope.eval(stmt['/script']);
         return true;
     }
     eachStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt.each) return false;
+        if (!stmt['/each']) return false;
         this.trace.step('each');
 
         this.trace.into(() => {
             scope.objects.forEach((o, i) => {
                 this.trace.step(i);
                 scope.object = o;
-                scope.evalScript(stmt.each);
+                scope.eval(stmt['/each']);
             });
         });
         delete scope.object;
         return true;
     }
     varStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt.var) return false;
+        if (!stmt['/var']) return false;
 
         this.trace.step('var');
-        scope.defineValues(stmt.var || {});
+        scope.defineValues(stmt['/var'] || {});
 
         return true;
     }
     assignStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt.assign) return false;
+        if (!stmt['/assign']) return false;
         this.trace.step('assign');
 
-        const values = scope.evalObject(stmt.assign || {});
+        const values = scope.evalObject(stmt['/assign'] || {});
         for (const key of Object.keys(values)) {
             if (key in scope.values) {
                 scope.values[key] = values[key];
@@ -76,18 +76,18 @@ export class Runtime {
         return true;
     }
     addStatement(scope: IScope, stmt: IStatement) {
-        if (!('add' in stmt)) return false;
+        if (!('/add' in stmt)) return false;
 
         this.trace.step('add');
-        const object = scope.evalObject(stmt.add);
+        const object = scope.evalObject(stmt['/add']);
         scope.add(object);
         return true;
     }
     includeStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt.include) return false;
+        if (!stmt['/include']) return false;
         this.trace.step('include');
 
-        const rpath = stmt.include;
+        const rpath = stmt['/include'];
         if (rpath.toLowerCase().endsWith(".pkt")) {
             const { uri, data } = scope.loadPkt(rpath);
             this.execPkt(data, scope, uri);
@@ -99,15 +99,15 @@ export class Runtime {
         return true;
     }
     includeWithStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt.includeWith) return false;
+        if (!stmt['/includeWith']) return false;
         this.trace.step('includeWith');
 
-        const idx = stmt.includeWith.indexOf(' ')
+        const idx = stmt['/includeWith'].indexOf(' ')
         const rpath = idx >= 0
-            ? stmt.includeWith.substring(0, idx)
-            : stmt.includeWith;
+            ? stmt['/includeWith'].substring(0, idx)
+            : stmt['/includeWith'];
         const kvps = idx >= 0
-            ? stmt.includeWith.substring(idx)
+            ? stmt['/includeWith'].substring(idx)
             : "";
         const values = utils.parseKvps(kvps);
         scope.child({}, (cscope: IScope) => {
@@ -126,29 +126,29 @@ export class Runtime {
         return true;
     }
     jsonpathStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt.jsonpath) return false;
+        if (!stmt['/jsonpath']) return false;
         this.trace.step('jsonpath');
 
         const jsonpath = getJsonPath();
         this.trace.into(() => {
             scope.objects.forEach((o, i) => {
                 this.trace.step(i);
-                const nodes = jsonpath.nodes(o, stmt.jsonpath.query);
+                const nodes = jsonpath.nodes(o, stmt['/jsonpath'].query);
                 nodes.forEach((node: any) => {
                     scope.child({}, cscope => {
                         cscope.object = o;
                         cscope.value = node.value;
-                        if (stmt.jsonpath.apply) {
-                            const value = cscope.evalObject(stmt.jsonpath.apply);
+                        if (stmt['/jsonpath'].apply) {
+                            const value = cscope.evalObject(stmt['/jsonpath'].apply);
                             jsonpath.apply(o, jsonpath.stringify(node.path), () => value);
                         }
-                        if (stmt.jsonpath.merge) {
-                            const value = cscope.evalObject(stmt.jsonpath.merge);
+                        if (stmt['/jsonpath'].merge) {
+                            const value = cscope.evalObject(stmt['/jsonpath'].merge);
                             const merged = { ...node.value, ...value };
                             jsonpath.apply(o, jsonpath.stringify(node.path), () => merged);
                         }
-                        if (stmt.jsonpath.exec) {
-                            cscope.evalScript(stmt.jsonpath.exec);
+                        if (stmt['/jsonpath'].exec) {
+                            cscope.eval(stmt['/jsonpath'].exec);
                         }
                     });
                 })
@@ -156,24 +156,24 @@ export class Runtime {
         });
     }
     applyStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt.apply) return false;
+        if (!stmt['/apply']) return false;
         this.trace.step('apply');
 
-        const rpath = stmt.apply;
+        const rpath = stmt['/apply'];
         Runtime.Run(scope, rpath);
 
         return true;
     }
     applyWithStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt.applyWith) return false;
+        if (!stmt['/applyWith']) return false;
         this.trace.step('applyWith');
 
-        const idx = stmt.applyWith.indexOf(' ')
+        const idx = stmt['/applyWith'].indexOf(' ')
         const rpath = idx >= 0
-            ? stmt.applyWith.substring(0, idx)
-            : stmt.applyWith;
+            ? stmt['/applyWith'].substring(0, idx)
+            : stmt['/applyWith'];
         const kvps = idx >= 0
-            ? stmt.applyWith.substring(idx)
+            ? stmt['/applyWith'].substring(idx)
             : "";
         const values = utils.parseKvps(kvps);
         scope.child({ objects: scope.objects }, cscope => {
@@ -191,11 +191,11 @@ export class Runtime {
         return true;
     }
     patchStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt.patch) return false;
+        if (!stmt['/patch']) return false;
         this.trace.step('patch');
 
         const jsonpatch = getJsonPatch();
-        const patch = Array.isArray(stmt.patch) ? stmt.patch : [stmt.patch];
+        const patch = Array.isArray(stmt['/patch']) ? stmt['/patch'] : [stmt['/patch']];
         this.trace.into(() => {
             scope.objects.forEach((o, i) => {
                 this.trace.step(i);
@@ -209,29 +209,36 @@ export class Runtime {
         return true;
     }
     routineStatement(parentScope: IScope, stmt: IStatement) {
-        if (!stmt.routine) return false;
+        if (!stmt['/routine']) return false;
         this.trace.step('routine');
 
         parentScope.child({}, scope => {
-            this.execRoutine(scope, stmt.routine);
+            this.execRoutine(scope, stmt['/routine']);
         });
         return true;
     }
     routineWithStatement(parentScope: IScope, stmt: IStatement) {
-        if (!stmt.routineWith) return false;
+        if (!stmt['/routineWith']) return false;
         this.trace.step('routineWith');
 
         parentScope.child({ objects: parentScope.objects }, scope => {
-            this.execRoutine(scope, stmt.routineWith);
+            this.execRoutine(scope, stmt['/routineWith']);
         });
         return true;
     }
     templateStatement(scope: IScope, stmt: IStatement) {
-        if (!stmt.template) return false;
+        if (!stmt['/template']) return false;
         this.trace.step('template');
 
-        const objects = scope.evalTemplateAll(stmt.template);
+        const objects = scope.evalTemplateAll(stmt['/template']);
         objects.forEach(object => scope.add(object));
+        return true;
+    }
+
+    plainObjectStatement(scope: IScope, stmt: IStatement) {
+        this.trace.step('object');
+        const object = scope.evalObject(stmt);
+        scope.add(object);
         return true;
     }
 
@@ -257,30 +264,38 @@ export class Runtime {
     execRoutine(scope: IScope, routine: IStatement) {
         if (!routine)
             return;
-
         this.trace.into(() => {
             for (const i in routine) {
                 this.trace.step(i);
-
                 const stmt = routine[i];
-                if (stmt.if && !scope.evalScript(stmt.if)) {
+                if (!stmt) {
                     continue;
                 }
-                if (stmt.unless && scope.evalScript(stmt.unless)) {
-                    continue;
-                }
-                if (stmt.select) {
-                    const predicate = selectors.compile(stmt.select);
-                    const objects = scope.objects.filter(predicate);
-                    scope.child({ objects }, cscope => {
-                        this.execStatement(cscope, stmt)
-                    });
+                const hasStatement = Object.keys(stmt).find(k => k.length > 0 && k[0] == '/');
+                if (!hasStatement) {
+                    this.plainObjectStatement(scope, stmt);
                 } else {
-                    this.execStatement(scope, stmt)
-                }
+                    if (stmt['/if']) {
+                        const rst = !scope.eval(stmt['/if']);
+                        console.log(rst);
+                        if (rst) continue;
+                    }
+                    if (stmt['/unless'] && scope.eval(stmt['/unless'])) {
+                        continue;
+                    }
+                    if (stmt['/select']) {
+                        const predicate = selectors.compile(stmt['/select']);
+                        const objects = scope.objects.filter(predicate);
+                        scope.child({ objects }, cscope => {
+                            this.execStatement(cscope, stmt)
+                        });
+                    } else {
+                        this.execStatement(scope, stmt)
+                    }
 
-                if (this.break(stmt))
-                    return;
+                    if (this.break(stmt))
+                        return;
+                }
             }
         });
     }
@@ -305,12 +320,12 @@ export class Runtime {
 
                 // 2. build properties
                 this.trace.step('properties');
-                scope.values = buildProperties(file.properties || file.input, parentScope.values);
+                scope.values = buildProperties(file['/properties'] || file['/input'], parentScope.values);
 
                 // 3. validate schema
-                if (file.schema) {
+                if (file['/schema']) {
                     this.trace.step('schema');
-                    const schema = new Schema(file.schema);
+                    const schema = new Schema(file['/schema']);
                     const errors = schema.validate(scope.values);
                     if (errors) {
                         throw utils.pktError(scope, new Error(errors), 'property validation failed');
@@ -321,19 +336,19 @@ export class Runtime {
                 this.trace.step('var');
                 scope.values = {
                     ...scope.values,
-                    ...scope.evalObject(file.var || {}),
+                    ...scope.evalObject(file['/var'] || {}),
                 };
 
                 // 4. build values
                 this.trace.step('assign');
                 scope.values = {
                     ...scope.values,
-                    ...scope.evalObject(file.assign || {}),
+                    ...scope.evalObject(file['/assign'] || {}),
                 };
 
                 // 5. run routine
                 this.trace.step('routine');
-                this.execRoutine(scope, file.routine);
+                this.execRoutine(scope, file['/routine']);
             });
         });
         return parentScope.objects;

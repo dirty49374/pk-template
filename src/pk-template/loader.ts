@@ -29,7 +29,6 @@ export class Loader implements ILoader {
 
     loadYaml(uri: string): { uri: string, data: any } {
         const rst = this.loadText(uri);
-        console.log(uri);
         try {
             return {
                 uri: rst.uri,
@@ -55,9 +54,14 @@ export class Loader implements ILoader {
     loadPkt(uri: string): { uri: string, data: IPkt } {
         const rst = this.loadText(uri);
         try {
+            const objs = parseYamlAsPkt(rst.data, rst.uri);
+            var pkt = objs[0];
+            const routine = pkt['/routine'] || (pkt['/routine'] = []);
+            routine.push(...objs.slice(1));
+
             return {
                 uri: rst.uri,
-                data: parseYamlAsPkt(rst.data, rst.uri),
+                data: pkt,
             };
         } catch (e) {
             throw utils.pktError(this.scope, e, `failed to parse yaml ${uri}`);

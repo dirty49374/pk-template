@@ -1,17 +1,18 @@
 import { IObject } from "../common";
 import { IPktArgs } from "../pkt/args";
 import { IPkEnv } from "../pk-conf";
+import { CustomYamlTag } from "../pk-yaml/customTags";
 
 export type IConfig = any;
 export interface IPkt {
-    properties: any;
-    input: any;         // depricated, use properties instead
-    schema: any;
-    import?: string[] | string;
-    style: object[];
-    var: any;
-    assign: any;
-    routine: any;
+    ['/properties']: any;
+    ['/input']: any;         // depricated, use properties instead
+    ['/schema']: any;
+    ['/import']?: string[] | string;
+    ['/style']: object[];
+    ['/var']: any;
+    ['/assign']: any;
+    ['/routine']: any;
 }
 
 export type IStatement = any;
@@ -40,44 +41,6 @@ export interface IStyle extends Array<{ k: string, v: string, kv: string }> {
     name: string;
 }
 
-export class CustomYamlTag {
-    constructor(public type: string, public code: string, public src: string, public uri: string) { }
-    represent = () => this.src;
-    isScript = () => false;
-
-}
-export class CustomYamlJsTag extends CustomYamlTag {
-    constructor(code: string, src: string, uri: string) { super('js', code, src, uri); }
-    isScript = () => true;
-}
-export class CustomYamlCsTag extends CustomYamlTag {
-    constructor(code: string, src: string, uri: string) { super('cs', code, src, uri); }
-    isScript = () => true;
-}
-export class CustomYamlLsTag extends CustomYamlTag {
-    constructor(code: string, src: string, uri: string) { super('ls', code, src, uri); }
-    isScript = () => true;
-}
-export class CustomYamlTemplateTag extends CustomYamlTag {
-    constructor(code: string, src: string, uri: string) { super('template', code, src, uri); }
-}
-export class CustomYamlFileTag extends CustomYamlTag {
-    constructor(code: string, src: string, uri: string) { super('file', code, src, uri); }
-}
-export class CustomYamlTagTag extends CustomYamlTag {
-    constructor(code: string, src: string, uri: string) { super('tag', code, src, uri); }
-    convert() {
-        const [tag, src] = this.src.split(' ', 2);
-        switch (tag) {
-            case '!js': return new CustomYamlJsTag(src, src, this.uri);
-            case '!ls': return new CustomYamlLsTag(src, src, this.uri);
-            case '!cs': return new CustomYamlCsTag(src, src, this.uri);
-            case '!template': return new CustomYamlTemplateTag(src, src, this.uri);
-            case '!file': return new CustomYamlFileTag(src, src, this.uri);
-        }
-    }
-}
-
 
 export interface IStyleSheet {
     applyStyle(scope: IScope, object: IObject, parent: object, styles: IStyle): boolean;
@@ -99,8 +62,8 @@ export interface IEvaluator {
     evalTemplate(tpl: string): string;
     evalTemplateAll(text: string): any[];
 
-    evalCustomYamlTag(code: CustomYamlTag): any;
-    evalScript(script: CustomYamlTag | string): any;
+    // evalCustomYamlTag(code: CustomYamlTag): any;
+    // evalScript(script: CustomYamlTag | string): any;
 
     evalAllCustomTags(node: any): any;
     expandCaretPath(object: any): void;
@@ -129,7 +92,8 @@ export interface IScope {
     resolve(relpath: string): string;
     add(object: any): void;
     child({ uri, objects }: any, handler: IScopeHandler): any;
-    eval(src: string, uri?: string, additionalValues?: any): any;
+    eval(tag: CustomYamlTag, additionalValues?: any): any;
+
     defineValues(values: IValues): void;
     assignValues(values: IValues): void;
 
@@ -146,8 +110,8 @@ export interface IScope {
     evalTemplate(tpl: string): string;
     evalTemplateAll(text: string): any[];
 
-    evalCustomYamlTag(code: CustomYamlTag): any;
-    evalScript(script: CustomYamlTag | string): any;
+    // evalCustomYamlTag(code: CustomYamlTag): any;
+    // evalScript(script: CustomYamlTag | string): any;
 
     evalAllCustomTags(node: any): any;
     expandCaretPath(object: any): void;
