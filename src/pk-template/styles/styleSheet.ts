@@ -1,8 +1,9 @@
 import { IObject, forEachTreeObjectKey } from "../../common";
-import { IScope, IStyleSheet, IStyle, IPktHeader } from "../types";
+import { IScope, IStyleSheet, IStyle, IPktHeader, ILanguageVmBase, ILanguageVm } from "../types";
 import { StyleApply } from "./styleApply";
 import { compileStyle } from "./styleCompile";
 import { CustomYamlTag } from "../../pk-yaml/customTags";
+import { PktRuntime } from "..";
 
 export class StyleSheet implements IStyleSheet {
     private styleSheets: { [name: string]: StyleApply };
@@ -46,18 +47,18 @@ export class StyleSheet implements IStyleSheet {
         }
     }
 
-    applyStyle(scope: IScope, object: IObject, node: object, style: IStyle): boolean {
+    applyStyle(vm: ILanguageVm<PktRuntime>, scope: IScope, object: IObject, node: object, style: IStyle): boolean {
         const styleApply = this.styleSheets[style.type];
         return styleApply
-            ? styleApply.applyStyle(scope, object, node, style)
+            ? styleApply.applyStyle(vm, scope, object, node, style)
             : (
                 this.parent
-                    ? this.parent.applyStyle(scope, object, node, style)
+                    ? this.parent.applyStyle(vm, scope, object, node, style)
                     : false
             );
     }
 
-    applyTree(scope: IScope, object: IObject) {
+    applyTree(vm: ILanguageVm<PktRuntime>, scope: IScope, object: IObject) {
         let updated = false;
 
         let left: any = null;
@@ -70,7 +71,7 @@ export class StyleSheet implements IStyleSheet {
 
                 const leftOvers: IStyle[] = [];
                 for (const style of styles) {
-                    const applied = this.applyStyle(scope, object, node, style);
+                    const applied = this.applyStyle(vm, scope, object, node, style);
                     if (applied) {
                         updated = true;
                     } else {
@@ -94,9 +95,9 @@ export class StyleSheet implements IStyleSheet {
         return left != null;
     }
 
-    apply(scope: IScope, object: any) {
-        compileStyle(scope, object);
-        while (this.applyTree(scope, object))
+    apply(vm: ILanguageVm<PktRuntime>, scope: IScope, object: any) {
+        compileStyle(vm, scope, object);
+        while (this.applyTree(vm, scope, object))
             ;
     }
 

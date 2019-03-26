@@ -1,31 +1,29 @@
-import * as vm from 'vm';
 import jslib from './jslib';
 import { IScope, IValues, IStyleSheet, ITrace, IPkt } from './types';
 import { IObject } from '../common';
-import { Evaluator } from './evaluator';
-import { Loader } from './loader';
 import { StyleSheet } from './styles/styleSheet';
 import { PathResolver } from './pathResolver';
 import { PkProjectConf } from '../pk-conf/projectConf';
 import { pktError } from './utils';
 import { Trace } from './trace';
-import { CustomYamlTag } from '../pk-yaml/customTags';
+import { isHttp } from '../pk-path/isHttp';
+import { getSyncRequest, getUnderscore } from '../lazy';
+import { readFileSync, readdirSync } from 'fs';
+import { parseYamlAll, parseYaml, parseYamlAsPkt } from '../pk-yaml';
 
 const clone = (obj: any): any => JSON.parse(JSON.stringify(obj));
 
 export class Scope extends PathResolver implements IScope {
     objects: IObject[];
-    object: IObject | null = null;
     values: IValues;
     pvalues: IValues;
+    object: IObject | null = null;
     value: any;
     parent: IScope;
     $buildLib: any;
     trace: ITrace;
     conf?: PkProjectConf;
     styleSheet: IStyleSheet;
-    private evaluator: Evaluator;
-    private loader: Loader;
 
     constructor({ objects, values, uri, parent, styleSheet }: any) {
         super(uri);
@@ -37,8 +35,6 @@ export class Scope extends PathResolver implements IScope {
         this.parent = parent;
         this.styleSheet = styleSheet;
         this.$buildLib = jslib;
-        this.evaluator = new Evaluator(this);
-        this.loader = new Loader(this);
         this.trace = parent && parent.trace || new Trace('');
     }
 
@@ -52,7 +48,7 @@ export class Scope extends PathResolver implements IScope {
 
     child<T>({ uri, objects, values }: any, handler: (scope: IScope) => T): T {
         const scope = new Scope({
-            objects: objects ? [...objects] : [],
+            objects: objects ? [...objects] : [...this.objects],
             values: values || this.values,
             uri: uri || this.uri,
             parent: this,
@@ -74,64 +70,115 @@ export class Scope extends PathResolver implements IScope {
     }
 
     defineValues(values: IValues) {
-        const evals = this.evalObject(values || {});
-        for (const key of Object.keys(evals)) {
+        for (const key of Object.keys(values)) {
             if (!(key in this.pvalues)) {
                 this.pvalues[key] = this.values[key];
             }
         }
         this.values = {
             ...this.values,
-            ...evals,
+            ...values,
         };
 
     }
 
     assignValues(values: IValues) {
-        const evals = this.evalObject(values || {});
-        for (const key of Object.keys(evals)) {
+        for (const key of Object.keys(values)) {
             if (key in this.values) {
                 this.values[key] = values[key];
             } else {
-                throw pktError(this, new Error(`value ${key} is not defined`), '');
+                throw this.error(`value ${key} is not defined`);
             }
         }
     }
 
-    eval(tag: CustomYamlTag, additionalValues?: any): any {
-        const $ = additionalValues
-            ? { ...this, ...this.$buildLib(this), ...additionalValues }
-            : { ...this, ...this.$buildLib(this) };
-        const sandbox = { $, console, Buffer, ...this.values };
-        return tag.evaluate(this, sandbox);
+    // loader
+    loadText(uri: string): { uri: string, data: string } {
+        uri = this.resolve(uri);
+        try {
+            return {
+                uri,
+                data: isHttp(uri)
+                    ? getSyncRequest()('GET', uri).getBody('utf8')
+                    : readFileSync(uri, 'utf8')
+            };
+        } catch (e) {
+            throw this.error(`failed to load ${uri}`, e);
+        }
     }
 
-    loadText = (uri: string): { uri: string, data: string } => this.loader.loadText(uri);
-    loadYaml = (uri: string): { uri: string, data: any } => this.loader.loadYaml(uri);
-    loadYamlAll = (uri: string): { uri: string, data: any[] } => this.loader.loadYamlAll(uri);
+    loadYaml(uri: string): { uri: string, data: any } {
+        const rst = this.loadText(uri);
+        try {
+            return {
+                uri: rst.uri,
+                data: parseYaml(rst.data),
+            };
+        } catch (e) {
+            throw this.error(`failed to parse yaml ${uri}`, e);
+        }
+    }
 
-    loadPkt = (uri: string): { uri: string, data: IPkt } => this.loader.loadPkt(uri);
-    loadTemplate = (uri: string): { uri: string, data: string } => this.loader.loadTemplate(uri);
-    listFiles = (uri: string): { uri: string, data: string[] } => this.loader.listFiles(uri);
+    loadYamlAll(uri: string): { uri: string, data: any[] } {
+        const rst = this.loadText(uri);
+        try {
+            return {
+                uri: rst.uri,
+                data: parseYamlAll(rst.data),
+            };
+        } catch (e) {
+            throw this.error(`failed to parse yaml ${uri}`, e);
+        }
+    }
 
-    // evaluater
-    evalTemplate = (tpl: string): string => this.evaluator.evalTemplate(tpl);
-    evalTemplateAll = (text: string): any[] => this.evaluator.evalTemplateAll(text);
+    loadPkt(uri: string): { uri: string, data: IPkt } {
+        const rst = this.loadText(uri);
+        try {
+            const yamls = parseYamlAsPkt(rst.data, rst.uri);
+            if (yamls.length == 0) {
+                return { uri: rst.uri, data: { header: {}, statements: [] } }
+            }
+            if (yamls[0]['/properties'] || yamls[0]['/schema']) {
+                const header = yamls[0];
+                return { uri: rst.uri, data: { header, statements: yamls.slice(1) } }
+            }
+            return {
+                uri: rst.uri,
+                data: { header: {}, statements: yamls },
+            };
+        } catch (e) {
+            throw this.error(`failed to parse yaml ${uri}`, e);
+        }
+    }
 
-    // evalCustomYamlTag = (code: CustomYamlTag): any => this.evaluator.evalCustomYamlTag(code);
-    // evalScript = (script: CustomYamlTag | string): any => this.evaluator.evalScript(script);
+    loadTemplate(uri: string): { uri: string, data: string } {
+        const rst = this.loadText(uri);
+        try {
+            return {
+                uri: rst.uri,
+                data: getUnderscore().template(rst.data),
+            };
+        } catch (e) {
+            throw this.error(`failed to parse template ${uri}`, e);
+        }
+    }
 
-    evalAllCustomTags = (node: any): any => this.evaluator.evalAllCustomTags(node);
-    expandCaretPath = (object: any): void => this.evaluator.expandCaretPath(object);
-    evalObject = (object: any): any => this.evaluator.evalObject(object);
+    listFiles(uri: string): { uri: string, data: string[] } {
+        uri = this.resolve(uri);
+        if (isHttp(uri)) {
+            throw new Error(`cannot get directory listing from ${uri}`);
+        }
 
-    // style
-    expandStyle = (object: any): void => this.styleSheet.apply(this, object);
+        return {
+            uri,
+            data: readdirSync(uri),
+        };
+    }
 
     log = (...args: any) => this.trace.log(...args);
 
-    error(msg: string): Error {
-        const err = pktError(this, new Error(msg), msg);
+    error(msg: string, error?: Error): Error {
+        const err = pktError(this, error || new Error(msg), msg);
         return err;
     }
 

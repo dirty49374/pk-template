@@ -1,9 +1,10 @@
 import { getUnderscore } from "../../lazy";
 import { forEachTreeObject } from "../../common";
 import { parseParametericStyle as parseParametericStyles, parseEmptyStyles } from "./styleParser";
-import { IStyle, IScope } from "../types";
+import { IStyle, IScope, ILanguageVm } from "../types";
+import { PktRuntime } from "../languageSpec";
 
-export const compileStyle = (scope: IScope, object: any) => {
+export const compileStyle = (vm: ILanguageVm<PktRuntime>, scope: IScope, object: any) => {
     const _ = getUnderscore();
 
     forEachTreeObject(object, (node: any) => {
@@ -28,10 +29,10 @@ export const compileStyle = (scope: IScope, object: any) => {
                     const styleType = key.substr(0, key.length - 1);
                     if (Array.isArray(value)) {
                         for (const item of value) {
-                            styles.push(...parseParametericStyles(styleType, scope.evalTemplate(item)));
+                            styles.push(...parseParametericStyles(styleType, vm.runtime.evalTemplate(vm, scope, item)));
                         }
                     } else {
-                        styles.push(...parseParametericStyles(styleType, scope.evalTemplate(value)));
+                        styles.push(...parseParametericStyles(styleType, vm.runtime.evalTemplate(vm, scope, value)));
                     }
                 }
                 delete node[key];
