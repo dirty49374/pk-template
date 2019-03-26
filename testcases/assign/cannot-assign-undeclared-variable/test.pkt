@@ -1,0 +1,5 @@
+/properties:
+  p1: 1
+---
+/assign:
+  p2: 2

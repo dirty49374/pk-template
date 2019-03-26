@@ -1,0 +1,10 @@
+input:
+  p1: 10
+expected:
+  basic:
+    - p1: 10
+      p2: 2
+    - p1: -1
+      p2: 2
+    - p1: -1
+      p2: -2

@@ -1,0 +1,5 @@
+p1: !js p1
+---
+p2: !js p2
+---
+/include: nested-sub.pkt

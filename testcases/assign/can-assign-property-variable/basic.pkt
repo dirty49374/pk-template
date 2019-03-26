@@ -1,0 +1,18 @@
+/properties:
+  p1: 1
+  p2: 2
+---
+p1: !js p1
+p2: !js p2
+---
+/assign:
+  p1: -1
+---
+p1: !js p1
+p2: !js p2
+---
+/assign:
+  p2: -2
+---
+p1: !js p1
+p2: !js p2

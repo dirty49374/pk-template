@@ -10,7 +10,8 @@
         "deploy": "npm run distclean && tsc && npm publish",
         "webpack": "webpack --config webpack.config.js",
         "distclean": "rimraf dist/*",
-        "test": "true",
+        "test": "mocha dist/test",
+        "watchtest": "nodemon -x 'mocha dist/test' -e js,pkt,yaml",
         "release": "release-it"
     },
     "bin": {
@@ -60,6 +61,7 @@
         "@types/js-yaml": "^3.12.0",
         "@types/json-patch": "0.0.30",
         "@types/jsonpath": "^0.2.0",
+        "@types/mocha": "^5.2.6",
         "@types/node": "^11.9.4",
         "@types/readline-sync": "^1.4.3",
         "@types/underscore": "^1.8.9",

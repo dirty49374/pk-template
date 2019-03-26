@@ -1,0 +1,35 @@
+/properties:
+  p1: 1
+---
+/values:
+  p2: 2
+---
+p1: !js p1
+p2: !js p2
+pos: L0
+---
+/routine:
+  - /values:
+      p2: 3
+  - p1: !js p1
+    p2: !js p2
+    pos: L1
+  - /routine:
+      - p1: !js p1
+        p2: !js p2
+        pos: L2
+      - /values:
+          p2: 4
+      - p1: !js p1
+        p2: !js p2
+        pos: L2
+      - p1: !js p1
+        p2: !js p2
+        pos: L2
+  - p1: !js p1
+    p2: !js p2
+    pos: L1
+---
+p1: !js p1
+p2: !js p2
+pos: L0
