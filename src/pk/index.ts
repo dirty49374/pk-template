@@ -8,6 +8,8 @@ import jsonpatch from 'json-patch';
 import { loadModuleCommands, loadModuleGenerators } from "./module";
 import { PkConf } from "../pk-conf/conf";
 import { homedir } from "os";
+import { compilePkt } from "../pk-template/languageSpec";
+import { IPkCommandInfo } from "./types";
 
 async function main(argv: string[]) {
     const conf = PkConf.load();
@@ -16,7 +18,9 @@ async function main(argv: string[]) {
     const yargs = require('yargs')(argv)
         .scriptName("pk")
 
-    const pk = { ...libs, ...lazy, ui: cmdui, projectRoot, projectConf, generate, yaml, jsonpatch };
+    const pk: IPkCommandInfo = {
+        ...libs, ...lazy, ui: cmdui, projectRoot, projectConf, generate, yaml, jsonpatch, compilePkt
+    };
     if (projectConf && projectRoot) {
         yargs
             .command(require('./commands/app').default(pk))

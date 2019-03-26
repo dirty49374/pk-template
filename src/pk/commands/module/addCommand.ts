@@ -51,8 +51,10 @@ export default (pk: IPkCommandInfo) => ({
             } else {
 
                 await atProjectDir(async () => {
+                    //@ts-ignore
                     pk.projectConf.addModule(mod);
                     await cloneModule(mod, false);
+                    //@ts-ignore
                     PkProjectConf.save(pk.projectConf, '.');
                 });
             }

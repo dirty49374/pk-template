@@ -3,8 +3,10 @@ import { join } from 'path';
 import { existsSync, readdirSync, readFileSync } from 'fs';
 import { writeObject } from '../pk-writeutil';
 import { bindYargsOption, buildCommandDescription } from '../pk-yargs/bindOption';
+import { IPkt } from '../pk-template/types';
+import { IPkCommandInfo } from './types';
 
-export function loadModuleCommands(yargs: any, root: string, name: string, pk: any) {
+export function loadModuleCommands(yargs: any, root: string, name: string, pk: IPkCommandInfo) {
     const mcd = join(root, MODULE_DIR, name, 'commands');
     if (existsSync(mcd)) {
         const commands = readdirSync(mcd)
@@ -15,15 +17,15 @@ export function loadModuleCommands(yargs: any, root: string, name: string, pk: a
     }
 }
 
-export function loadModuleGenerators(yargs: any, root: string, name: string, pk: any) {
+export function loadModuleGenerators(yargs: any, root: string, name: string, pk: IPkCommandInfo) {
 
     const buildCommand = (pk: any, dir: string, file: string) => {
         const name = file.substr(0, file.length - 4);
-        const pkt = pk.yaml.parseYamlAsPkt(readFileSync(join(dir, file), 'utf8'));
+        const pkt = pk.compilePkt(readFileSync(join(dir, file), 'utf8'), file);
         return {
             command: `gen-${name}`,
-            desc: buildCommandDescription(pkt),
-            builder: (yargs: any) => bindYargsOption(yargs, pkt)
+            desc: buildCommandDescription(pkt.header),
+            builder: (yargs: any) => bindYargsOption(yargs, pkt.header)
                 .options('dry', { description: 'dry run this command' }),
             handler: async (argv: any) => {
                 await pk.tryCatch(async () => {
@@ -35,15 +37,14 @@ export function loadModuleGenerators(yargs: any, root: string, name: string, pk:
                         console.log(pk.yaml.dumpYamlAll(result));
                     } else {
                         const patches = result.map((o: any) => ({
-                            type: 'yaml',
+                            type: 'yamlAll',
                             file: 'app.pkt',
                             func: (obj: any) => {
-                                const routine = obj.routine || (obj.routine = []);
-                                const idx = routine.findIndex((r: any) => r.comment == '--- APP END ---');
+                                const idx = obj.findIndex((r: any) => r['/comment'] == '---');
                                 if (idx == -1) {
-                                    routine.push(o);
+                                    obj.push(o);
                                 } else {
-                                    routine.splice(idx - 1, 0, o);
+                                    obj.splice(idx, 0, o);
                                 }
                             }
                         }));

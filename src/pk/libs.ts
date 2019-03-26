@@ -7,8 +7,8 @@ import { homedir } from 'os';
 import { preserveDir } from '../pk-util/preserveDir';
 import { getInquirer, getChalk, getUnderscore } from '../lazy';
 import { exec as child_process_exec } from "child_process";
-import { template } from 'underscore';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
+import { IPkCommandInfo } from './types';
 
 export const log = (...args: any) => console.log(...args);
 export const tryCatch = async (cb: any, debug: boolean) => {
@@ -43,6 +43,16 @@ export const atProjectDir = async (cb: (projectRoot: string, projectConf: PkProj
     await atDir(projectRoot, async () => {
         await cb(projectRoot, projectConf);
     });
+}
+
+export const invokeModuleHooks = async (pk: IPkCommandInfo, projectConf: PkProjectConf, name: string, value: any) => {
+    for (const mod of projectConf.data.modules) {
+        const hookPath = join(process.cwd(), 'pk-modules', mod.name, 'hooks', `${name}.js`);
+        if (existsSync(hookPath)) {
+            const hook = require(hookPath)(pk);
+            await hook(value);
+        }
+    }
 }
 
 export const atAppDir = async (appName: string, cb: (app: IPkApp) => Promise<any>) => {

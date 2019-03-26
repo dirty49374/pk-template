@@ -3,7 +3,7 @@ import { IProgressOptions } from '../pk-ui';
 import { PkProjectConf } from '../pk-conf/projectConf';
 
 export interface IPkCommandInfo {
-    conf: PkProjectConf;
+    projectConf: PkProjectConf | null;
     [name: string]: any;
 };
 

@@ -9,6 +9,18 @@ import jslib from "./jslib";
 import { forEachTreeObjectKey } from "../common";
 import { CustomYamlTag } from "../pk-yaml/customTags";
 
+export const compilePkt = (src: string, uri: string): IPkt => {
+    const yamls = parseYamlAsPkt(src, uri);
+    if (yamls.length == 0) {
+        return { header: {}, statements: [] };
+    }
+    if (yamls[0]['/properties'] || yamls[0]['/schema']) {
+        const header = yamls[0];
+        return { header, statements: yamls.slice(1) };
+    }
+    return { header: {}, statements: yamls };
+}
+
 export class PktRuntime {
     buildProperties(properties: any, parentValues: IValues): any {
         const values = {
@@ -148,25 +160,14 @@ const pktLanguage: ILanguageSpec<PktRuntime> = {
         return new PktRuntime();
     },
     compile(scope: IScope, src: string, uri: string): any {
-        const doCompile = (scope: IScope, src: string, uri: string): any => {
-            try {
-                const yamls = parseYamlAsPkt(src, uri);
-                if (yamls.length == 0) {
-                    return { header: {}, statements: [] };
-                }
-                if (yamls[0]['/properties'] || yamls[0]['/schema']) {
-                    const header = yamls[0];
-                    return { header, statements: yamls.slice(1) };
-                }
-                return { header: {}, statements: yamls };
-            } catch (e) {
-                throw scope.error(`failed to parse yaml ${uri}`, e);
+        try {
+            return {
+                uri,
+                pkt: compilePkt(src, uri),
+                withObject: true,
             }
-        }
-        return {
-            uri,
-            pkt: doCompile(scope, src, uri),
-            withObject: true,
+        } catch (e) {
+            throw scope.error(`failed to parse yaml ${uri}`, e);
         }
     },
     sandbox(scope: IScope, values?: IValues): any {
@@ -471,6 +472,13 @@ const pktLanguage: ILanguageSpec<PktRuntime> = {
                         }
                     });
 
+                    return {};
+                },
+            },
+            ['/comment']: {
+                name: '/comment',
+                order: 200,
+                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult => {
                     return {};
                 },
             },
