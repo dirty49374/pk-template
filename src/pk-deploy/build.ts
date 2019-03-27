@@ -5,6 +5,7 @@ import { IPktArgs } from "../pkt/args";
 import { IPkDeployment } from ".";
 import { PkProjectConf } from "../pk-conf/projectConf";
 import { generate } from "../pkt/pkt";
+import { sha256, repository, repositoryPath } from "../pk-template/utils";
 
 const objectError = (object: IObject, err: string) => {
     console.log(pkyaml.dumpYaml(object));
@@ -39,12 +40,30 @@ export const buildPkd = async (conf: PkProjectConf, appName: string, envName: st
         : `${conf.data.project.name}-${app.name}-${envName}`;
     const deploymentName = `${conf.data.project.name}-${appName}-${envName}`;
     const deploymentId = `${app.id}-${envName}`;
+    const deployment = {
+        id: deploymentId,
+        name: deploymentName,
+        created: new Date().toJSON(),
+        project: conf.data.project,
+        git: {
+            repo: repository(),
+            path: repositoryPath('./app.pkt'),
+        },
+        app: {
+            name: app.name,
+            id: app.id,
+        },
+        env: env,
+    };
 
     const args: IPktArgs = {
         options: {},
         file: `app.pkt`,
         env: env.name,
-        values: env.values,
+        values: {
+            ...env.values,
+            deployment,
+        },
     }
 
     const objects = await generate(args);
@@ -79,22 +98,11 @@ export const buildPkd = async (conf: PkProjectConf, appName: string, envName: st
             const apiGroup = avs.length == 2 ? avs[0] : '';
             const namespace = o.metadata.namespace || '';
             const name = o.metadata.name;
+            const sha = (o.metadata.annotations && o.metadata.annotations['pk.io/sha']) || sha256(o, 8);
 
-            return `${kind}/${apiGroup}/${name}/${namespace}`;
+            return `${kind}/${apiGroup}/${name}/${namespace}/${sha}`;
         })
         .join('\n');
-
-    const header = {
-        id: deploymentId,
-        name: deploymentName,
-        created: new Date().toJSON(),
-        project: conf.data.project,
-        app: {
-            name: app.name,
-            id: app.id,
-        },
-        env: env,
-    };
 
     newList.unshift({
         apiVersion: "v1",
@@ -115,7 +123,7 @@ export const buildPkd = async (conf: PkProjectConf, appName: string, envName: st
                 '#  DEPLOYMENT SPEC\n' +
                 '#--------------------------------------------------------\n' +
                 '\n' +
-                pkyaml.dumpYaml(header) +
+                pkyaml.dumpYaml(deployment) +
                 '\n' +
                 '#--------------------------------------------------------\n' +
                 '\n',
@@ -124,7 +132,7 @@ export const buildPkd = async (conf: PkProjectConf, appName: string, envName: st
     });
 
     const pkd: IPkDeployment = {
-        header: header,
+        header: deployment,
         objects: newList,
     };
 

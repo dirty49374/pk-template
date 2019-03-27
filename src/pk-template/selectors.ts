@@ -31,7 +31,7 @@ const buildPredicate = (src: string): ObjectPredicate => {
             object.metadata &&
             object.metadata.name == name;
     } else {
-        return (object: any) => object.kind === src;
+        return (object: any) => src === '*' ? true : object.kind === src;
     }
 };
 

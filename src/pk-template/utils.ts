@@ -1,4 +1,8 @@
 import { IScope } from './types';
+import { dumpYamlSortedKey } from '../pk-yaml';
+import { createHash } from 'crypto';
+import { execSync } from 'child_process';
+import { resolve, relative } from 'path';
 
 export interface IPktError extends Error {
     summary: string;
@@ -70,4 +74,33 @@ export async function readStdin(): Promise<string> {
             reject(error);
         })
     });
+}
+
+export const sha256 = (obj: any, len?: number) => {
+    const yaml = typeof obj === 'object'
+        ? dumpYamlSortedKey(obj)
+        : obj.toString();
+    const hash = createHash('sha256');
+    hash.update(yaml);
+    return len ? hash.digest('hex').substr(0, len) : hash.digest('hex');
+}
+
+export const repository = (ref?: string) => {
+    try {
+        const r = execSync(`git config --get ${ref || 'remote.origin.url'}`);
+        return r.toString('utf8').trim();
+    } catch (e) {
+        return 'unknown';
+    }
+}
+
+export const repositoryPath = (path: string) => {
+    try {
+        const filePath = resolve(path);
+        const gitRoot = execSync(`git rev-parse --show-toplevel`).toString('utf8').trim();
+        console.log('gr=', gitRoot, 'fp=', filePath)
+        return relative(gitRoot, filePath);
+    } catch (e) {
+        return 'unknown';
+    }
 }

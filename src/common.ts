@@ -33,6 +33,7 @@ export interface IResourceKey {
     apiGroup: string;
     namespace: string;
     name: string;
+    sha?: string;
 }
 
 export interface ISet {

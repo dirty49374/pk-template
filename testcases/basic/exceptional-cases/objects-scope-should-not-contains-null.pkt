@@ -1,0 +1,9 @@
+null
+---
+c: !js $.objects.length
+---
+null
+---
+c: !js $.objects.length
+---
+c: !js $.objects.length

@@ -13,7 +13,7 @@ export const deletePkd = async (projectName: string, appName: string, envName: s
         const nonNamespaces = keys.filter(k => k.kind !== 'Namespace');
         kube.deleteObjects(nonNamespaces);
 
-        const namespaces = keys.filter(k => k.kind === 'Namespace');
+        const namespaces = keys.filter(k => k.kind === 'Namespace' && k.name !== 'default');
         kube.deleteObjects(namespaces);
 
         kube.deleteObjects([{

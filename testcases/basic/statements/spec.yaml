@@ -22,13 +22,18 @@ expected:
     - p: 1
     - p: 2
   select:
+    - "*": 4
     - Pod(a=a1): 2
     - Pod(a=a): 0
     - Pod(b=b1): 1
     - Pod(b=b2): 1
     - Pod(!A=A1): 1
+    - Pod: 2
+    - Pod(.pod2): 1
+    - Pod(.pod3): 0
     - Service(!A=A2): 2
     - Service(!A=*): 2
+    - Service: 2
   foreach:
     - id: 1
       top3: true

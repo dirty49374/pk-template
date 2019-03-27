@@ -38,6 +38,7 @@ export default (pk: IPkCommandInfo) => ({
                             env: { type: 'string', description: 'pk environment name', },
                             cluster: { type: 'string', description: 'pk cluster name', },
                             namespace: { type: 'string', description: 'prefered namespace name', },
+                            deployment: { type: 'object', description: 'pk deployment information', },
                         },
                         required: ['env', 'cluster', 'namespace'],
                     }

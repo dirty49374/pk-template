@@ -1,9 +1,10 @@
 import path from 'path';
-import { parseKvps, parseList, pktError } from './utils';
+import { parseKvps, parseList, pktError, sha256, repository, repositoryPath } from './utils';
 import { IScope } from './types';
 import { log } from './logger';
 import { createHash } from 'crypto';
 import { dumpYamlSortedKey } from '../pk-yaml';
+import { execSync } from 'child_process';
 
 const jslib = (scope: IScope) => {
     const lib = {
@@ -11,12 +12,9 @@ const jslib = (scope: IScope) => {
         envVar: (name: string) => process.env[name],
         log: (...msg: any[]) => log(...msg),
         last: () => scope.objects.length == 0 ? undefined : scope.objects[scope.objects.length - 1],
-        sha256: (obj: any) => {
-            var yaml = dumpYamlSortedKey(obj)
-            const hash = createHash('sha256');
-            hash.update(yaml);
-            return hash.digest('hex');
-        },
+        sha256: (obj: any, len?: number) => sha256(obj, len),
+        repository: (ref?: string) => repository(ref),
+        repositoryPath: (path: string) => repositoryPath(path),
         files: (path: string) => scope.listFiles(path).data,
         loadText: (path: string) => scope.loadText(path).data,
         loadPkt: (path: string) => scope.loadPkt(path).data,
@@ -34,6 +32,8 @@ const jslib = (scope: IScope) => {
             if (!object.metadata.labels) return undefined;
             return object.metadata.labels[name];
         },
+        base64encode: (txt: string) => Buffer.from(txt).toString('base64'),
+        base64decode: (txt: string) => Buffer.from(txt, 'base64').toString('utf8'),
         setlabel: (object: any, name: string, value: string) => {
             if (typeof object === 'string') {
                 value = name;

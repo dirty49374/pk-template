@@ -14,7 +14,7 @@ export const compilePkt = (src: string, uri: string): IPkt => {
     if (yamls.length == 0) {
         return { header: {}, statements: [] };
     }
-    if (yamls[0]['/properties'] || yamls[0]['/schema']) {
+    if (yamls[0] && (yamls[0]['/properties'] || yamls[0]['/schema'])) {
         const header = yamls[0];
         return { header, statements: yamls.slice(1) };
     }

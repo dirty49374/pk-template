@@ -60,6 +60,10 @@ export class PkKubeCtl extends KubeCtl {
 
     deleteObjects(keys: IResourceKey[]) {
         for (const key of keys) {
+            if (key.apiGroup == '' && key.kind == 'Namespace' && key.name == 'default') {
+                this.progress.verbose('    skip default namespaces');
+                continue;
+            }
             const namespaced = this.isNamespacedType(key.apiGroup, key.kind);
             if (namespaced && !key.namespace) {
                 this.progress.error(`!!! cannot determine object to delete (kind=${key.kind}, name=${key.name}), namespace is missing`);

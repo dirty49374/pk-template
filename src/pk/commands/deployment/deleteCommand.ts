@@ -5,7 +5,7 @@ import { IPkdApplierOption } from '../../../pk-deploy/options';
 import { execSync } from 'child_process';
 
 export default (pk: IPkCommandInfo) => ({
-    command: 'delete',
+    command: 'delete [app] [env]',
     desc: 'delete deployments',
     builder: (yargs: any) => yargs
         .option('all', { describe: 'all apps and envs', boolean: false })

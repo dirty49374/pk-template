@@ -20,8 +20,8 @@ export class PkdCatalog {
     getKeys(): IResourceKey[] {
         const left: IResourceKey[] = [];
         for (const key in this.keys) {
-            const [kind, apiGroup, name, namespace] = key.split('/');
-            left.push({ kind, apiGroup, namespace, name });
+            const [kind, apiGroup, name, namespace, sha] = key.split('/');
+            left.push({ kind, apiGroup, namespace, name, sha });
         }
         return left;
     }
@@ -30,8 +30,8 @@ export class PkdCatalog {
         const left: IResourceKey[] = [];
         for (const key in this.keys) {
             if (!other.keys[key]) {
-                const [kind, apiGroup, name, namespace] = key.split('/');
-                left.push({ kind, apiGroup, namespace, name });
+                const [kind, apiGroup, name, namespace, sha] = key.split('/');
+                left.push({ kind, apiGroup, namespace, name, sha });
             }
         }
         return left;

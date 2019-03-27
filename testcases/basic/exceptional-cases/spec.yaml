@@ -1,0 +1,7 @@
+input:
+expected:
+  objects-should-not-contains-null: []
+  objects-scope-should-not-contains-null:
+    - c: 0
+    - c: 1
+    - c: 2
