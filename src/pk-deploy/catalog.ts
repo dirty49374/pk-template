@@ -5,7 +5,10 @@ export class PkdCatalog {
         const set: ISet = {};
         text.split('\n')
             .filter((line: string) => line)
-            .forEach(key => set[key.trim()] = true);
+            .forEach(line => {
+                const key = line.trim().split('/', 4).join('/');
+                set[key] = true;
+            });
 
         return new PkdCatalog(set);
     }
