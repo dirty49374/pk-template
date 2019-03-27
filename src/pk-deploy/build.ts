@@ -54,7 +54,10 @@ export const buildPkd = async (conf: PkProjectConf, appName: string, envName: st
             id: app.id,
         },
         env: env,
-    };
+    } as any;
+    if (app.owner) {
+        deployment.app.owner = app.owner;
+    }
 
     const args: IPktArgs = {
         options: {},
