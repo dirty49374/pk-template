@@ -98,7 +98,6 @@ export const repositoryPath = (path: string) => {
     try {
         const filePath = resolve(path);
         const gitRoot = execSync(`git rev-parse --show-toplevel`).toString('utf8').trim();
-        console.log('gr=', gitRoot, 'fp=', filePath)
         return relative(gitRoot, filePath);
     } catch (e) {
         return 'unknown';
