@@ -7,8 +7,12 @@ import { dumpYaml } from '../pk-yaml';
 
 const testCaseRoot = join(__dirname, '../../testcases');
 const loadYaml = (category: string, test: string, file: string) => {
-    const src = readFileSync(join(testCaseRoot, category, test, file), 'utf8');
-    return load(src);
+    try {
+        const src = readFileSync(join(testCaseRoot, category, test, file), 'utf8');
+        return load(src);
+    } catch (e) {
+        return null;
+    }
 }
 
 describe('pkt testcases', () => {
@@ -18,6 +22,9 @@ describe('pkt testcases', () => {
             const tests = readdirSync(join(testCaseRoot, category));
             for (const testName of tests) {
                 const spec = loadYaml(category, testName, 'spec.yaml');
+                if (spec == null) {
+                    continue;
+                }
                 describe(testName, () => {
                     for (const testCaseName of Object.keys(spec.expected)) {
                         const expected = spec.expected[testCaseName];

@@ -1,0 +1,36 @@
+input:
+expected:
+  basic:
+    - count: 0
+    - count: 1
+    - count: 2
+  object-list-should-be-cleared-on-routine:
+    - count: 0
+    - count: 1
+    - count: 0
+    - count: 1
+    - count: 4
+  object-list-should-be-cleared-on-include:
+    - count: 0
+    - count: 1
+    - count: 0
+    - count: 1
+    - count: 4
+  object-list-should-be-cleared-on-include-yaml:
+    - count: 0
+    - count: 1
+    - count: 0
+    - count: 0
+    - count: 4
+  object-list-should-not-be-cleared-on-apply:
+    - count: 0
+    - count: 1
+    - count: 2
+    - count: 3
+    - count: 4
+  object-list-should-not-be-cleared-on-apply-yaml:
+    - count: 0
+    - count: 1
+    - count: 2
+    - count: 2
+    - count: 4

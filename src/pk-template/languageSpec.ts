@@ -465,7 +465,7 @@ const pktLanguage: ILanguageSpec<PktRuntime> = {
                 name: '/routine',
                 order: 100,
                 handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult => {
-                    scope.child({}, scope => {
+                    scope.child({ objects: [] }, scope => {
                         for (const cstmt of stmt['/routine']) {
                             const rst = vm.execute(scope, cstmt, 'pkt-statement');
                             if (rst.exit) {

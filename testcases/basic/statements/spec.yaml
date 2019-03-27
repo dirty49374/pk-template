@@ -1,0 +1,58 @@
+input:
+expected:
+  if:
+    - p: 1
+    - p: 2
+  unless:
+    - p: 1
+    - p: 2
+  end:
+    - p: 1
+    - p: 2
+  end-with-if:
+    - p: 1
+    - p: 2
+  end-with-unless:
+    - p: 1
+    - p: 2
+  endIf:
+    - p: 1
+    - p: 2
+  values:
+    - p: 1
+    - p: 2
+  select:
+    - Pod(a=a1): 2
+    - Pod(a=a): 0
+    - Pod(b=b1): 1
+    - Pod(b=b2): 1
+    - Pod(!A=A1): 1
+    - Service(!A=A2): 2
+    - Service(!A=*): 2
+  foreach:
+    - id: 1
+      top3: true
+      top5: true
+    - id: 2
+      top3: true
+      top5: true
+    - id: 3
+      top3: true
+      top5: true
+    - id: 4
+      top5: true
+    - id: 5
+      top5: true
+  select-foreach:
+    - spec:
+        id: Pod pod1
+        Pod(a=a1): a1
+    - spec:
+        id: Pod pod2
+        Pod(a=a1): a1
+    - spec:
+        id: Service svc1
+        Service(!A=*): A2
+    - spec:
+        id: Service svc2
+        Service(!A=*): A2

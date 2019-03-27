@@ -1,0 +1,7 @@
+p: 1
+---
+/unless: !js 1
+p: 0
+---
+/unless: !js 0
+p: 2

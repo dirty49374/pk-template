@@ -1,0 +1,62 @@
+kind: Pod
+metadata:
+  name: pod1
+  labels:
+    a: a1
+    b: b1
+---
+kind: Pod
+metadata:
+  name: pod2
+  labels:
+    a: a1
+    b: b2
+  annotations:
+    A: A1
+---
+kind: Service
+metadata:
+  name: svc1
+  labels:
+    a: a1
+    b: b1
+  annotations:
+    A: A2
+---
+kind: Service
+metadata:
+  name: svc2
+  labels:
+    a: a1
+    b: b2
+  annotations:
+    A: A2
+---
+/select: Pod a=a1
+/foreach: !js |
+  $.object.spec = {
+    ...($.object.spec || {}),
+    ['Pod(a=a1)']: $.object.metadata.labels.a
+  }
+---
+/select: Service a=*
+/foreach: !js |
+  $.object.spec = {
+    ...($.object.spec || {}),
+    ['Service(!A=*)']: $.object.metadata.annotations.A
+  }
+---
+/select: Service !A=*
+/foreach: !js |
+  $.object.spec = {
+    ...($.object.spec || {}),
+    ['Service(!A=*)']: $.object.metadata.annotations.A
+  }
+---
+/foreach: !js |
+  $.object.spec = {
+    ...($.object.spec || {}),
+    id: `${$.object.kind} ${$.object.metadata.name}`
+  }
+  delete $.object.kind
+  delete $.object.metadata

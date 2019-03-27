@@ -1,0 +1,9 @@
+/values:
+  p: 1
+---
+p: !js p
+---
+/values:
+  p: 2
+---
+p: !js p

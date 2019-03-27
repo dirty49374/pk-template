@@ -1,0 +1,7 @@
+count: !js $.objects.length
+---
+count: !js $.objects.length
+---
+/apply: include.yaml
+---
+count: !js $.objects.length

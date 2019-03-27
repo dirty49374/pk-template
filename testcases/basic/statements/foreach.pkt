@@ -1,0 +1,15 @@
+id: 1
+---
+id: 2
+---
+id: 3
+---
+/foreach: !js |
+  $.object.top3 = true;
+---
+id: 4
+---
+id: 5
+---
+/foreach: !js |
+  $.object.top5 = true

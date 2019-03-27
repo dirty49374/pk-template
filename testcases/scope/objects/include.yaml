@@ -1,0 +1,3 @@
+count: <<<= $.objects.length >>>
+---
+count: <<<= $.objects.length >>>

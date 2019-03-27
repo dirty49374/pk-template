@@ -1,0 +1,63 @@
+kind: Pod
+metadata:
+  name: pod1
+  labels:
+    a: a1
+    b: b1
+---
+kind: Pod
+metadata:
+  name: pod2
+  labels:
+    a: a1
+    b: b2
+  annotations:
+    A: A1
+---
+kind: Service
+metadata:
+  name: svc1
+  labels:
+    a: a1
+    b: b1
+  annotations:
+    A: A2
+---
+kind: Service
+metadata:
+  name: svc2
+  labels:
+    a: a1
+    b: b2
+  annotations:
+    A: A2
+---
+/values:
+  count: !js $.objects.length
+---
+/select: Pod a=a1
+Pod(a=a1): !js $.objects.length
+---
+/select: Pod a=a
+Pod(a=a): !js $.objects.length
+---
+/select: Pod b=b1
+Pod(b=b1): !js $.objects.length
+---
+/select: Pod b=b2
+Pod(b=b2): !js $.objects.length
+---
+/select: Pod !A=A1
+Pod(!A=A1): !js $.objects.length
+---
+/select: Service !A=A2
+Service(!A=A2): !js $.objects.length
+---
+/select: Service !A=*
+Service(!A=*): !js $.objects.length
+---
+/script: !js |
+  let root = $;
+  while (root.parent != null)
+    root = root.parent;
+  root.objects.splice(0, count)

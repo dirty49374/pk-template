@@ -1,0 +1,9 @@
+count: !js $.objects.length
+---
+count: !js $.objects.length
+---
+/routine:
+  - count: !js $.objects.length
+  - count: !js $.objects.length
+---
+count: !js $.objects.length

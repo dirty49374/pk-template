@@ -1,0 +1,7 @@
+count: !js $.objects.length
+---
+count: !js $.objects.length
+---
+/include: include.pkt
+---
+count: !js $.objects.length
