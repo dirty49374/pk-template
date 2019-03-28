@@ -261,7 +261,7 @@ export class PktRuntime {
         const schema = new JsonSchema(stmt['/schema']);
         const errors = schema.validate(scope.values);
         if (errors) {
-            throw scope.error('property validation failed');
+            throw scope.error('property validation failed', new Error(errors));
         }
         return next(scope);
     }
