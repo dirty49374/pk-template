@@ -30,6 +30,7 @@ export default (pk: IPkCommandInfo) => ({
                         env: null,
                         cluster: null,
                         namespace: null,
+                        deployment: null,
                     },
                     ['/schema']: {
                         title: `${argv.appName} in ${projectConf.data.project.name} project`,
