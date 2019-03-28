@@ -157,6 +157,7 @@ export interface ILanguageRuntime {
 export interface ILanguageVmBase {
     eval(tag: CustomYamlTag, scope: IScope, values?: IValues): any;
     sandbox(scope: IScope, values?: IValues): any;
+    evalAllCustomTags(scope: IScope, node: any): any;
 }
 
 export interface ILanguageVm<T extends ILanguageRuntime> extends ILanguageVmBase {

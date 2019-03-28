@@ -1,5 +1,5 @@
 import jsyaml from 'js-yaml';
-import { CustomYamlTag, CustomYamlTagTag, CustomYamlCsTag, CustomYamlLsTag, CustomYamlJsTag, CustomYamlFileTag, CustomYamlTemplateTag } from './customTags';
+import { CustomYamlTag, CustomYamlTagTag, CustomYamlCsTag, CustomYamlLsTag, CustomYamlJsTag, CustomYamlFileTag, CustomYamlTemplateTag, CustomYamlFlattenTag, CustomYamlYamlTag } from './customTags';
 
 
 interface ITagData {
@@ -72,6 +72,25 @@ export const pktYamlOption = (uri: string) => ({
             instanceOf: CustomYamlLsTag,
             represent: (tag: any) => tag.represent(),
         }),
+        new jsyaml.Type('!yaml', {
+            kind: 'scalar',
+            resolve: (data: any) => typeof data === 'string' || typeof data === 'number' || typeof data === null,
+            construct: (data: any) => {
+                return new CustomYamlYamlTag(data, uri);
+            },
+            instanceOf: CustomYamlLsTag,
+            represent: (tag: any) => tag.represent(),
+        }),
+        new jsyaml.Type('!flatten', {
+            kind: 'sequence',
+            resolve: (data: any) => Array.isArray(data),
+            construct: (data: any) => {
+                return new CustomYamlFlattenTag(data, uri);
+            },
+            instanceOf: CustomYamlFlattenTag,
+            represent: (tag: any) => tag.represent(),
+        }),
+
         new jsyaml.Type('!tag', {
             kind: 'scalar',
             resolve: (data: any) => typeof data === 'string' || typeof data === 'number' || typeof data === null,

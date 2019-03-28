@@ -4,14 +4,12 @@ export const buildOptionsFromProperties = (yargs: any, properties: any) => {
     if (!properties) {
         return yargs;
     }
-    console.log('from prop', properties);
     for (const name of Object.keys(properties)) {
         const value = properties[name];
         const opt = {
             description: `${name} option`,
             default: value,
         };
-        console.log('zzz')
         yargs.option(name, opt);
     }
     return yargs;

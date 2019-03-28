@@ -99,21 +99,6 @@ export class PktRuntime {
         });
     }
 
-    private evalAllCustomTags(vm: ILanguageVm<PktRuntime>, scope: IScope, node: any): any {
-        if (node instanceof CustomYamlTag) {
-            return vm.eval(node, scope);
-        } else if (Array.isArray(node)) {
-            return node.map(item => this.evalAllCustomTags(vm, scope, item));
-        } else if (typeof node === 'object') {
-            if (node === null) return node;
-
-            const clone: any = {};
-            Object.keys(node)
-                .forEach((key: string) => clone[key] = this.evalAllCustomTags(vm, scope, node[key]));
-            return clone;
-        }
-        return node;
-    }
 
     private deleteUndefined(node: any) {
         if (node === undefined) {
@@ -143,7 +128,7 @@ export class PktRuntime {
     }
 
     private evalObject(vm: ILanguageVm<PktRuntime>, scope: IScope, object: any): any {
-        object = this.evalAllCustomTags(vm, scope, object);
+        object = vm.evalAllCustomTags(scope, object);
         this.expandCaretPath(object);
         this.expandStyleSheet(vm, scope, object);
         this.deleteUndefined(object);
@@ -301,12 +286,10 @@ export class PktRuntime {
     ['decl:104:/values'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
         if (stmt['/values']) {
             scope.trace.step('/values');
-            console.log('>>> ', scope.values)
             scope.values = {
                 ...scope.values,
                 ...vm.runtime.evalObject(vm, scope, stmt['/values'] || {}),
             };
-            console.log('>>>X', scope.values)
         }
         return next(scope);
     }

@@ -37,8 +37,25 @@ export class LanguageVm<T extends ILanguageRuntime> implements ILanguageVm<T> {
         return this.languageSpec.sandbox(scope, values || {});
     }
 
+    evalAllCustomTags(scope: IScope, node: any): any {
+        if (node instanceof CustomYamlTag) {
+            node = node.evaluate(scope, this.sandbox(scope), this.evalAllCustomTags);
+        }
+        if (Array.isArray(node)) {
+            return node.map(item => this.evalAllCustomTags(scope, item));
+        } else if (typeof node === 'object') {
+            if (node === null) return node;
+
+            const clone: any = {};
+            Object.keys(node)
+                .forEach((key: string) => clone[key] = this.evalAllCustomTags(scope, node[key]));
+            return clone;
+        }
+        return node;
+    }
+
     eval(tag: CustomYamlTag, scope: IScope, values?: IValues): any {
-        return tag.evaluate(scope, this.sandbox(scope, values));
+        return tag.evaluate(scope, this.sandbox(scope, values), this.eval);
     }
 
     execute(scope: IScope, stmt: any, state: string) {

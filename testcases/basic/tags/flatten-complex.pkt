@@ -1,0 +1,32 @@
+/values:
+  useA: false
+  useB: true
+  A:
+    A1: 1
+    A2: 2
+  B:
+    B1: 10
+    B2: 20
+---
+a: !flatten
+  - - !js 1
+    - !js 2
+  - - !js undefined
+    - !js undefined
+    - - !js undefined
+      - - !js undefined
+        - !js 3
+---
+env: !flatten
+  - name: X
+    value: "0"
+  - !js "useA ? Object.keys(A).map(k => ({ name: k, value: A[k].toString() })) : undefined"
+  - !js "useB ? Object.keys(B).map(k => ({ name: k, value: B[k].toString() })) : undefined"
+---
+list: !flatten
+  - A: 1
+  - B:
+      - !flatten
+        - !js 2
+        - !js 3
+  - C: !js 4

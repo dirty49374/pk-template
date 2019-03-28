@@ -2,6 +2,7 @@ import { getLiveScript, getCoffeeScript, getUnderscore } from "../lazy";
 import { IScope, IValues } from "../pk-template/types";
 import * as vm from 'vm';
 import { tpl } from "../pk/libs";
+import { parseYamlAll, parseYaml } from ".";
 const _ = getUnderscore();
 
 const compileCoffee = (data: string): string => {
@@ -25,9 +26,9 @@ const compileLive = (data: string): string => {
 }
 
 export class CustomYamlTag {
-    constructor(public type: string, public src: string, public uri: string) { }
+    constructor(public type: string, public src: any, public uri: string) { }
     represent = () => this.src;
-    evaluate = (scope: IScope, sandbox: IValues): any => {
+    evaluate = (scope: IScope, sandbox: IValues, evaluator: any): any => {
         throw new Error('Custom Tag must implement evaluate() function');
     };
     isScript = () => false;
@@ -35,13 +36,13 @@ export class CustomYamlTag {
 
 export class CustomYamlScriptTag extends CustomYamlTag {
     public script: vm.Script;
-    constructor(tag: string, src: string, uri: string, compiler?: any) {
+    constructor(tag: string, src: any, uri: string, compiler?: any) {
         super(tag, src, uri);
 
         const compiled = compiler ? compiler(src) : src;
         this.script = new vm.Script(compiled);
     }
-    evaluate = (scope: IScope, sandbox: IValues): any => {
+    evaluate = (scope: IScope, sandbox: IValues, evaluator: any): any => {
         try {
             const context = vm.createContext(sandbox);
             return this.script.runInContext(context, {
@@ -58,56 +59,83 @@ export class CustomYamlScriptTag extends CustomYamlTag {
 }
 
 export class CustomYamlJsTag extends CustomYamlScriptTag {
-    constructor(src: string, uri: string) {
+    constructor(src: any, uri: string) {
         super('js', src, uri);
     }
 }
 
 export class CustomYamlCsTag extends CustomYamlScriptTag {
-    constructor(src: string, uri: string) {
+    constructor(src: any, uri: string) {
         super('cs', src, uri, compileCoffee);
     }
 }
 
 export class CustomYamlLsTag extends CustomYamlScriptTag {
-    constructor(src: string, uri: string) {
+    constructor(src: any, uri: string) {
         super('ls', src, uri, compileLive);
     }
 }
 
 export class CustomYamlTemplateTag extends CustomYamlTag {
     private tpl: any;
-    constructor(src: string, uri: string) {
+    constructor(src: any, uri: string) {
         super('template', src, uri);
         this.tpl = _.template(src);
     }
-    evaluate = (scope: IScope, sandbox: IValues): any => {
+    evaluate = (scope: IScope, sandbox: IValues, evaluator: any): any => {
         return this.tpl(sandbox);
     }
 }
 
+export class CustomYamlYamlTag extends CustomYamlTag {
+    private tpl: any;
+    constructor(src: any, uri: string) {
+        super('yaml', src, uri);
+        this.tpl = _.template(src);
+    }
+    evaluate = (scope: IScope, sandbox: IValues, evaluator: any): any => {
+        const text = this.tpl(sandbox);
+        return parseYaml(text);
+    }
+}
+
+
 export class CustomYamlFileTag extends CustomYamlTag {
-    constructor(src: string, uri: string) {
+    constructor(src: any, uri: string) {
         super('file', src, uri);
     }
-    evaluate = (scope: IScope, sandbox: IValues) => {
+    evaluate = (scope: IScope, sandbox: IValues, evaluator: any) => {
         const result = scope.loadText(this.src);
         return result.data;
     }
 }
 
-export class CustomYamlConcatTag extends CustomYamlTag {
-    constructor(code: string, src: string, uri: string) {
-        super('concat', src, uri);
+export class CustomYamlFlattenTag extends CustomYamlTag {
+    constructor(src: any, uri: string) {
+        super('flatten', src, uri);
     }
-    evaluate = (scope: IScope, sandbox: IValues) => { }
+    evaluate = (scope: IScope, sandbox: IValues, evaluator: any) => {
+        const list: any[] = [];
+        const flattenDeep = (o: any) => {
+            if (o instanceof CustomYamlTag) {
+                o = o.evaluate(scope, sandbox, evaluator);
+            }
+            if (Array.isArray(o)) {
+                o.forEach(e => flattenDeep(e));
+            } else {
+                list.push(o);
+            }
+        }
+        flattenDeep(this.src);
+        return list;
+    }
 }
 
 export class CustomYamlTagTag extends CustomYamlTag {
-    constructor(code: string, src: string, uri: string) {
+    constructor(code: string, src: any, uri: string) {
         super('tag', src, uri);
     }
-    execute(scope: IScope, sandbox: IValues) { }
+    execute(scope: IScope, sandbox: IValues, evaluator: any) { }
     convert() {
         const [tag, src] = this.src.split(' ', 2);
         switch (tag) {
@@ -115,7 +143,9 @@ export class CustomYamlTagTag extends CustomYamlTag {
             case '!ls': return new CustomYamlLsTag(src, this.uri);
             case '!cs': return new CustomYamlCsTag(src, this.uri);
             case '!template': return new CustomYamlTemplateTag(src, this.uri);
+            case '!yaml': return new CustomYamlYamlTag(src, this.uri);
             case '!file': return new CustomYamlFileTag(src, this.uri);
+            case '!flatten': return new CustomYamlFlattenTag(src, this.uri);
         }
     }
 }

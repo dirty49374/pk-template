@@ -1,0 +1,37 @@
+input:
+expected:
+  basic: []
+  flatten:
+    - a:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+  flatten-complex:
+    - a:
+        - 1
+        - 2
+        - 3
+    - env:
+        - name: X
+          value: "0"
+        - name: B1
+          value: "10"
+        - name: B2
+          value: "20"
+    - list:
+        - A: 1
+        - B:
+            - - 2
+              - 3
+        - C: 4
+  yaml:
+    - a:
+        p1: 1
+        p2: "2"
+    - a:
+        p1: 1
+        p2: "2"
