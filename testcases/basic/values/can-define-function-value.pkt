@@ -1,0 +1,9 @@
+/properties:
+  p1: 1
+---
+/values:
+  f1: !js () => 100
+  f2: !js (a, b) => a + b
+---
+p1: !js f1()
+p2: !js f2(100, 100)

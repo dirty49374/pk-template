@@ -14,6 +14,25 @@ interface IKvpType {
     [id: string]: string
 }
 
+export const deepClone = (obj: any): any => JSON.parse(JSON.stringify(obj));
+// export const deepCloneWithFunction = deepClone;
+export const deepCloneWithFunction = (obj: any): any => {
+    if (typeof obj === 'object') {
+        if (Array.isArray(obj)) {
+            return obj.map(item => deepCloneWithFunction(item));
+        } else if (obj === null) {
+            return null;
+        } else {
+            const cloned: any = {};
+            for (const key of Object.keys(obj)) {
+                cloned[key] = deepCloneWithFunction(obj[key]);
+            }
+            return cloned;
+        }
+    }
+    return obj;
+}
+
 export const pktError = (scope: IScope | null, error: Error, message: string): IPktError => {
     const pe = error as IPktError;
     pe.summary = message;

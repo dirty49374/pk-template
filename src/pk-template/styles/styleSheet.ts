@@ -3,7 +3,7 @@ import { IScope, IStyleSheet, IStyle, IPktHeader, ILanguageVmBase, ILanguageVm }
 import { StyleApply } from "./styleApply";
 import { compileStyle } from "./styleCompile";
 import { CustomYamlTag } from "../../pk-yaml/customTags";
-import { PktRuntime } from "..";
+import { PktRuntime } from "../languageSpec";
 
 export class StyleSheet implements IStyleSheet {
     private styleSheets: { [name: string]: StyleApply };
@@ -27,7 +27,7 @@ export class StyleSheet implements IStyleSheet {
 
     private import(scope: IScope, rpath: string) {
         const { uri, data } = scope.loadPkt(rpath);
-        scope.child({ uri }, cscope => {
+        scope.child2({ uri }, cscope => {
             this.load(cscope, data.header);
         });
     }

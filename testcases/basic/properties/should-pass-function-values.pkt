@@ -1,0 +1,4 @@
+/values:
+  f1: !js () => 100
+---
+/include: function.pkt

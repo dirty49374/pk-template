@@ -1,6 +1,6 @@
 import { IScope, IValues, IPkStatementResult, IPkt, ILanguageSpec, ILanguageVm, IPktHeader } from "./types";
 import { getJsonPath, getJsonPatch, getUnderscore } from "../lazy";
-import { pktError, setValue } from "./utils";
+import { pktError, setValue, deepCloneWithFunction } from "./utils";
 import { StyleSheet } from './styles/styleSheet';
 import { JsonSchema } from "./jsonSchema";
 import selectors from "./selectors";
@@ -8,13 +8,20 @@ import { parseYamlAsPkt, parseYamlAll } from "../pk-yaml";
 import jslib from "./jslib";
 import { forEachTreeObjectKey } from "../common";
 import { CustomYamlTag } from "../pk-yaml/customTags";
+import { NextStatement } from "./virtualMachine";
+
+const PKT_INITIAL_STATE = 'pkt:$initial';
+const PKT_IMPORT_INITIAL_STATE = 'import:$initial';
+
+export interface IPktOptions {
+}
 
 export const compilePkt = (src: string, uri: string): IPkt => {
     const yamls = parseYamlAsPkt(src, uri);
     if (yamls.length == 0) {
         return { header: {}, statements: [] };
     }
-    if (yamls[0] && (yamls[0]['/properties'] || yamls[0]['/schema'])) {
+    if (yamls[0] && (yamls[0]['/properties'] || yamls[0]['/schema'] || yamls[0]['/import'])) {
         const header = yamls[0];
         return { header, statements: yamls.slice(1) };
     }
@@ -22,7 +29,7 @@ export const compilePkt = (src: string, uri: string): IPkt => {
 }
 
 export class PktRuntime {
-    buildProperties(properties: any, parentValues: IValues): any {
+    private buildProperties(properties: any, parentValues: IValues): any {
         const values = {
             cluster: null,
             env: null,
@@ -47,21 +54,19 @@ export class PktRuntime {
         }
     }
 
-    executeFile(vm: ILanguageVm<PktRuntime>, scope: IScope, rpath: string, strictValues: IValues) {
+    private executeFile(vm: ILanguageVm<PktRuntime>, scope: IScope, rpath: string, strictValues: IValues) {
         if (rpath.toLowerCase().endsWith('.pkt')) {
             const { uri, data } = scope.loadPkt(rpath);
             this.checkStrictCheckedValues(data.header, strictValues, uri);
 
-            scope.child({ objects: scope.objects }, (cscope: IScope) => {
-                const evaluatedValues = strictValues ? this.evalObject(vm, scope, strictValues) : {};
-                cscope.defineValues(evaluatedValues);
-                vm.execute(cscope, { uri, pkt: data, withObject: false }, 'pkt:/pkt');
+            const values = strictValues ? this.evalObject(vm, scope, strictValues) : {};
+            scope.child2({ uri, values }, (cscope: IScope) => {
+                vm.execute(cscope, { uri, pkt: data }, PKT_INITIAL_STATE);
             });
         } else {
-            const { data } = scope.loadText(rpath);
-            scope.child({ objects: scope.objects }, (cscope: IScope) => {
-                const evaluatedValues = strictValues ? this.evalObject(vm, scope, strictValues) : {};
-                cscope.defineValues(evaluatedValues);
+            const { uri, data } = scope.loadText(rpath);
+            const values = strictValues ? this.evalObject(vm, scope, strictValues) : {};
+            scope.child2({ uri, values }, (cscope: IScope) => {
                 vm.runtime.evalTemplateAll(vm, cscope, data)
                     .filter(o => o)
                     .forEach(o => cscope.add(o));
@@ -69,15 +74,23 @@ export class PktRuntime {
         }
     }
 
-    expandStyleSheet(vm: ILanguageVm<PktRuntime>, scope: IScope, object: any): void {
+    private importFile(vm: ILanguageVm<PktRuntime>, scope: IScope, rpath: string) {
+        if (!rpath.toLowerCase().endsWith('.pkt')) {
+            throw scope.error(`can not import non pkt file ${rpath}`);
+        }
+        const { uri, data } = scope.loadPkt(rpath);
+        vm.execute(scope, { uri, pkt: data }, PKT_IMPORT_INITIAL_STATE);
+    }
+
+    private expandStyleSheet(vm: ILanguageVm<PktRuntime>, scope: IScope, object: any): void {
         this.expandStyle(vm, scope, object);
     }
 
     // style
-    expandStyle = (vm: ILanguageVm<PktRuntime>, scope: IScope, object: any): void =>
+    private expandStyle = (vm: ILanguageVm<PktRuntime>, scope: IScope, object: any): void =>
         scope.styleSheet.apply(vm, scope, object);
 
-    expandCaretPath(object: any) {
+    private expandCaretPath(object: any) {
         forEachTreeObjectKey(object, (node: any, key: string, value: any) => {
             if (key.startsWith('^') && key.length > 1) {
                 delete node[key];
@@ -86,7 +99,7 @@ export class PktRuntime {
         });
     }
 
-    evalAllCustomTags(vm: ILanguageVm<PktRuntime>, scope: IScope, node: any): any {
+    private evalAllCustomTags(vm: ILanguageVm<PktRuntime>, scope: IScope, node: any): any {
         if (node instanceof CustomYamlTag) {
             return vm.eval(node, scope);
         } else if (Array.isArray(node)) {
@@ -102,7 +115,7 @@ export class PktRuntime {
         return node;
     }
 
-    deleteUndefined(node: any) {
+    private deleteUndefined(node: any) {
         if (node === undefined) {
             return;
         }
@@ -129,7 +142,7 @@ export class PktRuntime {
         }
     }
 
-    evalObject(vm: ILanguageVm<PktRuntime>, scope: IScope, object: any): any {
+    private evalObject(vm: ILanguageVm<PktRuntime>, scope: IScope, object: any): any {
         object = this.evalAllCustomTags(vm, scope, object);
         this.expandCaretPath(object);
         this.expandStyleSheet(vm, scope, object);
@@ -143,7 +156,7 @@ export class PktRuntime {
         const _ = getUnderscore();
         return _.template(tpl)(vm.sandbox(scope));
     }
-    evalTemplateAll(vm: ILanguageVm<PktRuntime>, scope: IScope, text: string): any[] {
+    private evalTemplateAll(vm: ILanguageVm<PktRuntime>, scope: IScope, text: string): any[] {
         try {
             const tpl = getUnderscore().template(text);
             const yaml = tpl(vm.sandbox(scope));
@@ -153,12 +166,32 @@ export class PktRuntime {
             throw scope.error('failed to parse template', e);
         }
     }
-}
+    // }
 
-const pktLanguage: ILanguageSpec<PktRuntime> = {
-    createRuntime() {
-        return new PktRuntime();
-    },
+    // const pktLanguage: ILanguageSpec<PktRuntime> = {
+    createLanguageSpec() {
+        const spec: ILanguageSpec<PktRuntime> = {
+            compile: this.compile,
+            initialState: PKT_INITIAL_STATE,
+            states: {},
+            sandbox: this.sandbox,
+        };
+        for (const key of Object.getOwnPropertyNames(PktRuntime.prototype)) {
+            const item = (this as any)[key];
+            if (typeof item == 'function') {
+                const m = key.match(/^([^_]+):(\d+):([^_]+)$/);
+                if (m) {
+                    const state = spec.states[m[1]] || (spec.states[m[1]] = {});
+                    state[m[3]] = {
+                        name: m[3],
+                        order: Number(m[2]),
+                        handler: (this as any)[key],
+                    };
+                }
+            }
+        }
+        return spec;
+    }
     compile(scope: IScope, src: string, uri: string): any {
         try {
             return {
@@ -169,344 +202,295 @@ const pktLanguage: ILanguageSpec<PktRuntime> = {
         } catch (e) {
             throw scope.error(`failed to parse yaml ${uri}`, e);
         }
-    },
+    }
     sandbox(scope: IScope, values?: IValues): any {
         const $ = values
             ? { ...scope, ...jslib(scope), ...values }
             : { ...scope, ...jslib(scope) };
         const sandbox = { $, console, Buffer, ...scope.values };
         return sandbox;
-    },
-    initialState: 'pkt:/pkt',
-    states: {
-        'pkt': {
-            ['/pkt']: {
-                name: '/pkt',
-                order: 100,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult => {
-                    if (!stmt) return {};
-                    if (!scope) throw 'no parent scope';
+    }
+    ['pkt:100:$initial'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        if (!stmt) return {};
+        if (!scope) throw 'no parent scope';
 
-                    const uri = stmt.uri;
-                    const pkt = stmt.pkt as IPkt;
-                    const withObject = stmt.withObject;
+        const uri = stmt.uri;
+        const pkt = stmt.pkt as IPkt;
+        const options = stmt.options as IPktOptions;
 
-                    scope.trace.into(() => {
-                        const values = JSON.parse(JSON.stringify(scope.values));
-                        scope.child({ uri, values }, cscope => {
-                            if (withObject) {
-                                cscope.objects = [...scope.objects];
-                            }
-
-                            cscope.trace.step('header');
-                            const rst = vm.execute(cscope, pkt.header, 'pkt:/pkt-header');
-                            if (rst.exit) {
-                                return {};
-                            }
-
-                            for (let i = 0; i < pkt.statements.length; ++i) {
-                                cscope.trace.step(i);
-                                const rst = vm.execute(cscope, pkt.statements[i], 'pkt-statement');
-                                if (rst.exit) {
-                                    return {};
-                                }
-                            }
-                        });
-                    });
+        scope.trace.into(() => {
+            const values = deepCloneWithFunction(scope.values);
+            scope.child2({ uri, values }, cscope => {
+                cscope.trace.step('header');
+                const rst = vm.execute(cscope, pkt.header, 'decl');
+                if (rst.exit) {
                     return {};
-                },
-            },
-            ['/pkt-header']: {
-                name: '/pkt-header',
-                order: 100,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult => {
-                    // 0. style sheets
-                    scope.trace.step('/stylesheet');
-                    scope.styleSheet = StyleSheet.Build(scope, stmt);
+                }
 
-                    // 2. build properties
-                    scope.trace.step('/properties');
-                    if (stmt['/properties']) {
-                        scope.values = vm.runtime.buildProperties(stmt['/properties'], scope.values);
-                    }
-
-                    // 3. validate schema
-                    if (stmt['/schema']) {
-                        scope.trace.step('schema');
-                        const schema = new JsonSchema(stmt['/schema']);
-                        const errors = schema.validate(scope.values);
-                        if (errors) {
-                            throw scope.error('property validation failed');
-                        }
-                    }
-
-                    // 4. build values
-                    if (stmt['/values']) {
-                        throw scope.error('header cannot have /values statement');
-                        // scope.trace.step('/values');
-                        // scope.values = {
-                        //     ...scope.values,
-                        //     ...scope.evalObject(stmt['/values'] || {}),
-                        // };
-                    }
-
-                    // 4. build values
-                    if (stmt['/assign']) {
-                        throw scope.error('header cannot have /assign statement');
-                        // scope.trace.step('/assign');
-                        // scope.values = {
-                        //     ...scope.values,
-                        //     ...scope.evalObject(stmt['/assign'] || {}),
-                        // };
-                    }
-
-                    return {};
-                },
-            },
-        },
-        'pkt-statement': {
-            ['/if']: {
-                name: '/if',
-                order: 0,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: any): IPkStatementResult =>
-                    vm.runtime.evalObject(vm, scope, stmt['/if']) ? next(scope) : {},
-            },
-            ['/unless']: {
-                name: '/unless',
-                order: 1,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: any): IPkStatementResult =>
-                    vm.runtime.evalObject(vm, scope, stmt['/unless']) ? {} : next(scope),
-            },
-            ['/endIf']: {
-                name: '/endIf',
-                order: 3,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult =>
-                    vm.runtime.evalObject(vm, scope, stmt['/endIf']) ? { exit: true } : {},
-            },
-            ['/end']: {
-                name: '/end',
-                order: 4,
-                handler: (): IPkStatementResult => ({ exit: true }),
-            },
-            ['/select']: {
-                name: '/select',
-                order: 10,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: any): IPkStatementResult => {
-                    const predicate = selectors.compile(stmt['/select']);
-                    const objects = scope.objects.filter(predicate);
-                    const rst = scope.child({ objects }, cscope => {
-                        return next(cscope);
-                    });
+                for (let i = 0; i < pkt.statements.length; ++i) {
+                    cscope.trace.step(i);
+                    const rst = vm.execute(cscope, pkt.statements[i], 'stmt');
                     if (rst.exit) {
-                        return rst;
-                    }
-                    return {};
-                },
-            },
-            ['/foreach']: {
-                name: '/foreach',
-                order: 100,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult => {
-                    scope.trace.into(() => {
-                        scope.objects.forEach((o, i) => {
-                            scope.trace.step(i);
-                            scope.object = o;
-                            vm.eval(stmt['/foreach'], scope);
-                        });
-                    });
-                    delete scope.object;
-                    return {};
-                },
-            },
-            ['/values']: {
-                name: '/values',
-                order: 100,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult => {
-                    const evaluatedValues = vm.runtime.evalObject(vm, scope, stmt['/values'] || {});
-                    scope.defineValues(evaluatedValues);
-                    return {};
-                },
-            },
-            ['/assign']: {
-                name: '/assign',
-                order: 100,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult => {
-                    const values = vm.runtime.evalObject(vm, scope, stmt['/assign'] || {});
-                    for (const key of Object.keys(values)) {
-                        if (key in scope.values) {
-                            scope.values[key] = values[key];
-                        } else {
-                            const msg = `value ${key} is not defined`;
-                            throw pktError(scope, new Error(msg), msg);
-                        }
-                    }
-                    return {};
-                },
-            },
-            ['/exit']: {
-                name: '/exit',
-                order: 100,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult => {
-                    const value = vm.runtime.evalObject(vm, scope, stmt['/exit']);
-                    if (value) {
-                        return { exit: true };
-                    } else {
                         return {};
                     }
-                },
-            },
-            ['/add']: {
-                name: '/add',
-                order: 100,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult => {
-                    const object = vm.runtime.evalObject(vm, scope, stmt['/add']);
-                    scope.add(object);
-                    return {};
-                },
-            },
-            ['/script']: {
-                name: '/script',
-                order: 100,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult => {
-                    vm.eval(stmt['/script'], scope);
-                    return {};
-                },
-            },
+                }
+            });
+        });
+        return {};
+    }
+    ['import:100:$initial'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult {
+        if (!stmt) return {};
+        if (!scope) throw 'no parent scope';
 
-            ['/template']: {
-                name: '/template',
-                order: 100,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult => {
-                    const objects = vm.runtime.evalTemplateAll(vm, scope, stmt['/template']);
-                    objects.forEach(object => scope.add(object));
-                    return {};
-                },
-            },
-            ['/include']: {
-                name: '/include',
-                order: 100,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult => {
-                    const rpath = stmt['/include'];
-                    const _with = stmt['/with'] || {};
-                    scope.child({ objects: [] }, (cscope) => {
-                        vm.runtime.executeFile(vm, cscope, rpath, _with);
-                    })
-                    return {};
-                },
-            },
-            ['/apply']: {
-                name: '/apply',
-                order: 100,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult => {
-                    const rpath = stmt['/apply'];
-                    const _with = stmt['/with'] || {};
-                    vm.runtime.executeFile(vm, scope, rpath, _with);
-                    return {};
-                },
-            },
-            ['/jsonpath']: {
-                name: '/jsonpath',
-                order: 100,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult => {
-                    const query = stmt['/jsonpath'];
-                    const apply = stmt['.apply'];
-                    const merge = stmt['.merge'];
-                    const exec = stmt['.exec'];
+        const uri = stmt.uri;
+        const pkt = stmt.pkt as IPkt;
+        const withObject = stmt.withObject;
 
-                    const jsonpath = getJsonPath();
-                    scope.trace.into(() => {
-                        scope.objects.forEach((o, i) => {
-                            scope.trace.step(i);
-                            const nodes = jsonpath.nodes(o, query);
-                            nodes.forEach((node: any) => {
-                                scope.child({}, cscope => {
-                                    cscope.object = o;
-                                    cscope.value = node.value;
-                                    if (apply) {
-                                        const value = vm.runtime.evalObject(vm, scope, apply);
-                                        jsonpath.apply(o, jsonpath.stringify(node.path), () => value);
-                                    }
-                                    if (merge) {
-                                        const value = vm.runtime.evalObject(vm, scope, merge);
-                                        const merged = { ...node.value, ...value };
-                                        jsonpath.apply(o, jsonpath.stringify(node.path), () => merged);
-                                    }
-                                    if (exec) {
-                                        vm.eval(exec, cscope);
-                                    }
-                                });
-                            })
-                        });
-                    });
-                    return {};
-                },
-            },
-            ['/jsonpatch']: {
-                name: '/jsonpatch',
-                order: 100,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult => {
-
-                    const jsonpatch = getJsonPatch();
-                    const patch = Array.isArray(stmt['/jsonpatch']) ? stmt['/jsonpatch'] : [stmt['/jsonpatch']];
-                    scope.trace.into(() => {
-                        scope.objects.forEach((o, i) => {
-                            scope.trace.step(i);
-                            scope.object = o;
-                            const p = vm.runtime.evalObject(vm, scope, patch);
-                            jsonpatch.apply(o, p);
-                            delete scope.object;
-                        });
-                    });
-                    delete scope.object;
-                    return {};
-                },
-            },
-            ['/routine']: {
-                name: '/routine',
-                order: 100,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult => {
-                    scope.child({ objects: [] }, scope => {
-                        for (const cstmt of stmt['/routine']) {
-                            const rst = vm.execute(scope, cstmt, 'pkt-statement');
-                            if (rst.exit) {
-                                return rst;
-                            }
-                        }
-                    });
-
-                    return {};
-                },
-            },
-            ['/comment']: {
-                name: '/comment',
-                order: 200,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult => {
-                    return {};
-                },
-            },
-            ['default']: {
-                name: '/default',
-                order: 5,
-                handler: (vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any): IPkStatementResult => {
-                    if (!stmt) {
-                        return {};
-                    }
-                    const o: any = {};
-                    Object.keys(stmt)
-                        .filter(k => k.length == 0 || k[0] !== '/')
-                        .forEach(k => o[k] = stmt[k]);
-                    if (Object.keys(o).length != 0) {
-                        const object = vm.runtime.evalObject(vm, scope, o);
-                        if (object) {
-                            scope.add(object);
-                        }
-                    }
-                    return {};
-                },
-
+        scope.trace.into(() => {
+            scope.trace.step('header');
+            const rst = vm.execute(scope, pkt.header, 'decl');
+            if (rst.exit) {
+                return {};
             }
-        },
-    },
+
+            for (let i = 0; i < pkt.statements.length; ++i) {
+                scope.trace.step(i);
+                const rst = vm.execute(scope, pkt.statements[i], 'stmt');
+                if (rst.exit) {
+                    return {};
+                }
+            }
+        });
+        return {};
+    }
+    ['decl:100:/properties'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        // 2. build properties
+        scope.trace.step('/properties');
+        if (stmt['/properties']) {
+            scope.values = vm.runtime.buildProperties(stmt['/properties'], scope.values);
+        }
+        return next(scope);
+    }
+    ['decl:101:/schema'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        scope.trace.step('schema');
+        const schema = new JsonSchema(stmt['/schema']);
+        const errors = schema.validate(scope.values);
+        if (errors) {
+            throw scope.error('property validation failed');
+        }
+        return next(scope);
+    }
+    ['decl:102:/import'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        scope.trace.step('/import');
+        const rpath = stmt['/import'];
+
+        let childValues: IValues = {};
+        scope.child2({ objects: [], orphan: true }, (cscope) => {
+            vm.runtime.importFile(vm, cscope, rpath);
+            childValues = cscope.values;
+        });
+        scope.values = childValues;
+
+        return next(scope);
+    }
+    ['decl:103:/stylesheet'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        scope.trace.step('/stylesheet');
+        scope.styleSheet = StyleSheet.Build(scope, stmt);
+        return next(scope);
+    }
+    ['decl:104:/values'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        if (stmt['/values']) {
+            scope.trace.step('/values');
+            console.log('>>> ', scope.values)
+            scope.values = {
+                ...scope.values,
+                ...vm.runtime.evalObject(vm, scope, stmt['/values'] || {}),
+            };
+            console.log('>>>X', scope.values)
+        }
+        return next(scope);
+    }
+    ['decl:105:/assign'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        if (stmt['/assign']) {
+            throw scope.error('header cannot have /assign statement');
+            // scope.trace.step('/assign');
+            // scope.values = {
+            //     ...scope.values,
+            //     ...scope.evalObject(stmt['/assign'] || {}),
+            // };
+        }
+        return next(scope);
+    }
+
+    ['stmt:000:/if'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        return vm.runtime.evalObject(vm, scope, stmt['/if']) ? next(scope) : {};
+    }
+    ['stmt:001:/unless'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        return vm.runtime.evalObject(vm, scope, stmt['/unless']) ? {} : next(scope);
+    }
+    ['stmt:003:/endIf'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        return vm.runtime.evalObject(vm, scope, stmt['/endIf']) ? { exit: true } : {};
+    }
+    ['stmt:004:/end'](): IPkStatementResult {
+        return { exit: true }
+    }
+    ['stmt:010:/select'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        const predicate = selectors.compile(stmt['/select']);
+        const objects = scope.objects.filter(predicate);
+        const rst = scope.child2({ objects }, cscope => {
+            return next(cscope);
+        });
+        if (rst.exit) {
+            return rst;
+        }
+        return {};
+    }
+    ['stmt:100:/foreach'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        scope.trace.into(() => {
+            scope.objects.forEach((o, i) => {
+                scope.trace.step(i);
+                scope.object = o;
+                vm.eval(stmt['/foreach'], scope);
+            });
+        });
+        delete scope.object;
+        return {};
+    }
+    ['stmt:100:/values'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        const evaluatedValues = vm.runtime.evalObject(vm, scope, stmt['/values'] || {});
+        scope.defineValues(evaluatedValues);
+        return {};
+    }
+    ['stmt:100:/assign'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        const values = vm.runtime.evalObject(vm, scope, stmt['/assign'] || {});
+        for (const key of Object.keys(values)) {
+            if (key in scope.values) {
+                scope.values[key] = values[key];
+            } else {
+                const msg = `value ${key} is not defined`;
+                throw pktError(scope, new Error(msg), msg);
+            }
+        }
+        return {};
+    }
+    ['stmt:100:/exit'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        const value = vm.runtime.evalObject(vm, scope, stmt['/exit']);
+        if (value) {
+            return { exit: true };
+        } else {
+            return {};
+        }
+    }
+    ['stmt:100:/add'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        const object = vm.runtime.evalObject(vm, scope, stmt['/add']);
+        scope.add(object);
+        return {};
+    }
+    ['stmt:100:/script'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        vm.eval(stmt['/script'], scope);
+        return {};
+    }
+
+    ['stmt:100:/template'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        const objects = vm.runtime.evalTemplateAll(vm, scope, stmt['/template']);
+        objects.forEach(object => scope.add(object));
+        return {};
+    }
+    ['stmt:100:/include'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        const rpath = stmt['/include'];
+        const _with = stmt['/with'] || {};
+        scope.child2({ objects: [] }, (cscope) => {
+            vm.runtime.executeFile(vm, cscope, rpath, _with);
+        })
+        return {};
+    }
+    ['stmt:100:/apply'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        const rpath = stmt['/apply'];
+        const _with = stmt['/with'] || {};
+        vm.runtime.executeFile(vm, scope, rpath, _with);
+        return {};
+    }
+    ['stmt:100:/jsonpath'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        const query = stmt['/jsonpath'];
+        const apply = stmt['.apply'];
+        const merge = stmt['.merge'];
+        const exec = stmt['.exec'];
+
+        const jsonpath = getJsonPath();
+        scope.trace.into(() => {
+            scope.objects.forEach((o, i) => {
+                scope.trace.step(i);
+                const nodes = jsonpath.nodes(o, query);
+                nodes.forEach((node: any) => {
+                    scope.child2({}, cscope => {
+                        cscope.object = o;
+                        cscope.value = node.value;
+                        if (apply) {
+                            const value = vm.runtime.evalObject(vm, scope, apply);
+                            jsonpath.apply(o, jsonpath.stringify(node.path), () => value);
+                        }
+                        if (merge) {
+                            const value = vm.runtime.evalObject(vm, scope, merge);
+                            const merged = { ...node.value, ...value };
+                            jsonpath.apply(o, jsonpath.stringify(node.path), () => merged);
+                        }
+                        if (exec) {
+                            vm.eval(exec, cscope);
+                        }
+                    });
+                })
+            });
+        });
+        return {};
+    }
+    ['stmt:100:/jsonpatch'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+
+        const jsonpatch = getJsonPatch();
+        const patch = Array.isArray(stmt['/jsonpatch']) ? stmt['/jsonpatch'] : [stmt['/jsonpatch']];
+        scope.trace.into(() => {
+            scope.objects.forEach((o, i) => {
+                scope.trace.step(i);
+                scope.object = o;
+                const p = vm.runtime.evalObject(vm, scope, patch);
+                jsonpatch.apply(o, p);
+                delete scope.object;
+            });
+        });
+        delete scope.object;
+        return {};
+    }
+    ['stmt:100:/routine'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        scope.child2({ objects: [] }, scope => {
+            for (const cstmt of stmt['/routine']) {
+                const rst = vm.execute(scope, cstmt, 'stmt');
+                if (rst.exit) {
+                    return rst;
+                }
+            }
+        });
+
+        return {};
+    }
+    ['stmt:200:/comment'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        return {};
+    }
+    ['stmt:500:$default'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+        if (!stmt) {
+            return {};
+        }
+        const o: any = {};
+        Object.keys(stmt)
+            .filter(k => k.length == 0 || k[0] !== '/')
+            .forEach(k => o[k] = stmt[k]);
+        if (Object.keys(o).length != 0) {
+            const object = vm.runtime.evalObject(vm, scope, o);
+            if (object) {
+                scope.add(object);
+            }
+        }
+        return {};
+    }
+    initialState = PKT_INITIAL_STATE;
 };
 
-export const languageSpec = pktLanguage;
+export const createLanguageRuntime = () => new PktRuntime();

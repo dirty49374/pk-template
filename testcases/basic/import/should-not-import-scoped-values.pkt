@@ -1,0 +1,8 @@
+/properties:
+  p1: 1
+  p2: 2
+/import: with-scoped-values.pkt
+---
+p1: !js p1
+p2: !js p2
+p3: !js $.values.p3 === undefined

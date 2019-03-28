@@ -4,14 +4,13 @@ import { IObject } from '../common';
 import { StyleSheet } from './styles/styleSheet';
 import { PathResolver } from './pathResolver';
 import { PkProjectConf } from '../pk-conf/projectConf';
-import { pktError } from './utils';
+import { pktError, deepClone } from './utils';
 import { Trace } from './trace';
 import { isHttp } from '../pk-path/isHttp';
 import { getSyncRequest, getUnderscore } from '../lazy';
 import { readFileSync, readdirSync } from 'fs';
 import { parseYamlAll, parseYaml, parseYamlAsPkt } from '../pk-yaml';
 
-const clone = (obj: any): any => JSON.parse(JSON.stringify(obj));
 
 export class Scope extends PathResolver implements IScope {
     objects: IObject[];
@@ -40,15 +39,19 @@ export class Scope extends PathResolver implements IScope {
 
     add(object: any): void {
         let scope: IScope = this;
+        let objects = null;
         while (scope) {
-            scope.objects.push(object);
+            if (objects !== scope.objects) {
+                scope.objects.push(object);
+                objects = scope.objects;
+            }
             scope = scope.parent;
         }
     }
 
     child<T>({ uri, objects, values }: any, handler: (scope: IScope) => T): T {
         const scope = new Scope({
-            objects: objects ? [...objects] : [...this.objects],
+            objects: objects ? objects : this.objects,
             values: values || this.values,
             uri: uri || this.uri,
             parent: this,
@@ -69,17 +72,47 @@ export class Scope extends PathResolver implements IScope {
         return rst;
     }
 
+    child2<T>({ uri, objects, values, orphan }: any, handler: (scope: IScope) => T): T {
+        objects = objects ? objects : this.objects;
+        uri = uri || this.uri;
+
+        const scope = new Scope({
+            objects: orphan ? [] : objects,
+            values: orphan ? deepClone(this.values) : this.values,
+            uri: uri || this.uri,
+            parent: orphan ? null : this,
+            styleSheet: this.styleSheet,
+            $buildLib: jslib,
+        });
+
+        if (values) {
+            scope.defineValues(values);
+        }
+
+        const rst = handler(scope);
+
+        for (const key of Object.keys(scope.values)) {
+            if (key in this.values) {
+                this.values[key] = key in scope.pvalues
+                    ? scope.pvalues[key]
+                    : scope.values[key];
+            }
+        }
+
+        return rst;
+    }
+
     defineValues(values: IValues) {
         for (const key of Object.keys(values)) {
             if (!(key in this.pvalues)) {
                 this.pvalues[key] = this.values[key];
             }
         }
-        this.values = {
-            ...this.values,
-            ...values,
-        };
-
+        Object.assign(this.values, values);
+        //  = {
+        //     ...this.values,
+        //     ...values,
+        // };
     }
 
     assignValues(values: IValues) {
@@ -185,7 +218,7 @@ export class Scope extends PathResolver implements IScope {
     static Create(values: IValues, uri: string, parent: IScope | null, objects: IObject[], styleSheet: IStyleSheet): IScope {
         const scope = new Scope({
             objects: objects ? [...objects] : [],
-            values: values ? clone(values) : {},
+            values: values ? deepClone(values) : {},
             uri: uri || '.',
             styleSheet: styleSheet || (parent ? parent.styleSheet : null),
             parent: parent || null,

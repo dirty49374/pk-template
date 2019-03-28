@@ -1,0 +1,7 @@
+/import: normal.pkt
+/values:
+  p1: 1
+  p2: 2
+---
+p1: !js p1
+p2: !js p2

@@ -1,0 +1,8 @@
+/properties:
+  p1: 1
+  p2: 2
+/import: with-object.pkt
+---
+p1: !js p1
+p2: !js p2
+c: !js $.objects.length

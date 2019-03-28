@@ -25,15 +25,15 @@ describe('pkt testcases', () => {
                 if (spec == null) {
                     continue;
                 }
+                // if (testName != 'properties') continue;
                 describe(testName, () => {
                     for (const testCaseName of Object.keys(spec.expected)) {
                         const expected = spec.expected[testCaseName];
                         it(testCaseName, () => {
-                            if (expected.throw) {
+                            if (expected === 'throws') {
                                 assert.throws(() => {
                                     executePkt([], spec.input, join(testCaseRoot, category, testName, `${testCaseName}.pkt`));
                                 });
-
                             } else {
                                 let actual = null;
                                 try {

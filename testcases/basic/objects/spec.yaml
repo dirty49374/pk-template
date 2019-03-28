@@ -1,6 +1,6 @@
 input:
 expected:
-  basic:
+  can-create-object:
     - count: 0
     - count: 1
     - count: 2

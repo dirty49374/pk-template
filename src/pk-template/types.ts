@@ -94,6 +94,7 @@ export interface IScope {
     resolve(relpath: string): string;
     add(object: any): void;
     child({ uri, objects }: any, handler: IScopeHandler): any;
+    child2({ uri, objects, values, orphan }: any, handler: IScopeHandler): any;
 
     defineValues(values: IValues): void;
     assignValues(values: IValues): void;
@@ -141,7 +142,6 @@ export interface IPkStatementResult {
 }
 
 export interface ILanguageSpec<T extends ILanguageRuntime> {
-    createRuntime: () => T;
     compile(scope: IScope, src: string, uri: string): any;
     initialState: string;
     states: {
@@ -151,6 +151,7 @@ export interface ILanguageSpec<T extends ILanguageRuntime> {
 }
 
 export interface ILanguageRuntime {
+    createLanguageSpec(): any;
 }
 
 export interface ILanguageVmBase {

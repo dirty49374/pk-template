@@ -2,27 +2,32 @@
 import { IScope, IStatement, IStatementSpec, IPkStatementResult, ILanguageRuntime, ILanguageSpec, ILanguageVm, IValues } from './types';
 import { CustomYamlTag } from '../pk-yaml/customTags';
 
+export type NextStatement = (scope: IScope) => IPkStatementResult;
+
 export class LanguageVm<T extends ILanguageRuntime> implements ILanguageVm<T> {
     private state: string = '';
-    constructor(private languageSpec: ILanguageSpec<T>, public runtime: T) {
+    private languageSpec: ILanguageSpec<T>;
+    constructor(public runtime: T) {
+        this.languageSpec = runtime.createLanguageSpec();
     }
 
-    findStatementSpec(stmt: IStatement): IStatementSpec<T>[] {
-        const stmtSpecs = this.languageSpec.states[this.state];
+    findStatementSpec(state: string, stmt: IStatement): IStatementSpec<T>[] {
+        const stmtSpecs = this.languageSpec.states[state];
         if (!stmt) {
-            if (stmtSpecs['default']) {
-                return [stmtSpecs['default']];
+            if (stmtSpecs['$default']) {
+                return [stmtSpecs['$default']];
             }
             return [];
         }
 
         let specs = Object.keys(stmt)
+            .filter(k => k[0] === '/')
             .map(k => stmtSpecs[k])
             .filter(s => s)
             .sort((a, b) => a.order - b.order);
 
-        if (stmtSpecs['default']) {
-            specs.push(stmtSpecs['default']);
+        if (stmtSpecs['$default']) {
+            specs.push(stmtSpecs['$default']);
         }
 
         return specs;
@@ -57,11 +62,14 @@ export class LanguageVm<T extends ILanguageRuntime> implements ILanguageVm<T> {
             const lastState = this.state;
             this.state = state;
 
-            const specs = this.findStatementSpec(stmt);
+            const specs = this.findStatementSpec(state, stmt);
             if (specs.length != 0) {
                 const run = (scope: IScope, left: IStatementSpec<T>[]): IPkStatementResult => {
-                    const spec = left.splice(0, 1)[0];
-                    return spec.handler(this, scope, stmt, (scope: IScope) => left.length != 0 ? run(scope, left) : {});
+                    const spec = left.shift();
+                    if (!spec) {
+                        return {};
+                    }
+                    return spec.handler(this, scope, stmt, (scope: IScope) => run(scope, left));
                 }
                 const rst = run(scope, specs);
                 if (rst.exit) {
@@ -78,15 +86,14 @@ export class LanguageVm<T extends ILanguageRuntime> implements ILanguageVm<T> {
 
     run(scope: IScope, path: string) {
         const { uri, data } = scope.loadText(path);
-        scope.child({ uri }, cscope => {
+        scope.child2({ uri }, cscope => {
             const code = this.languageSpec.compile(scope, data, uri); 2
             this.execute(cscope, code, this.languageSpec.initialState);
         });
     }
 
-    static Run<T extends ILanguageRuntime>(langSpec: ILanguageSpec<T>, scope: IScope, uri: string): void {
-        const runtime = langSpec.createRuntime();
-        const vm = new LanguageVm(langSpec, runtime);
+    static Run<T extends ILanguageRuntime>(runtime: T, scope: IScope, uri: string): void {
+        const vm = new LanguageVm<T>(runtime);
         vm.run(scope, uri);
     }
 }

@@ -1,6 +1,7 @@
 import { IPkModule } from '.';
 import { execSync } from 'child_process';
 import { preserveDir } from '../pk-util/preserveDir';
+import { existsSync } from 'fs';
 
 export const MODULE_DIR = 'pk-modules';
 
@@ -23,6 +24,11 @@ export const cloneModule = async (module: IPkModule, isGlobal: boolean) => {
         } else if (module.tag) {
             console.log(`* checking out tags/${module.tag} tag ...`)
             execSync(`git checkout ${module.tag}`)
+        }
+
+        if (existsSync('package.json')) {
+            console.log('* updating npm modules');
+            execSync('npm install');
         }
 
         console.log(`* done`);
@@ -48,6 +54,11 @@ export const updateModule = async (module: IPkModule) => {
             console.log(`* checking out ${module.tag} tag ...`)
             execSync(`git reset --hard`);
             execSync(`git checkout tags/${module.tag}`)
+        }
+
+        if (existsSync('package.json')) {
+            console.log('* updating npm modules');
+            execSync('npm install');
         }
     });
 }

@@ -1,0 +1,7 @@
+/values:
+  p1: !js () => 13
+  p2: !js () => 23
+---
+must: descard this
+---
+must: descard this

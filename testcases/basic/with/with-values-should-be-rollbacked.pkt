@@ -1,0 +1,38 @@
+/properties:
+  p1: 1
+  p2: 2
+---
+p1: !js p1
+p2: !js p2
+---
+/include: include.pkt
+/with:
+  p1: !js p1 + 10
+  p2: !js p2 + 18
+---
+p1: !js p1
+p2: !js p2
+---
+/include: include.yaml
+/with:
+  p1: !js p1 + 10
+  p2: !js p2 + 18
+---
+p1: !js p1
+p2: !js p2
+---
+/apply: include.pkt
+/with:
+  p1: !js p1 + 10
+  p2: !js p2 + 18
+---
+p1: !js p1
+p2: !js p2
+---
+/apply: include.yaml
+/with:
+  p1: !js p1 + 10
+  p2: !js p2 + 18
+---
+p1: !js p1
+p2: !js p2

@@ -1,6 +1,0 @@
-input:
-  p1: 1
-  p2: 2
-expected:
-  test:
-    throw: true

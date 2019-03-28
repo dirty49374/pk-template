@@ -1,0 +1,17 @@
+input:
+  p1: 1
+  p2: 2
+expected:
+  # should-pass-declared-values-only-when-properties-tag-exists:
+  #   - p1: 1
+  #   - p2: -2
+  # any-values-can-pass-without-properties-tag-basic:
+  #   - p1: 1
+  #   - p2: 2
+  # any-values-can-pass-without-properties-tag-nested:
+  #   - p1: 1
+  #   - p2: 2
+  #   - subparm1: 1
+  #   - subparm2: 2
+  should-pass-function-values:
+    - f1: 100

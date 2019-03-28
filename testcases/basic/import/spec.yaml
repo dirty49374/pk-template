@@ -1,0 +1,22 @@
+input:
+expected:
+  should-import-values:
+    - p1: 11
+      p2: 21
+  should-import-values-not-in-parent:
+    - p1: 11
+      p2: 21
+  should-not-import-objects:
+    - p1: 12
+      p2: 22
+      c: 0
+  should-not-import-scoped-values:
+    - p1: 12
+      p2: 22
+      p3: true
+  should-evaluate-before-values:
+    - p1: 1
+      p2: 2
+  should-import-function-values:
+    - p1: 13
+      p2: 23
