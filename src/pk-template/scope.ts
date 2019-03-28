@@ -4,7 +4,7 @@ import { IObject } from '../common';
 import { StyleSheet } from './styles/styleSheet';
 import { PathResolver } from './pathResolver';
 import { PkProjectConf } from '../pk-conf/projectConf';
-import { pktError, deepClone } from './utils';
+import { pktError, deepCloneWithFunction } from './utils';
 import { Trace } from './trace';
 import { isHttp } from '../pk-path/isHttp';
 import { getSyncRequest, getUnderscore } from '../lazy';
@@ -78,7 +78,7 @@ export class Scope extends PathResolver implements IScope {
 
         const scope = new Scope({
             objects: orphan ? [] : objects,
-            values: orphan ? deepClone(this.values) : this.values,
+            values: orphan ? deepCloneWithFunction(this.values) : this.values,
             uri: uri || this.uri,
             parent: orphan ? null : this,
             styleSheet: this.styleSheet,
@@ -218,7 +218,7 @@ export class Scope extends PathResolver implements IScope {
     static Create(values: IValues, uri: string, parent: IScope | null, objects: IObject[], styleSheet: IStyleSheet): IScope {
         const scope = new Scope({
             objects: objects ? [...objects] : [],
-            values: values ? deepClone(values) : {},
+            values: values ? deepCloneWithFunction(values) : {},
             uri: uri || '.',
             styleSheet: styleSheet || (parent ? parent.styleSheet : null),
             parent: parent || null,
