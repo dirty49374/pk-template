@@ -16,7 +16,7 @@ export class PkProjectConf {
         this.data.apps.push(app);
     }
     getApp = (name: string): IPkApp | undefined => this.data.apps.find(app => app.name == name);
-    prepareEnv(envName: string) {
+    prepareEnv(envName: string): IPkEnv {
         if (!this.data.envs) {
             this.data.envs = [];
         }
@@ -31,7 +31,7 @@ export class PkProjectConf {
         this.data.envs.push(newEnv);
         return newEnv;
     }
-    prepareAppEnv(appName: string, envName: string) {
+    prepareAppEnv(appName: string, envName: string): IPkEnv {
         const app = this.getApp(appName);
         if (!app) {
             throw new Error(`app ${appName} does not exists`);

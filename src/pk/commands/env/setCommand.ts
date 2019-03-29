@@ -18,6 +18,10 @@ export default (pk: IPkCommandInfo) => ({
                     const data = require('yargs')(argv._.slice(2)).argv;
                     delete data._;
                     delete data['$0'];
+                    if (data.branch) {
+                        env.branch = data.branch;
+                        delete data.branch;
+                    }
                     env.values = {
                         ...env.values,
                         ...data
@@ -30,6 +34,10 @@ export default (pk: IPkCommandInfo) => ({
                     const data = require('yargs')(argv._.slice(2)).argv;
                     delete data._;
                     delete data['$0'];
+                    if (data.branch) {
+                        env.branch = data.branch;
+                        delete data.branch;
+                    }
                     env.values = {
                         ...env.values,
                         ...data

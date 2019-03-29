@@ -7,6 +7,7 @@ export interface IPkProject {
 
 export interface IPkEnv {
     name: string;
+    branch?: string;
     values: IValues;
 }
 
