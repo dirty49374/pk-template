@@ -72,3 +72,12 @@ export function getAjv() {
     _ajv = new Ajv({ allErrors: true });
     return _ajv;
 }
+
+let _table: any = null;
+export function getTable() {
+    if (_table) {
+        return _table;
+    }
+    _table = require('table').table;
+    return _table;
+}
