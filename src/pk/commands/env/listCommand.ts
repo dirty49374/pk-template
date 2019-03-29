@@ -11,38 +11,47 @@ export default () => ({
         await tryCatch(async () => {
             await atProjectDir(async (projectRoot, projectConf) => {
 
-                const getValueKeys = (envs: IPkEnv[]) => {
-                    return envs.reduce((sum: string[], e) => [...new Set([...sum, ...Object.keys(e.values)])], []);
-                }
+                const buildTable = (envs: IPkEnv[]): string => {
+                    const convertToPlainObject = (env: IPkEnv) => {
+                        return {
+                            name: env.name,
+                            branch: env.branch,
+                            ...env.values,
+                        } as any;
+                    }
 
-                const extractEnvValues = (env: IPkEnv, valueKeys: string[]): string[] => {
-                    const values = valueKeys.map(key => env.values[key] || '');
-                    return [
-                        env.name,
-                        ...values.map(value => typeof (value) === 'object' ? dumpYaml(value) : value)
-                    ]
-                }
+                    const buildTableHeader = (envs: Object[]) => {
+                        const columns: any = {};
+                        envs.forEach(e => Object.assign(columns, e));
+                        return Object.keys(columns);
+                    }
 
-                const table = getTable();
+                    const table = getTable();
+                    const plainObj = envs.map(convertToPlainObject);
+                    const header = buildTableHeader(plainObj);
+                    const content = plainObj.map(row => header
+                        .map(col => row[col] || '')
+                        .map(col => typeof col === 'object' ? dumpYaml(col) : col)
+                    );
+                    return table([header, ...content]);
+                }
 
                 console.log('* project environments');
-                const valueKeys = getValueKeys(projectConf.data.envs);
-                const envs: any = projectConf.data.envs.reduce((sum, env) => ({ ...sum, [env.name]: extractEnvValues(env, valueKeys) }), {});
-                if (projectConf.data.envs.length) {
-                    console.log(table([['name', ...valueKeys], ...Object.values(envs)]));
+                const envs = projectConf.data.envs;
+                if (envs.length) {
+                    const table = buildTable(projectConf.data.envs)
+                    console.log(table);
                 } else {
-                    console.log('- empty');
-                    console.log();
+                    console.log('- empty\n');
                 }
 
                 for (const app of projectConf.data.apps) {
                     if (app.envs) {
-                        const appOnlyEnvs = app.envs.filter(e => !envs[e.name])
+                        const appOnlyEnvs = app.envs.filter(e => !envs.find(env => env.name === e.name))
                         if (appOnlyEnvs.length) {
                             console.log(`* app '${app.name}' only environments`);
-                            const valueKeys = getValueKeys(appOnlyEnvs);
-                            const values = appOnlyEnvs.map(env => extractEnvValues(env, valueKeys));
-                            console.log(table([['name', ...valueKeys], ...values]));
+                            const table = buildTable(appOnlyEnvs)
+                            console.log(table);
                         }
                     }
                 }
