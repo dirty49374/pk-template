@@ -12,6 +12,7 @@ import { homedir } from 'os';
 import { visitEachAppAndEnv, tryCatch } from '../../libs';
 import { IPkCommandInfo } from "../../types";
 import { existsPkd } from '../../../pk-deploy/exists';
+import { matchBranchIfExist } from '../../../pk-deploy/match';
 
 interface IApplyStep {
     name: string;
@@ -222,6 +223,7 @@ export default (pk: IPkCommandInfo) => ({
     desc: 'apply deployments to kubernetes',
     builder: (yargs: any) => yargs
         .option('all', { describe: 'deploy all apps and envs', boolean: true })
+        .option('branch', { aliases: ['b'], describe: 'filter deployment using branch specified in env' })
         .option('dry-run', { alias: ['dry'], describe: 'dry run', boolean: true })
         .option('immediate', { alias: ['imm'], describe: 'execute immediately without initial 5 seconds delay', boolean: true })
         .option('yes', { alias: ['y'], describe: 'overwrite without confirmation', boolean: true }),
@@ -233,6 +235,10 @@ export default (pk: IPkCommandInfo) => ({
 
             await visitEachAppAndEnv(argv.app, argv.env, async (projectRoot, projectConf, app, envName) => {
                 if (!existsPkd(envName)) {
+                    return;
+                }
+                const env = projectConf.getMergedEnv(app.name, envName);
+                if (!matchBranchIfExist(env, argv.branch)) {
                     return;
                 }
                 await new Command(argv, app.name, envName).execute();

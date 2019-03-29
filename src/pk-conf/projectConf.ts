@@ -62,7 +62,7 @@ export class PkProjectConf {
         }
 
         return {
-            name: envName,
+            ...env,
             values: {
                 ...(this.data.values || {}),
                 ...(env && env.values || {}),

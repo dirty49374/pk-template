@@ -6,12 +6,14 @@ import { visitEachAppAndEnv, tryCatch } from '../../libs';
 import { loadPkd } from '../../../pk-deploy/load';
 import { diffObjects } from '../../../pk-diff/diff-objects';
 import { IPkCommandInfo } from "../../types";
+import { matchBranchIfExist } from '../../../pk-deploy/match';
 
 export default (pk: IPkCommandInfo) => ({
     command: 'update [app] [env]',
     desc: 'update a pkd deployment file (update does not apply to clusters)',
     builder: (yargs: any) => yargs
         .option('all', { describe: 'all apps ane envs', boolean: false })
+        .option('branch', { aliases: ['b'], describe: 'filter deployment using branch specified in env' })
         .option('force', { aliases: ['f'], describe: 'overwrite pkd file when content is identical (changes timestamp)' })
         .option('yes', { aliases: ['y'], describe: 'overwrite without confirmation', boolean: true })
         .option('d', { describe: 'enable error debugging', boolean: false }),
@@ -21,6 +23,11 @@ export default (pk: IPkCommandInfo) => ({
                 throw new Error('use --all options');
             }
             await visitEachAppAndEnv(argv.app, argv.env, async (projectRoot, projectConf, app, envName) => {
+                const env = projectConf.getMergedEnv(app.name, envName);
+                if (!matchBranchIfExist(env, argv.branch)) {
+                    return;
+                }
+
                 const header = `* app = ${app.name}, env = ${envName}`.padEnd(30);
 
                 const oldDeployment = existsPkd(envName) ? loadPkd(envName) : null;
