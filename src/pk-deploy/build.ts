@@ -26,14 +26,19 @@ export const buildPkd = async (conf: PkProjectConf, appName: string, envName: st
     }
 
     env.values.env = envName;
-    env.values.namespace = conf.data.namespace
-        ? conf.data.namespace.replace(/({\w+})/g, (m, p1, p2) => {
+
+    const namespaceSpec = app.namespace || conf.data.namespace;
+    env.values.namespace = namespaceSpec
+        ? namespaceSpec.replace(/({\w+})/g, (m, p1, p2) => {
             const key = m.substr(1, m.length - 2);
             if (key == 'project') {
                 return conf.data.project.name;
             }
             if (key == 'app') {
                 return app.name;
+            }
+            if (key == 'env') {
+                return envName;
             }
             return env.values[key];
         })

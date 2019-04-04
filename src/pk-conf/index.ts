@@ -16,6 +16,7 @@ export interface IPkApp {
     name: string;
     envs?: IPkEnv[];
     owner?: string;
+    namespace?: string;
 }
 
 export interface IPkModule {
