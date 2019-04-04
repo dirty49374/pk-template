@@ -18,6 +18,7 @@ export default (pk: IPkCommandInfo) => {
       .option('immediate', { alias: ['imm'], describe: 'execute immediately without initial 5 seconds delay [--apply, --delete]', boolean: true })
       .option('yes', { alias: ['y'], describe: 'overwrite without confirmation [--apply, --delete]', boolean: true })
       .option('watch', { alias: 'w', describe: 'all apps and envs [--diff]', boolean: false })
+      .option('debug', { alias: 'd', describe: 'enable error debugging', boolean: true })
       .option('diff', { describe: 'diff app.pkt and pkd', boolean: true })
       .option('update', { describe: 'update deployment files (*.pkd)', boolean: true })
       .option('apply', { describe: 'apply deployment to cluster', boolean: true })
