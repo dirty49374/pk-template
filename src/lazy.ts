@@ -1,83 +1,94 @@
+import { readFileSync } from "fs";
 
 let _livescript: any = null;
 export function getLiveScript() {
-    return _livescript || (_livescript = require('livescript'));
+  return _livescript || (_livescript = require('livescript'));
 }
 
 let _coffeescript: any = null;
 export function getCoffeeScript() {
-    return _coffeescript || (_coffeescript = require('coffeescript'));
+  return _coffeescript || (_coffeescript = require('coffeescript'));
 }
 
 let _jsonpath: any = null;
 export function getJsonPath() {
-    return _jsonpath || (_jsonpath = require('jsonpath'));
+  return _jsonpath || (_jsonpath = require('jsonpath'));
 }
 
 let _jsonPatch: any = null;
 export function getJsonPatch() {
-    return _jsonPatch || (_jsonPatch = require('json-patch'));
+  return _jsonPatch || (_jsonPatch = require('json-patch'));
 }
 
 let _diff: any = null;
 export function getDiff() {
-    return _diff || (_diff = require('diff'));
+  return _diff || (_diff = require('diff'));
 }
 
 let _syncRequest: any = null;
 export function getSyncRequest() {
-    return _syncRequest || (_syncRequest = require('sync-request'));
+  return _syncRequest || (_syncRequest = require('sync-request'));
 }
 
 let _readlineSync: any = null;
 export function getReadlineSync() {
-    return _readlineSync || (_readlineSync = require('readline-sync'));
+  return _readlineSync || (_readlineSync = require('readline-sync'));
 }
 
 let _chalk: any = null;
 export function getChalk() {
-    return _chalk || (_chalk = require('chalk'));
+  return _chalk || (_chalk = require('chalk'));
 }
 
 let _sourceMap: any = null;
 export function getSourceMap(): any {
-    return _sourceMap || (_sourceMap = require('source-map'));
+  return _sourceMap || (_sourceMap = require('source-map'));
 }
 
 let _inquirer: any = null;
 export function getInquirer(): any {
-    return _inquirer || (_inquirer = require('inquirer'));
+  return _inquirer || (_inquirer = require('inquirer'));
 }
 
 let _underscore: any = null;
 export function getUnderscore() {
-    if (_underscore) {
-        return _underscore;
-    }
-    _underscore = require('underscore');
-    _underscore.templateSettings = {
-        interpolate: /\<\<\<\=(.+?)\>\>\>/g,
-        evaluate: /\<\<\<\_(.+?)\>\>\>/g,
-    };
-
+  if (_underscore) {
     return _underscore;
+  }
+  _underscore = require('underscore');
+  _underscore.templateSettings = {
+    interpolate: /\<\<\<\=(.+?)\>\>\>/g,
+    evaluate: /\<\<\<\_(.+?)\>\>\>/g,
+  };
+
+  return _underscore;
 }
 
 let _ajv: any = null;
 export function getAjv() {
-    if (_ajv) {
-        return _ajv;
-    }
-    const Ajv = require("ajv");
-    _ajv = new Ajv({ allErrors: true });
+  if (_ajv) {
     return _ajv;
+  }
+  const Ajv = require("ajv");
+  _ajv = new Ajv({ allErrors: true });
+  return _ajv;
 }
 
 let _table: any = null;
 export function getTable() {
-    if (_table) {
-        return _table;
-    }
-    _table = require('table').table;
+  if (_table) {
     return _table;
+  }
+  _table = require('table').table;
+  return _table;
+}
+
+
+let _version: any = null;
+export function getVersion() {
+  if (_version) {
+    return _version;
+  }
+  _version = JSON.parse(readFileSync(__dirname + '/../package.json', 'utf8')).version;
+  return _version;
 }

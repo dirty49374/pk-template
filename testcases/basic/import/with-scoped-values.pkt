@@ -1,9 +1,12 @@
 /values:
   p1: 12
+---
+/values:
   p2: 22
 ---
 /routine:
   - /values:
       p1: 100
+  - /values:
       p2: 200
       p3: 300

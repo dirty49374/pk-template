@@ -8,9 +8,9 @@ export default (pk: IPkCommandInfo) => {
   const applyCommand = require('./applyCommand').default(pk).handler;
 
   return {
-    command: 'deployment2 [app] [env]',
-    desc: 'deployment2 commands',
-    aliases: ['dep2', 'deploy2'],
+    command: 'deployment [app] [env] [cluster]',
+    desc: 'deployment commands',
+    aliases: ['dep', 'deploy'],
     builder: (yargs: any) => yargs
       .option('all', { describe: 'deploy all apps and envs', boolean: true })
       .option('branch', { aliases: ['b'], describe: 'filter deployment using branch specified in env' })

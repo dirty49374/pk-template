@@ -6,8 +6,8 @@ import { IPkdApplierOption } from "./options";
 import { homedir } from "os";
 import { join } from "path";
 
-export const deletePkd = async (projectName: string, appName: string, envName: string, cluster: string, options: IPkdApplierOption) => {
-  const deploymentName = `${projectName}-${appName}-${envName}`;
+export const deletePkd = async (projectName: string, appName: string, envName: string, clusterName: string, options: IPkdApplierOption) => {
+  const deploymentName = `${projectName}-${appName}-${envName}-${clusterName}`;
 
   const deleteObjects = async (keys: IResourceKey[]) => {
     const nonNamespaces = keys.filter(k => k.kind !== 'Namespace');
@@ -26,9 +26,9 @@ export const deletePkd = async (projectName: string, appName: string, envName: s
 
   const ui = new Progress(options);
   const kubeOption: IKubeCtlConfig = {
-    cluster: cluster,
+    cluster: clusterName,
     isDryRun: options.dryRun,
-    kubeConfig: join(homedir(), '.kube', cluster),
+    kubeConfig: join(homedir(), '.kube', clusterName),
   };
   const kube = new PkKubeCtl(kubeOption, ui);
 
@@ -50,13 +50,14 @@ export const deletePkd = async (projectName: string, appName: string, envName: s
   }
   const catalog = PkdCatalog.parse(spec.data.catalog);
   if (!catalog) {
-    console.error(`cannot find env ${envName} on context ${cluster}`)
+    console.error(`cannot find env ${envName} on context ${clusterName}`)
     process.exit(1);
     return;
   }
   const packageName = spec.data.header.name;
 
   const keys = catalog.getKeys();
-  deleteObjects(keys);
+  console.log('delete keys', keys)
+  // deleteObjects(keys);
   ui.success('success !!!');
 }

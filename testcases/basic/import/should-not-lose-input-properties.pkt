@@ -1,0 +1,12 @@
+/properties:
+  p1: null
+  p2: 100
+  p3: 200
+  p4: null
+/import: normal.pkt
+---
+p1: !js p1
+p2: !js p2
+p3: !js p3
+p4: !js p4
+c: !js $.objects.length

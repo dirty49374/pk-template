@@ -10,22 +10,24 @@ import { PkConf } from "../pk-conf/conf";
 import { homedir } from "os";
 import { compilePkt } from "../pk-template/languageSpec";
 import { IPkCommandInfo } from "./types";
+import { readFileSync } from "fs";
 
 async function main(argv: string[]) {
   const conf = PkConf.load();
   const { projectRoot, projectConf } = PkProjectConf.find();
-
+  const version = lazy.getVersion();
   const yargs = require('yargs')(argv)
     .scriptName("pk")
 
+  console.log(version);
   const pk: IPkCommandInfo = {
-    ...libs, ...lazy, ui: cmdui, projectRoot, projectConf, generate, yaml, jsonpatch, compilePkt
+    ...libs, ...lazy, ui: cmdui, projectRoot, projectConf, generate, yaml, jsonpatch, compilePkt, version
   };
   if (projectConf && projectRoot) {
     yargs
       .command(require('./commands/app').default(pk))
       .command(require('./commands/env').default(pk))
-      .command(require('./commands/deployment').default(pk))
+      // .command(require('./commands/deployment').default(pk))
       .command(require('./commands/deployment2').default(pk))
       ;
 

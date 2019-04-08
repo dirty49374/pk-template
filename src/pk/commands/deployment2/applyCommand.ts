@@ -9,7 +9,7 @@ import { loadPkd } from '../../../pk-deploy/load';
 import { IPkDeployment } from '../../../pk-deploy';
 import { join } from 'path';
 import { homedir } from 'os';
-import { visitEachAppAndEnv, tryCatch } from '../../libs';
+import { visitEachDeployments, tryCatch } from '../../libs';
 import { IPkCommandInfo } from "../../types";
 import { existsPkd } from '../../../pk-deploy/exists';
 import { matchBranchIfExist } from '../../../pk-deploy/match';
@@ -26,7 +26,7 @@ class Command extends Progress {
   private kube: PkKubeCtl;
   private kubeOption: IKubeCtlConfig;
 
-  constructor(private options: IPkctlApplyOptions, private app: string, private env: string) {
+  constructor(private options: IPkctlApplyOptions, private app: string, private env: string, private cluster: string) {
     super(options)
 
     this.kube = null as unknown as PkKubeCtl;
@@ -205,8 +205,8 @@ class Command extends Progress {
   }
 
   async execute() {
-    const pkd = loadPkd(this.env);
-    const cluster = pkd.header.env.values.cluster;
+    const pkd = loadPkd(this.env, this.cluster);
+    const cluster = this.cluster;
     const kubeConfig = join(homedir(), '.kube', cluster);
     this.kubeOption = {
       cluster: cluster,
@@ -234,15 +234,15 @@ export default (pk: IPkCommandInfo) => ({
         throw new Error('use --all options');
       }
 
-      await visitEachAppAndEnv(argv.app, argv.env, async (projectRoot, projectConf, app, envName) => {
-        if (!existsPkd(envName)) {
+      await visitEachDeployments(argv.app, argv.env, argv.cluster, async (projectRoot, projectConf, app, envName, clusterName) => {
+        if (!existsPkd(envName, clusterName)) {
           return;
         }
-        const env = projectConf.getMergedEnv(app.name, envName);
+        const env = projectConf.getMergedEnv(app.name, envName, clusterName);
         if (!matchBranchIfExist(env, argv.branch)) {
           return;
         }
-        await new Command(argv, app.name, envName).execute();
+        await new Command(argv, app.name, envName, clusterName).execute();
       })
     }, !!argv.d);
   }
