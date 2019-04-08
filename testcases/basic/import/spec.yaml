@@ -1,4 +1,6 @@
 input:
+  p1: null
+  p3: 300
 expected:
   should-import-values:
     - p1: 11
@@ -20,3 +22,9 @@ expected:
   should-import-function-values:
     - p1: 13
       p2: 23
+  should-not-lose-input-properties:
+    - p1: 11
+      p2: 21
+      p3: 300
+      p4: null
+      c: 0
