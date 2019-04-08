@@ -9,6 +9,7 @@ export interface IPkEnv {
     name: string;
     branch?: string;
     values: IValues;
+    clusters: string[];
 }
 
 export interface IPkApp {

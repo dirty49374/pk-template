@@ -1,7 +1,7 @@
 import { getChalk } from '../../../lazy';
 import { buildPkd } from '../../../pk-deploy/build';
 import { existsPkd } from '../../../pk-deploy/exists';
-import { visitEachAppAndEnv, tryCatch, atProjectDir } from '../../libs';
+import { visitEachDeployments, tryCatch, atProjectDir } from '../../libs';
 import { loadPkd } from '../../../pk-deploy/load';
 import { diffObjects } from '../../../pk-diff/diff-objects';
 import { IPkCommandInfo } from "../../types";
@@ -26,19 +26,19 @@ export default (pk: IPkCommandInfo) => ({
                 });
             } else {
                 console.log('* diff ========================');
-                await visitEachAppAndEnv(argv.app, argv.env, async (projectRoot, projectConf, app, envName) => {
-                    if (!existsPkd(envName)) {
-                        return;
-                    }
+                await visitEachDeployments(argv.app, argv.env, async (projectRoot, projectConf, app, envName) => {
+                    // if (!existsPkd(envName)) {
+                    //     return;
+                    // }
 
-                    const header = `* app = ${app.name}, env = ${envName}`.padEnd(30);
+                    // const header = `* app = ${app.name}, env = ${envName}`.padEnd(30);
 
-                    const oldDeployment = loadPkd(envName);
-                    const newDeployment = await buildPkd(projectConf, app.name, envName);
-                    const same = diffObjects(oldDeployment.objects, newDeployment.objects, '  ', header);
-                    if (same) {
-                        console.log(header, getChalk().green(`  same !!!`));
-                    }
+                    // const oldDeployment = loadPkd(envName);
+                    // const newDeployment = await buildPkd(projectConf, app.name, envName);
+                    // const same = diffObjects(oldDeployment.objects, newDeployment.objects, '  ', header);
+                    // if (same) {
+                    //     console.log(header, getChalk().green(`  same !!!`));
+                    // }
                 });
             }
 

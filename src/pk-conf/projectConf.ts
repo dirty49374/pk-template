@@ -27,6 +27,7 @@ export class PkProjectConf {
         const newEnv = {
             name: envName,
             values: {},
+            clusters: [],
         };
         this.data.envs.push(newEnv);
         return newEnv;
@@ -46,6 +47,7 @@ export class PkProjectConf {
         const newEnv = {
             name: envName,
             values: {},
+            clusters: [],
         };
         app.envs.push(newEnv);
         return newEnv;

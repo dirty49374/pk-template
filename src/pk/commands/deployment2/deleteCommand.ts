@@ -1,4 +1,4 @@
-import { visitEachAppAndEnv, tryCatch, atAppDir } from '../../libs';
+import { visitEachDeployments, tryCatch, atAppDir } from '../../libs';
 import { IPkCommandInfo } from "../../types";
 import { deletePkd } from '../../../pk-deploy/delete';
 import { IPkdApplierOption } from '../../../pk-deploy/options';
@@ -18,7 +18,7 @@ export default (pk: IPkCommandInfo) => ({
                 throw new Error('use --all options');
             }
 
-            await visitEachAppAndEnv(argv.app, argv.env, async (projectRoot, projectConf, app, envName) => {
+            await visitEachDeployments(argv.app, argv.env, async (projectRoot, projectConf, app, envName) => {
 
                 const opt: IPkdApplierOption = {
                     yes: argv.yes || false,

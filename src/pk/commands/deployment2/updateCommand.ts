@@ -2,7 +2,7 @@ import { getChalk, getReadlineSync } from '../../../lazy';
 import { buildPkd } from '../../../pk-deploy/build';
 import { savePkd } from '../../../pk-deploy/save';
 import { existsPkd } from '../../../pk-deploy/exists';
-import { visitEachAppAndEnv, tryCatch } from '../../libs';
+import { visitEachDeployments, tryCatch } from '../../libs';
 import { loadPkd } from '../../../pk-deploy/load';
 import { diffObjects } from '../../../pk-diff/diff-objects';
 import { IPkCommandInfo } from "../../types";
@@ -22,7 +22,7 @@ export default (pk: IPkCommandInfo) => ({
             if (!argv.app && !argv.env && !argv.all) {
                 throw new Error('use --all options');
             }
-            await visitEachAppAndEnv(argv.app, argv.env, async (projectRoot, projectConf, app, envName) => {
+            await visitEachDeployments(argv.app, argv.env, async (projectRoot, projectConf, app, envName, clusterName) => {
                 const env = projectConf.getMergedEnv(app.name, envName);
                 if (!matchBranchIfExist(env, argv.branch)) {
                     return;
@@ -30,7 +30,7 @@ export default (pk: IPkCommandInfo) => ({
 
                 const header = `* app = ${app.name}, env = ${envName}`.padEnd(30);
 
-                const oldDeployment = existsPkd(envName) ? loadPkd(envName) : null;
+                const oldDeployment = existsPkd(envName, clusterName) ? loadPkd(envName, clusterName) : null;
                 const newDeployment = await buildPkd(projectConf, app.name, envName);
                 if (newDeployment != null) {
                     if (oldDeployment) {

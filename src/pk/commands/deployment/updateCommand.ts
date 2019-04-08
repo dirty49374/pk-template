@@ -2,7 +2,7 @@ import { getChalk, getReadlineSync } from '../../../lazy';
 import { buildPkd } from '../../../pk-deploy/build';
 import { savePkd } from '../../../pk-deploy/save';
 import { existsPkd } from '../../../pk-deploy/exists';
-import { visitEachAppAndEnv, tryCatch } from '../../libs';
+import { visitEachDeployments, tryCatch } from '../../libs';
 import { loadPkd } from '../../../pk-deploy/load';
 import { diffObjects } from '../../../pk-diff/diff-objects';
 import { IPkCommandInfo } from "../../types";
@@ -22,7 +22,7 @@ export default (pk: IPkCommandInfo) => ({
             if (!argv.app && !argv.env && !argv.all) {
                 throw new Error('use --all options');
             }
-            await visitEachAppAndEnv(argv.app, argv.env, async (projectRoot, projectConf, app, envName) => {
+            await visitEachDeployments(argv.app, argv.env, async (projectRoot, projectConf, app, envName) => {
                 const env = projectConf.getMergedEnv(app.name, envName);
                 if (!matchBranchIfExist(env, argv.branch)) {
                     return;
@@ -30,33 +30,33 @@ export default (pk: IPkCommandInfo) => ({
 
                 const header = `* app = ${app.name}, env = ${envName}`.padEnd(30);
 
-                const oldDeployment = existsPkd(envName) ? loadPkd(envName) : null;
-                const newDeployment = await buildPkd(projectConf, app.name, envName);
-                if (newDeployment != null) {
-                    if (oldDeployment) {
-                        const same = diffObjects(oldDeployment.objects, newDeployment.objects, '  ', header);
-                        if (same) {
-                            if (argv.force) {
-                                savePkd(newDeployment);
-                                console.log(header, getChalk().green(` - same, force write !!!`));
-                            } else {
-                                console.log(header, getChalk().green(` - same, skipped !!!`));
-                            }
-                        } else {
-                            savePkd(newDeployment);
-                            console.log(header, getChalk().green(` - updated !!!`));
-                        }
-                    } else {
-                        if (newDeployment.objects.length > 2) {
-                            savePkd(newDeployment);
-                            console.log(header, getChalk().green(` - created !!!`));
-                        } else {
-                            console.log(header, getChalk().grey(` - no data !!!`));
-                        }
-                    }
-                } else {
-                    console.error(header, getChalk().red(` - failed to create package ${envName}`));
-                }
+                // const oldDeployment = existsPkd(envName) ? loadPkd(envName) : null;
+                // const newDeployment = await buildPkd(projectConf, app.name, envName);
+                // if (newDeployment != null) {
+                //     if (oldDeployment) {
+                //         const same = diffObjects(oldDeployment.objects, newDeployment.objects, '  ', header);
+                //         if (same) {
+                //             if (argv.force) {
+                //                 savePkd(newDeployment);
+                //                 console.log(header, getChalk().green(` - same, force write !!!`));
+                //             } else {
+                //                 console.log(header, getChalk().green(` - same, skipped !!!`));
+                //             }
+                //         } else {
+                //             savePkd(newDeployment);
+                //             console.log(header, getChalk().green(` - updated !!!`));
+                //         }
+                //     } else {
+                //         if (newDeployment.objects.length > 2) {
+                //             savePkd(newDeployment);
+                //             console.log(header, getChalk().green(` - created !!!`));
+                //         } else {
+                //             console.log(header, getChalk().grey(` - no data !!!`));
+                //         }
+                //     }
+                // } else {
+                //     console.error(header, getChalk().red(` - failed to create package ${envName}`));
+                // }
             });
         }, !!argv.d);
 

@@ -110,10 +110,10 @@ export const getEnvNames = (projectConf: PkProjectConf, app: IPkApp) => {
     return Object.keys(envs);
 }
 
-export const visitEachAppAndEnv = async (
+export const visitEachDeployments = async (
     appName: string | undefined | null,
     envName: string,
-    cbb: (projectRoot: string, projectConf: PkProjectConf, app: IPkApp, envName: string) => Promise<any>) => {
+    cbb: (projectRoot: string, projectConf: PkProjectConf, app: IPkApp, envName: string, clusterName: string) => Promise<any>) => {
 
     const cwd = process.cwd();
     const targetAppNames = (projectRoot: string, projectConf: PkProjectConf) => {
@@ -141,13 +141,15 @@ export const visitEachAppAndEnv = async (
 
         for (const appName of appNames) {
             await atAppDir(appName, async app => {
-                const envNames = targetEnvNames(projectConf, app);
-                if (envNames.length == 0) {
+                const envs = app.envs || projectConf.data.envs;
+                if (envs.length == 0) {
                     throw new Error('please specify env-name or use --all-envs option');
                 }
 
-                for (const envName of envNames) {
-                    await cbb(projectRoot, projectConf, app, envName);
+                for (const env of envs) {
+                    for (const cluster of env.clusters) {
+                        await cbb(projectRoot, projectConf, app, env.name, cluster);
+                    }
                 }
             });
         }

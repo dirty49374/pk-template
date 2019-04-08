@@ -9,7 +9,7 @@ import { loadPkd } from '../../../pk-deploy/load';
 import { IPkDeployment } from '../../../pk-deploy';
 import { join } from 'path';
 import { homedir } from 'os';
-import { visitEachAppAndEnv, tryCatch } from '../../libs';
+import { visitEachDeployments, tryCatch } from '../../libs';
 import { IPkCommandInfo } from "../../types";
 import { existsPkd } from '../../../pk-deploy/exists';
 import { matchBranchIfExist } from '../../../pk-deploy/match';
@@ -204,17 +204,17 @@ class Command extends Progress {
     }
 
     async execute() {
-        const pkd = loadPkd(this.env);
-        const cluster = pkd.header.env.values.cluster;
-        const kubeConfig = join(homedir(), '.kube', cluster);
-        this.kubeOption = {
-            cluster: cluster,
-            isDryRun: this.options.dryRun,
-            kubeConfig: kubeConfig,
-        };
-        this.packageName = pkd.header.name;
-        this.kube = new PkKubeCtl(this.kubeOption, this);
-        await this.apply(pkd);
+        // const pkd = loadPkd(this.env);
+        // const cluster = pkd.header.env.values.cluster;
+        // const kubeConfig = join(homedir(), '.kube', cluster);
+        // this.kubeOption = {
+        //     cluster: cluster,
+        //     isDryRun: this.options.dryRun,
+        //     kubeConfig: kubeConfig,
+        // };
+        // this.packageName = pkd.header.name;
+        // this.kube = new PkKubeCtl(this.kubeOption, this);
+        // await this.apply(pkd);
     }
 }
 
@@ -233,15 +233,15 @@ export default (pk: IPkCommandInfo) => ({
                 throw new Error('use --all options');
             }
 
-            await visitEachAppAndEnv(argv.app, argv.env, async (projectRoot, projectConf, app, envName) => {
-                if (!existsPkd(envName)) {
-                    return;
-                }
-                const env = projectConf.getMergedEnv(app.name, envName);
-                if (!matchBranchIfExist(env, argv.branch)) {
-                    return;
-                }
-                await new Command(argv, app.name, envName).execute();
+            await visitEachDeployments(argv.app, argv.env, async (projectRoot, projectConf, app, envName) => {
+                // if (!existsPkd(envName)) {
+                //     return;
+                // }
+                // const env = projectConf.getMergedEnv(app.name, envName);
+                // if (!matchBranchIfExist(env, argv.branch)) {
+                //     return;
+                // }
+                // await new Command(argv, app.name, envName).execute();
             })
         }, !!argv.d);
     }
