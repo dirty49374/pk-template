@@ -176,9 +176,25 @@ class Command extends Progress {
     }
     this.output();
   }
+  private addPkDeploymentNamespace(objects: IObject[]) {
+    const exists = objects.findIndex(o =>
+      o.apiVersion == 'v1' &&
+      o.kind == 'Namespace' &&
+      o.metadata.name == 'pk-deployments') != -1;
+    if (!exists) {
+      objects.push({
+        apiVersion: 'v1',
+        kind: 'Namespace',
+        metadata: {
+          name: 'pk-deployments',
+        }
+      });
+    }
+  }
 
   private async apply(pkz: IPkDeployment) {
     const objects = pkz.objects.filter((o: any) => o);
+    this.addPkDeploymentNamespace(objects);
     const steps = this.buildApplySteps(objects);
 
     this.precheckStep(objects, steps);
@@ -219,31 +235,17 @@ class Command extends Progress {
   }
 }
 
-export default (pk: IPkCommandInfo) => ({
-  command: 'apply [app] [env]',
-  desc: 'apply deployments to kubernetes',
-  builder: (yargs: any) => yargs
-    .option('all', { describe: 'deploy all apps and envs', boolean: true })
-    .option('branch', { aliases: ['b'], describe: 'filter deployment using branch specified in env' })
-    .option('dry-run', { alias: ['dry'], describe: 'dry run', boolean: true })
-    .option('immediate', { alias: ['imm'], describe: 'execute immediately without initial 5 seconds delay', boolean: true })
-    .option('yes', { alias: ['y'], describe: 'overwrite without confirmation', boolean: true }),
-  handler: async (argv: any) => {
-    await tryCatch(async () => {
-      if (!argv.app && !argv.env && !argv.all) {
-        throw new Error('use --all options');
+export default (pk: IPkCommandInfo) => async (argv: any) => {
+  await tryCatch(async () => {
+    await visitEachDeployments(argv.app, argv.env, argv.cluster, async (projectRoot, projectConf, app, envName, clusterName) => {
+      if (!existsPkd(envName, clusterName)) {
+        return;
       }
-
-      await visitEachDeployments(argv.app, argv.env, argv.cluster, async (projectRoot, projectConf, app, envName, clusterName) => {
-        if (!existsPkd(envName, clusterName)) {
-          return;
-        }
-        const env = projectConf.getMergedEnv(app.name, envName, clusterName);
-        if (!matchBranchIfExist(env, argv.branch)) {
-          return;
-        }
-        await new Command(argv, app.name, envName, clusterName).execute();
-      })
-    }, !!argv.d);
-  }
-});
+      const env = projectConf.getMergedEnv(app.name, envName, clusterName);
+      if (!matchBranchIfExist(env, argv.branch)) {
+        return;
+      }
+      await new Command(argv, app.name, envName, clusterName).execute();
+    })
+  }, !!argv.d);
+};

@@ -2,21 +2,21 @@ import { IPkCommandInfo } from "../../types";
 import nodemon from 'nodemon';
 
 export default (pk: IPkCommandInfo) => {
-  const diffCommand = require('./diffCommand').default(pk).handler;
-  const updateCommand = require('./updateCommand').default(pk).handler;
-  const deleteCommand = require('./deleteCommand').default(pk).handler;
-  const applyCommand = require('./applyCommand').default(pk).handler;
+  const diffHandler = require('./diffHandler').default(pk);
+  const updateHandler = require('./updateHandler').default(pk);
+  const deleteHandler = require('./deleteHandler').default(pk);
+  const applyHandler = require('./applyHandler').default(pk);
 
   return {
     command: 'deployment [app] [env] [cluster]',
     desc: 'deployment commands',
     aliases: ['dep', 'deploy'],
     builder: (yargs: any) => yargs
-      .option('all', { describe: 'deploy all apps and envs', boolean: true })
       .option('branch', { aliases: ['b'], describe: 'filter deployment using branch specified in env' })
       .option('dry-run', { alias: ['dry'], describe: 'dry run [--apply, --delete]', boolean: true })
       .option('immediate', { alias: ['imm'], describe: 'execute immediately without initial 5 seconds delay [--apply, --delete]', boolean: true })
       .option('yes', { alias: ['y'], describe: 'overwrite without confirmation [--apply, --delete]', boolean: true })
+      .option('force', { alias: ['f'], describe: 'force write pkd even if output is same [--update]', boolean: true })
       .option('watch', { alias: 'w', describe: 'all apps and envs [--diff]', boolean: false })
       .option('debug', { alias: 'd', describe: 'enable error debugging', boolean: true })
       .option('diff', { describe: 'diff app.pkt and pkd', boolean: true })
@@ -36,22 +36,22 @@ export default (pk: IPkCommandInfo) => {
       }
       if (argv.diff) {
         console.log("* diff ====================");
-        await diffCommand(argv);
+        await diffHandler(argv);
         console.log();
       }
       if (argv.update) {
         console.log("* update ====================");
-        await updateCommand(argv);
+        await updateHandler(argv);
         console.log();
       }
       if (argv.apply) {
         console.log("* apply ====================");
-        await applyCommand(argv);
+        await applyHandler(argv);
         console.log();
       }
       if (argv.delete) {
         console.log("* delete ====================");
-        await deleteCommand(argv);
+        await deleteHandler(argv);
         console.log();
       }
     },

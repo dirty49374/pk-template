@@ -146,6 +146,7 @@ export const visitEachDeployments = async (appName: string | undefined | null, e
             if (clusterName != 'all' && clusterName && clusterName != cluster) {
               continue;
             }
+
             console.error(`* app = ${app.name}, env = ${env.name}, cluster = ${cluster}`);
             await cbb(projectRoot, projectConf, app, env.name, cluster);
           }

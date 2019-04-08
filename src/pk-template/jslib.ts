@@ -6,6 +6,9 @@ import { createHash } from 'crypto';
 import { dumpYamlSortedKey, parseYaml as ParseYaml, dumpYaml } from '../pk-yaml';
 import { execSync } from 'child_process';
 
+let repoCache: string | null = null;
+const repoPathCache: any = {};
+
 const jslib = (scope: IScope) => {
   const lib = {
     indent: () => scope.trace ? ''.padEnd(scope.trace.depth() * 2) : '',
@@ -13,8 +16,8 @@ const jslib = (scope: IScope) => {
     log: (...msg: any[]) => log(...msg),
     last: () => scope.objects.length == 0 ? undefined : scope.objects[scope.objects.length - 1],
     sha256: (obj: any, len?: number) => sha256(obj, len),
-    repository: (ref?: string) => repository(ref),
-    repositoryPath: (path: string) => repositoryPath(path),
+    repository: (ref?: string) => repoCache || (repoCache = repository(ref)),
+    repositoryPath: (path: string) => repoPathCache[path] || (repoPathCache[path] = repositoryPath(path)),
     files: (path: string) => scope.listFiles(path).data,
     loadText: (path: string) => scope.loadText(path).data,
     loadPkt: (path: string) => scope.loadPkt(path).data,

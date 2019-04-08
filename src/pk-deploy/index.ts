@@ -10,6 +10,7 @@ export interface IPkDeploymentHeader {
   app: IPkApp;
   env: string;
   cluster: string;
+  namespace: string;
 }
 
 export interface IPkDeployment {
