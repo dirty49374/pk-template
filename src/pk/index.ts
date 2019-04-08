@@ -19,7 +19,6 @@ async function main(argv: string[]) {
   const yargs = require('yargs')(argv)
     .scriptName("pk")
 
-  console.log(version);
   const pk: IPkCommandInfo = {
     ...libs, ...lazy, ui: cmdui, projectRoot, projectConf, generate, yaml, jsonpatch, compilePkt, version
   };

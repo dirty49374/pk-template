@@ -13,227 +13,227 @@ import { parseYamlAll, parseYaml, parseYamlAsPkt } from '../pk-yaml';
 
 
 export class Scope extends PathResolver implements IScope {
-    objects: IObject[];
-    values: IValues;
-    pvalues: IValues;
-    object: IObject | null = null;
-    value: any;
-    parent: IScope;
-    $buildLib: any;
-    trace: ITrace;
-    conf?: PkProjectConf;
-    styleSheet: IStyleSheet;
+  objects: IObject[];
+  values: IValues;
+  pvalues: IValues;
+  object: IObject | null = null;
+  value: any;
+  parent: IScope;
+  $buildLib: any;
+  trace: ITrace;
+  conf?: PkProjectConf;
+  styleSheet: IStyleSheet;
 
-    constructor({ objects, values, uri, parent, styleSheet }: any) {
-        super(uri);
+  constructor({ objects, values, uri, parent, styleSheet }: any) {
+    super(uri);
 
-        this.objects = objects;
-        this.values = values;
-        this.pvalues = {};
-        this.uri = uri;
-        this.parent = parent;
-        this.styleSheet = styleSheet;
-        this.$buildLib = jslib;
-        this.trace = parent && parent.trace || new Trace('');
+    this.objects = objects;
+    this.values = values;
+    this.pvalues = {};
+    this.uri = uri;
+    this.parent = parent;
+    this.styleSheet = styleSheet;
+    this.$buildLib = jslib;
+    this.trace = parent && parent.trace || new Trace('');
+  }
+
+  add(object: any): void {
+    let scope: IScope = this;
+    let objects = null;
+    while (scope) {
+      if (objects !== scope.objects) {
+        scope.objects.push(object);
+        objects = scope.objects;
+      }
+      scope = scope.parent;
+    }
+  }
+
+  child<T>({ uri, objects, values }: any, handler: (scope: IScope) => T): T {
+    const scope = new Scope({
+      objects: objects ? objects : this.objects,
+      values: values || this.values,
+      uri: uri || this.uri,
+      parent: this,
+      styleSheet: this.styleSheet,
+      $buildLib: jslib,
+    });
+
+    const rst = handler(scope);
+
+    for (const key of Object.keys(scope.values)) {
+      if (key in this.values) {
+        this.values[key] = key in scope.pvalues
+          ? scope.pvalues[key]
+          : scope.values[key];
+      }
     }
 
-    add(object: any): void {
-        let scope: IScope = this;
-        let objects = null;
-        while (scope) {
-            if (objects !== scope.objects) {
-                scope.objects.push(object);
-                objects = scope.objects;
-            }
-            scope = scope.parent;
-        }
+    return rst;
+  }
+
+  child2<T>({ uri, objects, values, orphan }: any, handler: (scope: IScope) => T): T {
+    objects = objects ? objects : this.objects;
+    uri = uri || this.uri;
+
+    const scope = new Scope({
+      objects: orphan ? [] : objects,
+      values: orphan ? deepCloneWithFunction(this.values) : this.values,
+      uri: uri || this.uri,
+      parent: orphan ? null : this,
+      styleSheet: this.styleSheet,
+      $buildLib: jslib,
+    });
+
+    if (values) {
+      scope.defineValues(values);
     }
 
-    child<T>({ uri, objects, values }: any, handler: (scope: IScope) => T): T {
-        const scope = new Scope({
-            objects: objects ? objects : this.objects,
-            values: values || this.values,
-            uri: uri || this.uri,
-            parent: this,
-            styleSheet: this.styleSheet,
-            $buildLib: jslib,
-        });
+    const rst = handler(scope);
 
-        const rst = handler(scope);
-
-        for (const key of Object.keys(scope.values)) {
-            if (key in this.values) {
-                this.values[key] = key in scope.pvalues
-                    ? scope.pvalues[key]
-                    : scope.values[key];
-            }
-        }
-
-        return rst;
+    for (const key of Object.keys(scope.values)) {
+      if (key in this.values) {
+        this.values[key] = key in scope.pvalues
+          ? scope.pvalues[key]
+          : scope.values[key];
+      }
     }
 
-    child2<T>({ uri, objects, values, orphan }: any, handler: (scope: IScope) => T): T {
-        objects = objects ? objects : this.objects;
-        uri = uri || this.uri;
+    return rst;
+  }
 
-        const scope = new Scope({
-            objects: orphan ? [] : objects,
-            values: orphan ? deepCloneWithFunction(this.values) : this.values,
-            uri: uri || this.uri,
-            parent: orphan ? null : this,
-            styleSheet: this.styleSheet,
-            $buildLib: jslib,
-        });
+  defineValues(values: IValues) {
+    for (const key of Object.keys(values)) {
+      if (!(key in this.pvalues)) {
+        this.pvalues[key] = this.values[key];
+      }
+    }
+    Object.assign(this.values, values);
+    //  = {
+    //     ...this.values,
+    //     ...values,
+    // };
+  }
 
-        if (values) {
-            scope.defineValues(values);
-        }
+  assignValues(values: IValues) {
+    for (const key of Object.keys(values)) {
+      if (key in this.values) {
+        this.values[key] = values[key];
+      } else {
+        throw this.error(`value ${key} is not defined`);
+      }
+    }
+  }
 
-        const rst = handler(scope);
+  // loader
+  loadText(uri: string): { uri: string, data: string } {
+    uri = this.resolve(uri);
+    try {
+      return {
+        uri,
+        data: isHttp(uri)
+          ? getSyncRequest()('GET', uri).getBody('utf8')
+          : readFileSync(uri, 'utf8')
+      };
+    } catch (e) {
+      throw this.error(`failed to load ${uri}`, e);
+    }
+  }
 
-        for (const key of Object.keys(scope.values)) {
-            if (key in this.values) {
-                this.values[key] = key in scope.pvalues
-                    ? scope.pvalues[key]
-                    : scope.values[key];
-            }
-        }
+  loadYaml(uri: string): { uri: string, data: any } {
+    const rst = this.loadText(uri);
+    try {
+      return {
+        uri: rst.uri,
+        data: parseYaml(rst.data),
+      };
+    } catch (e) {
+      throw this.error(`failed to parse yaml ${uri}`, e);
+    }
+  }
 
-        return rst;
+  loadYamlAll(uri: string): { uri: string, data: any[] } {
+    const rst = this.loadText(uri);
+    try {
+      return {
+        uri: rst.uri,
+        data: parseYamlAll(rst.data),
+      };
+    } catch (e) {
+      throw this.error(`failed to parse yaml ${uri}`, e);
+    }
+  }
+
+  loadPkt(uri: string): { uri: string, data: IPkt } {
+    const rst = this.loadText(uri);
+    try {
+      const yamls = parseYamlAsPkt(rst.data, rst.uri);
+      if (yamls.length == 0) {
+        return { uri: rst.uri, data: { header: {}, statements: [] } }
+      }
+      if (yamls[0] && (yamls[0]['/properties'] || yamls[0]['/schema'])) {
+        const header = yamls[0];
+        return { uri: rst.uri, data: { header, statements: yamls.slice(1) } }
+      }
+      return {
+        uri: rst.uri,
+        data: { header: {}, statements: yamls },
+      };
+    } catch (e) {
+      throw this.error(`failed to parse yaml ${uri}`, e);
+    }
+  }
+
+  loadTemplate(uri: string): { uri: string, data: string } {
+    const rst = this.loadText(uri);
+    try {
+      return {
+        uri: rst.uri,
+        data: getUnderscore().template(rst.data),
+      };
+    } catch (e) {
+      throw this.error(`failed to parse template ${uri}`, e);
+    }
+  }
+
+  listFiles(uri: string): { uri: string, data: string[] } {
+    uri = this.resolve(uri);
+    if (isHttp(uri)) {
+      throw new Error(`cannot get directory listing from ${uri}`);
     }
 
-    defineValues(values: IValues) {
-        for (const key of Object.keys(values)) {
-            if (!(key in this.pvalues)) {
-                this.pvalues[key] = this.values[key];
-            }
-        }
-        Object.assign(this.values, values);
-        //  = {
-        //     ...this.values,
-        //     ...values,
-        // };
-    }
+    return {
+      uri,
+      data: readdirSync(uri),
+    };
+  }
 
-    assignValues(values: IValues) {
-        for (const key of Object.keys(values)) {
-            if (key in this.values) {
-                this.values[key] = values[key];
-            } else {
-                throw this.error(`value ${key} is not defined`);
-            }
-        }
-    }
+  log = (...args: any) => this.trace.log(...args);
 
-    // loader
-    loadText(uri: string): { uri: string, data: string } {
-        uri = this.resolve(uri);
-        try {
-            return {
-                uri,
-                data: isHttp(uri)
-                    ? getSyncRequest()('GET', uri).getBody('utf8')
-                    : readFileSync(uri, 'utf8')
-            };
-        } catch (e) {
-            throw this.error(`failed to load ${uri}`, e);
-        }
-    }
+  error(msg: string, error?: Error): Error {
+    const err = pktError(this, error || new Error(msg), msg);
+    return err;
+  }
 
-    loadYaml(uri: string): { uri: string, data: any } {
-        const rst = this.loadText(uri);
-        try {
-            return {
-                uri: rst.uri,
-                data: parseYaml(rst.data),
-            };
-        } catch (e) {
-            throw this.error(`failed to parse yaml ${uri}`, e);
-        }
-    }
+  static Create(values: IValues, uri: string, parent: IScope | null, objects: IObject[], styleSheet: IStyleSheet): IScope {
+    const scope = new Scope({
+      objects: objects ? [...objects] : [],
+      values: values ? deepCloneWithFunction(values) : {},
+      uri: uri || '.',
+      styleSheet: styleSheet || (parent ? parent.styleSheet : null),
+      parent: parent || null,
+      trace: new Trace('$'),
+    });
+    return scope;
+  }
 
-    loadYamlAll(uri: string): { uri: string, data: any[] } {
-        const rst = this.loadText(uri);
-        try {
-            return {
-                uri: rst.uri,
-                data: parseYamlAll(rst.data),
-            };
-        } catch (e) {
-            throw this.error(`failed to parse yaml ${uri}`, e);
-        }
-    }
-
-    loadPkt(uri: string): { uri: string, data: IPkt } {
-        const rst = this.loadText(uri);
-        try {
-            const yamls = parseYamlAsPkt(rst.data, rst.uri);
-            if (yamls.length == 0) {
-                return { uri: rst.uri, data: { header: {}, statements: [] } }
-            }
-            if (yamls[0]['/properties'] || yamls[0]['/schema']) {
-                const header = yamls[0];
-                return { uri: rst.uri, data: { header, statements: yamls.slice(1) } }
-            }
-            return {
-                uri: rst.uri,
-                data: { header: {}, statements: yamls },
-            };
-        } catch (e) {
-            throw this.error(`failed to parse yaml ${uri}`, e);
-        }
-    }
-
-    loadTemplate(uri: string): { uri: string, data: string } {
-        const rst = this.loadText(uri);
-        try {
-            return {
-                uri: rst.uri,
-                data: getUnderscore().template(rst.data),
-            };
-        } catch (e) {
-            throw this.error(`failed to parse template ${uri}`, e);
-        }
-    }
-
-    listFiles(uri: string): { uri: string, data: string[] } {
-        uri = this.resolve(uri);
-        if (isHttp(uri)) {
-            throw new Error(`cannot get directory listing from ${uri}`);
-        }
-
-        return {
-            uri,
-            data: readdirSync(uri),
-        };
-    }
-
-    log = (...args: any) => this.trace.log(...args);
-
-    error(msg: string, error?: Error): Error {
-        const err = pktError(this, error || new Error(msg), msg);
-        return err;
-    }
-
-    static Create(values: IValues, uri: string, parent: IScope | null, objects: IObject[], styleSheet: IStyleSheet): IScope {
-        const scope = new Scope({
-            objects: objects ? [...objects] : [],
-            values: values ? deepCloneWithFunction(values) : {},
-            uri: uri || '.',
-            styleSheet: styleSheet || (parent ? parent.styleSheet : null),
-            parent: parent || null,
-            trace: new Trace('$'),
-        });
-        return scope;
-    }
-
-    static CreateRoot(objects: IObject[], values: IValues) {
-        return Scope.Create(
-            values,
-            process.cwd() + '/',
-            null,
-            objects,
-            new StyleSheet(null),
-        );
-    }
+  static CreateRoot(objects: IObject[], values: IValues) {
+    return Scope.Create(
+      values,
+      process.cwd() + '/',
+      null,
+      objects,
+      new StyleSheet(null),
+    );
+  }
 }

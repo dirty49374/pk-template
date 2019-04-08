@@ -1,0 +1,9 @@
+/properties:
+  a0: hello
+  a1: null
+---
+/values:
+  a1: 101
+---
+/values:
+  a2: 21

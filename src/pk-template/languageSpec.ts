@@ -267,14 +267,22 @@ export class PktRuntime {
   }
   ['decl:102:/import'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
     scope.trace.step('/import');
-    const rpath = stmt['/import'];
+    let rpathes = stmt['/import'];
+    if (!Array.isArray(rpathes)) {
+      rpathes = [rpathes];
+    }
 
-    let childValues: IValues = {};
-    scope.child2({ objects: [], orphan: true }, (cscope) => {
-      vm.runtime.importFile(vm, cscope, rpath);
-      childValues = cscope.values;
-    });
-    scope.values = childValues;
+    for (const rpath of rpathes) {
+      let childValues: IValues = {};
+      scope.child2({ objects: [], orphan: true }, (cscope) => {
+        vm.runtime.importFile(vm, cscope, rpath);
+        childValues = cscope.values;
+      });
+      scope.values = {
+        ...scope.values,
+        ...childValues,
+      };
+    }
 
     return next(scope);
   }

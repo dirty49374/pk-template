@@ -1,10 +1,14 @@
 input:
+  a1: 100
   p1: null
   p3: 300
 expected:
   should-import-values:
     - p1: 11
       p2: 21
+      a0: hello
+      a1: 101
+      a2: 21
   should-import-values-not-in-parent:
     - p1: 11
       p2: 21

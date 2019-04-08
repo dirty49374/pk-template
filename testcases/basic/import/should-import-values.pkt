@@ -1,7 +1,12 @@
 /properties:
   p1: 1
   p2: 2
-/import: normal.pkt
+/import:
+- normal.pkt
+- with-properties.pkt
 ---
 p1: !js p1
 p2: !js p2
+a0: !js a0
+a1: !js a1
+a2: !js a2
