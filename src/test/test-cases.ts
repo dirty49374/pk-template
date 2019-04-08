@@ -7,51 +7,51 @@ import { dumpYaml } from '../pk-yaml';
 
 const testCaseRoot = join(__dirname, '../../testcases');
 const loadYaml = (category: string, test: string, file: string) => {
-    try {
-        const src = readFileSync(join(testCaseRoot, category, test, file), 'utf8');
-        return load(src);
-    } catch (e) {
-        return null;
-    }
+  try {
+    const src = readFileSync(join(testCaseRoot, category, test, file), 'utf8');
+    return load(src);
+  } catch (e) {
+    return null;
+  }
 }
 
 describe('pkt testcases', () => {
-    const categories = readdirSync(testCaseRoot);
-    for (const category of categories) {
-        describe(category, () => {
-            const tests = readdirSync(join(testCaseRoot, category));
-            for (const testName of tests) {
-                const spec = loadYaml(category, testName, 'spec.yaml');
-                if (spec == null) {
-                    continue;
-                }
-                // if (testName != 'properties') continue;
-                describe(testName, () => {
-                    for (const testCaseName of Object.keys(spec.expected)) {
-                        const expected = spec.expected[testCaseName];
-                        it(testCaseName, () => {
-                            if (expected === 'throws') {
-                                assert.throws(() => {
-                                    executePkt([], spec.input, join(testCaseRoot, category, testName, `${testCaseName}.pkt`));
-                                });
-                            } else {
-                                let actual = null;
-                                try {
-                                    actual = executePkt([], spec.input, join(testCaseRoot, category, testName, `${testCaseName}.pkt`));
-                                    assert.deepEqual(actual, expected);
-                                } catch (e) {
-                                    console.log(dumpYaml({
-                                        actual, expected
-                                    }))
-                                    throw e;
-                                }
-                            }
-                        });
-                    }
+  const categories = readdirSync(testCaseRoot);
+  for (const category of categories) {
+    describe(category, () => {
+      const tests = readdirSync(join(testCaseRoot, category));
+      for (const testName of tests) {
+        const spec = loadYaml(category, testName, 'spec.yaml');
+        if (spec == null) {
+          continue;
+        }
+        // if (testName != 'properties') continue;
+        describe(testName, () => {
+          for (const testCaseName of Object.keys(spec.expected)) {
+            const expected = spec.expected[testCaseName];
+            it(testCaseName, () => {
+              if (expected === 'throws') {
+                assert.throws(() => {
+                  executePkt([], spec.input, join(testCaseRoot, category, testName, `${testCaseName}.pkt`));
                 });
-            }
+              } else {
+                let actual = null;
+                try {
+                  actual = executePkt([], spec.input, join(testCaseRoot, category, testName, `${testCaseName}.pkt`));
+                  assert.deepEqual(actual, expected);
+                } catch (e) {
+                  console.log(dumpYaml({
+                    actual, expected
+                  }))
+                  throw e;
+                }
+              }
+            });
+          }
         });
-    };
+      }
+    });
+  };
 });
 
 // const testExec = (files, values) => exec([], values || {}, files);

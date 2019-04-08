@@ -1,4 +1,4 @@
 
 export const log = (...msg: any[]) => {
-    console.error(...msg);
+  console.error(...msg);
 }

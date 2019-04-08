@@ -4,9 +4,9 @@ import { IPktOptions } from "../../pk-template/types";
 import { IObject } from "../../common";
 
 export class YamlOutput implements IOutput {
-    constructor(private options: IPktOptions) { }
+  constructor(private options: IPktOptions) { }
 
-    *write(objects: IObject[]): Iterator<string> {
-        yield pkyaml.dumpYamlAll(objects)
-    }
+  *write(objects: IObject[]): Iterator<string> {
+    yield pkyaml.dumpYamlAll(objects)
+  }
 }

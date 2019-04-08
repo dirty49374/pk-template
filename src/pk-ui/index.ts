@@ -1,5 +1,5 @@
 
 export interface IProgressOptions {
-    yes: boolean;
-    dryRun: boolean;
+  yes: boolean;
+  dryRun: boolean;
 }

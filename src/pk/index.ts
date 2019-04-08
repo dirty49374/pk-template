@@ -26,8 +26,7 @@ async function main(argv: string[]) {
     yargs
       .command(require('./commands/app').default(pk))
       .command(require('./commands/env').default(pk))
-      // .command(require('./commands/deployment').default(pk))
-      .command(require('./commands/deployment2').default(pk))
+      .command(require('./commands/deployment').default(pk))
       ;
 
     if (projectConf.data.modules) {

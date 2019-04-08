@@ -3,21 +3,21 @@ import { IProgressOptions } from '../pk-ui';
 import { PkProjectConf } from '../pk-conf/projectConf';
 
 export interface IPkCommandInfo {
-    projectConf: PkProjectConf | null;
-    [name: string]: any;
+  projectConf: PkProjectConf | null;
+  [name: string]: any;
 };
 
 export interface IPkctlOptions extends IProgressOptions {
-    context: string;
-    packageName: string;
-    _: string[];
+  context: string;
+  packageName: string;
+  _: string[];
 }
 
 export interface IPktCreateOptions extends IPkctlOptions {
 }
 
 export interface IPkctlUpdateOptions extends IPkctlOptions {
-    packageNames: string[];
+  packageNames: string[];
 }
 
 export interface IPkctlDiffOptions extends IPkctlOptions {
@@ -27,36 +27,36 @@ export interface IPkctlInitOptions extends IPkctlOptions {
 }
 
 export interface IPkctlAddOptions extends IPkctlOptions {
-    repositoryName: string;
-    repositoryUri: string;
+  repositoryName: string;
+  repositoryUri: string;
 }
 
 export interface IPkctlApplyOptions extends IPkctlOptions {
-    immediate: boolean;
-    sequentialApply: boolean;
+  immediate: boolean;
+  sequentialApply: boolean;
 }
 
 export interface IPkctlDeleteOptions extends IPkctlOptions {
-    envName: string;
+  envName: string;
 }
 
 export interface IPkctlDeployOptions extends IPkctlOptions {
-    specName: string;
-    envName: string;
-    immediate: boolean;
-    sequentialApply: boolean;
+  specName: string;
+  envName: string;
+  immediate: boolean;
+  sequentialApply: boolean;
 }
 
 export interface IPkctlEnvOptions extends IPkctlOptions {
-    envName: string;
-    contextName: string;
+  envName: string;
+  contextName: string;
 }
 
 
 export interface ApplyConfig extends IKubeCtlConfig {
-    target: string;
-    apply: boolean;
-    unnamespaced: IResourceType[];
-    already_confirmed: boolean;
-    // [ key: string ]: string;
+  target: string;
+  apply: boolean;
+  unnamespaced: IResourceType[];
+  already_confirmed: boolean;
+  // [ key: string ]: string;
 }

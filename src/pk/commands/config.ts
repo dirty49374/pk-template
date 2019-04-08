@@ -6,47 +6,47 @@ import { dumpYaml } from '../../pk-yaml';
 import { IPkCommandInfo } from '../types';
 
 export default (pk: IPkCommandInfo) => ({
-    command: 'config',
-    desc: 'config',
-    builder: (yargs: any) => yargs
-        .option('email', { alias: 'e', description: 'your email' })
-        .option('repository', { alias: ['repo', 'r'], description: 'repository (--repository name=git-repo)' }),
-    handler: async (argv: any) => {
-        await tryCatch(async () => {
+  command: 'config',
+  desc: 'config',
+  builder: (yargs: any) => yargs
+    .option('email', { alias: 'e', description: 'your email' })
+    .option('repository', { alias: ['repo', 'r'], description: 'repository (--repository name=git-repo)' }),
+  handler: async (argv: any) => {
+    await tryCatch(async () => {
 
-            await atHomeDir(async () => {
-                const conf = PkConf.load() || new PkConf({
-                    email: '',
-                    modules: [],
-                    repositories: [],
-                });
+      await atHomeDir(async () => {
+        const conf = PkConf.load() || new PkConf({
+          email: '',
+          modules: [],
+          repositories: [],
+        });
 
-                if (argv.email) {
-                    conf.data.email = argv.email;
-                }
+        if (argv.email) {
+          conf.data.email = argv.email;
+        }
 
-                if (argv.repository) {
-                    const sp = argv.repository.split('=', 2);
-                    conf.data.repositories.push({
-                        name: sp[0],
-                        repository: sp[1],
-                        branch: 'master',
-                    });
-                }
+        if (argv.repository) {
+          const sp = argv.repository.split('=', 2);
+          conf.data.repositories.push({
+            name: sp[0],
+            repository: sp[1],
+            branch: 'master',
+          });
+        }
 
-                if (!existsSync('pk-modules')) {
-                    console.log('mkdir')
-                    mkdirSync('pk-modules');
-                }
+        if (!existsSync('pk-modules')) {
+          console.log('mkdir')
+          mkdirSync('pk-modules');
+        }
 
-                PkConf.save(conf);
+        PkConf.save(conf);
 
-                console.log(dumpYaml(conf.data));
+        console.log(dumpYaml(conf.data));
 
-                if (!conf.data.email) {
-                    throw new Error('email must be set. use pk config --email');
-                }
-            });
-        }, argv.d);
-    },
+        if (!conf.data.email) {
+          throw new Error('email must be set. use pk config --email');
+        }
+      });
+    }, argv.d);
+  },
 });
