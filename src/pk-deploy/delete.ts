@@ -54,10 +54,8 @@ export const deletePkd = async (projectName: string, appName: string, envName: s
     process.exit(1);
     return;
   }
-  const packageName = spec.data.header.name;
 
   const keys = catalog.getKeys();
-  console.log('delete keys', keys)
-  // deleteObjects(keys);
+  deleteObjects(keys);
   ui.success('success !!!');
 }

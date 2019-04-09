@@ -14,14 +14,13 @@ export default (pk: IPkCommandInfo) => async (argv: any) => {
         immediate: argv.immediate || false,
       }
       const envdata = projectConf.getMergedEnv(app.name, envName, clusterName);
-      if (!envdata || !envdata.values || !envdata.values.cluster) {
+      if (!clusterName) {
         console.log(pk.getChalk().red(`cluster is not defined ${app.name} ${envName}`));
         return;
       }
 
       console.log(`* app = ${app.name}, env = ${envName}, cluster = ${clusterName}`);
       await atAppDir(app.name, async () => {
-        execSync('ls -al');
         await deletePkd(
           projectConf.data.project.name,
           app.name,
