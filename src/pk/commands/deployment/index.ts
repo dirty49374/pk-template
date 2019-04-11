@@ -16,6 +16,7 @@ export default (pk: IPkCommandInfo) => {
       .option('dry-run', { alias: ['dry'], describe: 'dry run [--apply, --delete]', boolean: true })
       .option('immediate', { alias: ['imm'], describe: 'execute immediately without initial 5 seconds delay [--apply, --delete]', boolean: true })
       .option('yes', { alias: ['y'], describe: 'overwrite without confirmation [--apply, --delete]', boolean: true })
+      .option('yesyes', { describe: '--yes and --imm [--apply, --delete]', boolean: true })
       .option('force', { alias: ['f'], describe: 'force write pkd even if output is same [--update]', boolean: true })
       .option('watch', { alias: 'w', describe: 'all apps and envs [--diff]', boolean: false })
       .option('debug', { alias: 'd', describe: 'enable error debugging', boolean: true })
@@ -24,6 +25,12 @@ export default (pk: IPkCommandInfo) => {
       .option('apply', { describe: 'apply deployment to cluster', boolean: true })
       .option('delete', { describe: 'delete deployment', boolean: true }),
     handler: async (argv: any) => {
+      if (argv.yesyes) {
+        argv.y = true;
+        argv.yes = true;
+        argv.imm = true;
+        argv.immediate = true;
+      }
       if (argv.watch) {
         const args = process.argv.filter(w => w !== '-w' && w !== '--watch');
         args.splice(0, 2);
