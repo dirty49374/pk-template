@@ -27,6 +27,16 @@ export interface IPkModule {
   tag?: string;
 }
 
+export interface IPkDeployConf {
+  branch: string;
+  apps?: string[];
+  '-apps'?: string[];
+  envs?: string[];
+  '-envs'?: string[];
+  clusters?: string[];
+  '-clusters'?: string[];
+}
+
 export interface IPkProjectConf {
   project: IPkProject;
   values: IValues;
@@ -34,6 +44,7 @@ export interface IPkProjectConf {
   envs: IPkEnv[];
   modules: IPkModule[];
   namespace?: string;
+  deploy?: IPkDeployConf[]
 }
 
 export interface IPkConf {

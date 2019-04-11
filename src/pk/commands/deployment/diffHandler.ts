@@ -17,6 +17,10 @@ export default (pk: IPkCommandInfo) => async (argv: any): Promise<any> => {
       });
     } else {
       await visitEachDeployments(argv.app, argv.env, argv.cluster, async (projectRoot, projectConf, app, envName, clusterName) => {
+        if (!projectConf.isDeployExecutable(argv.branch, app.name, envName, clusterName)) {
+          return;
+        }
+
         var begin = new Date().getTime();
 
         const exists = existsPkd(envName, clusterName);

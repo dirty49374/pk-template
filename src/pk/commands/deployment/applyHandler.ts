@@ -12,7 +12,6 @@ import { homedir } from 'os';
 import { visitEachDeployments, tryCatch } from '../../libs';
 import { IPkCommandInfo } from "../../types";
 import { existsPkd } from '../../../pk-deploy/exists';
-import { matchBranchIfExist } from '../../../pk-deploy/match';
 
 interface IApplyStep {
   name: string;
@@ -241,8 +240,7 @@ export default (pk: IPkCommandInfo) => async (argv: any) => {
       if (!existsPkd(envName, clusterName)) {
         return;
       }
-      const env = projectConf.getMergedEnv(app.name, envName, clusterName);
-      if (!matchBranchIfExist(env, argv.branch)) {
+      if (!projectConf.isDeployExecutable(argv.branch, app.name, envName, clusterName)) {
         return;
       }
       await new Command(argv, app.name, envName, clusterName).execute();

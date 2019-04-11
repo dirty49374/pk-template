@@ -7,7 +7,9 @@ import { execSync } from 'child_process';
 export default (pk: IPkCommandInfo) => async (argv: any) => {
   await tryCatch(async () => {
     await visitEachDeployments(argv.app, argv.env, argv.cluster, async (projectRoot, projectConf, app, envName, clusterName) => {
-
+      if (!projectConf.isDeployExecutable(argv.branch, app.name, envName, clusterName)) {
+        return;
+      }
       const opt: IPkdApplierOption = {
         yes: argv.yes || false,
         dryRun: argv.dryRun || false,

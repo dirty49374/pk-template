@@ -103,6 +103,35 @@ export class PkProjectConf {
   }
   getModule = (name: string): IPkModule | undefined => this.data.modules.find(m => m.name == name);
 
+  isDeployExecutable(branch: string | undefined, appName: string, envName: string, clusterName: string): boolean {
+    if (!branch || !this.data.deploy || this.data.deploy.length === 0) {
+      return true;
+    }
+
+    const deployConfs = this.data.deploy.filter(d => d.branch === branch);
+    if (deployConfs.length === 0) {
+      return false;
+    }
+
+    const accepted = (accpets: string[] | undefined, denies: string[] | undefined, item: string, name: string): boolean => {
+      if (accpets && denies) {
+        throw new Error(`deploy option ${name} and -${name} can not be used at the same time.`)
+      }
+
+      if (accpets) {
+        return accpets.includes(item);
+      } else if (denies) {
+        return !denies.includes(item);
+      } else { // both not exists
+        return true;
+      }
+    }
+
+    return deployConfs.some(conf => accepted(conf.apps, conf['-apps'], appName, 'apps')
+      && accepted(conf.envs, conf['-envs'], envName, 'envs')
+      && accepted(conf.clusters, conf['-clusters'], clusterName, 'clusters'))
+  }
+
   static exists(dir?: string) {
     return dir
       ? existsSync(join(dir, PkProjectConf.FILENAME))
@@ -119,6 +148,7 @@ export class PkProjectConf {
       apps: [],
       envs: [],
       modules: [],
+      deploy: [],
     });
   }
 
