@@ -9,6 +9,7 @@ import jslib from "./jslib";
 import { forEachTreeObjectKey } from "../common";
 import { CustomYamlTag } from "../pk-yaml/customTags";
 import { NextStatement } from "./virtualMachine";
+import { resolve as resolvePath, parse as parsePath } from "path";
 
 const PKT_INITIAL_STATE = 'pkt:$initial';
 const PKT_IMPORT_INITIAL_STATE = 'import:$initial';
@@ -16,12 +17,13 @@ const PKT_IMPORT_INITIAL_STATE = 'import:$initial';
 export interface IPktOptions {
 }
 
+// TODO: merge loadPkt in scope.ts
 export const compilePkt = (src: string, uri: string): IPkt => {
   const yamls = parseYamlAsPkt(src, uri);
   if (yamls.length == 0) {
     return { header: {}, statements: [] };
   }
-  if (yamls[0] && (yamls[0]['/properties'] || yamls[0]['/schema'] || yamls[0]['/import'])) {
+  if (yamls[0] && (yamls[0]['/properties'] || yamls[0]['/schema'] || yamls[0]['/import'] || yamls[0]['/require'])) {
     const header = yamls[0];
     return { header, statements: yamls.slice(1) };
   }
@@ -274,10 +276,12 @@ export class PktRuntime {
 
     for (const rpath of rpathes) {
       let childValues: IValues = {};
+
       scope.child2({ objects: [], orphan: true }, (cscope) => {
         vm.runtime.importFile(vm, cscope, rpath);
         childValues = cscope.values;
       });
+
       scope.values = {
         ...scope.values,
         ...childValues,
@@ -289,6 +293,19 @@ export class PktRuntime {
   ['decl:103:/stylesheet'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
     scope.trace.step('/stylesheet');
     scope.styleSheet = StyleSheet.Build(scope, stmt);
+    return next(scope);
+  }
+  ['decl:103:/require'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
+    scope.trace.step('/require');
+    const uri = scope.resolve(stmt['/require']);
+    if (uri) {
+      const obj = require(uri);
+      const name = parsePath(uri).name;
+      scope.values = {
+        ...scope.values,
+        [name]: obj,
+      };
+    }
     return next(scope);
   }
   ['decl:104:/values'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {

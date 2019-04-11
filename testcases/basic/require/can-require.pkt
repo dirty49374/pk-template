@@ -1,0 +1,5 @@
+/require: ./test
+---
+p1: !js test.p1
+p2: !js test.p2
+msg: !js test.hello()

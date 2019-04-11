@@ -1,0 +1,13 @@
+input:
+  p1: 1
+  p2: 2
+expected:
+  can-require:
+    - p1: 10
+      p2: 20
+      msg: hello
+  can-import-required:
+    - p1: 10
+      p2: 20
+      msg: hello
+      basename: c.d

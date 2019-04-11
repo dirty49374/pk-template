@@ -164,6 +164,7 @@ export class Scope extends PathResolver implements IScope {
     }
   }
 
+  // TODO: merge compilePkt in languageSpec.ts
   loadPkt(uri: string): { uri: string, data: IPkt } {
     const rst = this.loadText(uri);
     try {
@@ -171,7 +172,7 @@ export class Scope extends PathResolver implements IScope {
       if (yamls.length == 0) {
         return { uri: rst.uri, data: { header: {}, statements: [] } }
       }
-      if (yamls[0] && (yamls[0]['/properties'] || yamls[0]['/schema'])) {
+      if (yamls[0] && (yamls[0]['/properties'] || yamls[0]['/schema'] || yamls[0]['/import'] || yamls[0]['/require'])) {
         const header = yamls[0];
         return { uri: rst.uri, data: { header, statements: yamls.slice(1) } }
       }
