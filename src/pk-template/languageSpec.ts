@@ -298,6 +298,9 @@ export class PktRuntime {
   ['decl:103:/require'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
     scope.trace.step('/require');
     const uri = scope.resolve(stmt['/require']);
+    if (!uri.endsWith('.js')) {
+      throw scope.error('/require only accepts *.js files');
+    }
     if (uri) {
       const obj = require(uri);
       const name = parsePath(uri).name;

@@ -1,4 +1,4 @@
-/require: ./test
+/require: ./test.js
 ---
 p1: !js test.p1
 p2: !js test.p2
