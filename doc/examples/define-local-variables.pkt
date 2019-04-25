@@ -1,0 +1,22 @@
+/values: # var name = 'world'
+  name: world
+---
+hello: !js name
+---
+/assign: # name = 'universe'
+  name: universe
+---
+hello: !js name
+---
+/values: # array = [ 'john', 'jane' ]
+  array:
+    - john
+    - jane
+---
+hello: !js array
+---
+/values: # object = { hello: 'world' }
+  object:
+    hello: world
+---
+object: !js object

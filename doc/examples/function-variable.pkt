@@ -1,0 +1,9 @@
+/values:
+  deployment: !js |
+    image => ({
+      kind: 'Deployment',
+      metadata: { name: image.split('/').slice(-1)[0].split(':')[0] },
+      spec: { template: { spec: { containers: [ { image } ] } } }
+    })
+---
+!js deployment('aa/bb:1.2.3')

@@ -1,0 +1,6 @@
+kind: Deployment
+---
+kind: Service
+---
+/if: !js ingress
+/include: include-ingress.pkt

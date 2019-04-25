@@ -1,0 +1,4 @@
+kind: Ingress
+spec:
+  rules:
+    host: !js ingress

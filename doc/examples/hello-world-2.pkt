@@ -1,0 +1,23 @@
+syntax:
+  block: !js |
+    'this is string'
+  inline: !js "'this is string'"
+constants:
+  array: !js |
+    [1]
+  number: !js |
+    100
+operators:
+  add: !js 1 + 2
+  concat: !js " name + ' !' "
+control:
+  conditional: !js " name == 'world' ? 'hello world' : 'who are you ?' "
+  if: !js |
+    if (name == 'world') { true } else { false }
+  switch: !js |
+    let result = 0;
+    switch (name) {
+      case 'world': result = 1; break;
+      default: result = 2;
+    }
+    result;

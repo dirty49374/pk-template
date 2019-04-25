@@ -1,0 +1,8 @@
+kind: ConfigMap
+data:
+  config.ini: !template |
+    user = '<<<= user >>>'
+---
+kind: Secret
+data:
+  pass: !js $.base64encode(pass)

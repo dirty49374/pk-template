@@ -1,0 +1,41 @@
+/require: lib/markdown.js
+---
+markdown: |
+  # Examples
+
+---
+example: Hello world
+desc: |
+  ```!js``` tags evalutes string as javascript
+file: examples/hello-world.pkt
+option: --name world
+---
+example: Any javascript can be used
+file: examples/hello-world-2.pkt
+option: --name universe
+---
+example: Define local variables
+file: examples/define-local-variables.pkt
+option: ''
+---
+example: If
+file: examples/if.pkt
+option: '--type nginx'
+---
+example: Include
+file:
+  - examples/include.pkt
+  - examples/include-ingress.pkt
+option: '--ingress www'
+---
+example: Text templating
+file: examples/text-template.pkt
+option: '--user admin --pass abcd'
+---
+# example: Define function variable
+# file: examples/function-variable.pkt
+# option: ''
+---
+/script: !js |
+  markdown.print($.objects)
+  $.objects.splice(0, $.objects.length)

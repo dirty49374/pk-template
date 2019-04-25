@@ -1,0 +1,5 @@
+/if: !js type == 'nginx'
+image: nginx-ingress-controller
+---
+/if: !js type == 'alb'
+image: alb-ingress-controller
