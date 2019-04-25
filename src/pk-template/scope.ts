@@ -39,14 +39,7 @@ export class Scope extends PathResolver implements IScope {
 
   add(object: any): void {
     let scope: IScope = this;
-    let objects = null;
-    while (scope) {
-      if (objects !== scope.objects) {
-        scope.objects.push(object);
-        objects = scope.objects;
-      }
-      scope = scope.parent;
-    }
+    scope.objects.push(object);
   }
 
   child<T>({ uri, objects, values }: any, handler: (scope: IScope) => T): T {

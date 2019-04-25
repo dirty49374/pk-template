@@ -3,7 +3,7 @@ import { parseKvps, parseList, pktError, sha256, repository, repositoryPath } fr
 import { IScope } from './types';
 import { log } from './logger';
 import { createHash } from 'crypto';
-import { dumpYamlSortedKey, parseYaml as ParseYaml, dumpYaml } from '../pk-yaml';
+import { dumpYamlSortedKey, parseYaml, parseYamlAll, dumpYaml, dumpYamlAll } from '../pk-yaml';
 import { execSync } from 'child_process';
 
 let repoCache: string | null = null;
@@ -88,8 +88,10 @@ const jslib = (scope: IScope) => {
     arraify: (value: any) => Array.isArray(value) ? value : [value],
     parseKvps,
     parseList,
-    parseYaml: (yaml: string) => ParseYaml(yaml, scope.uri),
+    parseYaml: (yaml: string) => parseYaml(yaml, scope.uri),
+    parseYamlAll: (yaml: string) => parseYamlAll(yaml, scope.uri),
     dumpYaml: (obj: any) => dumpYaml(obj),
+    dumpYamlAll: (obj: any[]) => dumpYamlAll(obj),
     toWords: (value: string) => value.split(/\s+/).filter(p => p.length !== 0),
     toNumbers: (value: string) => lib.toWords(value).map(p => Number(p)),
     toList: (o: any, cb: any) => Object.keys(o).map(k => cb(k, o[k])),

@@ -4,7 +4,7 @@ import { pktError, setValue, deepCloneWithFunction } from "./utils";
 import { StyleSheet } from './styles/styleSheet';
 import { JsonSchema } from "./jsonSchema";
 import selectors from "./selectors";
-import { parseYamlAsPkt, parseYamlAll } from "../pk-yaml";
+import { parseYamlAsPkt, parseYamlAll, dumpYamlAll } from "../pk-yaml";
 import jslib from "./jslib";
 import { forEachTreeObjectKey } from "../common";
 import { CustomYamlTag } from "../pk-yaml/customTags";
@@ -277,10 +277,12 @@ export class PktRuntime {
     for (const rpath of rpathes) {
       let childValues: IValues = {};
 
-      scope.child2({ objects: [], orphan: true }, (cscope) => {
+      const objects: any[] = [];
+      scope.child2({ objects, orphan: true }, (cscope) => {
         vm.runtime.importFile(vm, cscope, rpath);
         childValues = cscope.values;
       });
+      scope.objects.push(...objects);
 
       scope.values = {
         ...scope.values,
@@ -347,10 +349,33 @@ export class PktRuntime {
   }
   ['stmt:010:/select'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
     const predicate = selectors.compile(stmt['/select']);
-    const objects = scope.objects.filter(predicate);
-    const rst = scope.child2({ objects }, cscope => {
+
+    const before = scope.objects.filter(predicate);
+    const after = before.map(o => o);
+
+    const rst = scope.child2({ objects: after }, cscope => {
       return next(cscope);
     });
+
+    // add new objects
+    for (const obj of after) {
+      if (!before.includes(obj)) {
+        scope.objects.push(obj);
+      }
+    }
+
+    // remove deleted objects
+    for (const obj of before) {
+      if (!after.includes(obj)) {
+        const idx = scope.objects.indexOf(obj);
+        if (idx == -1) {
+          throw new Error('unknown error');
+        }
+        scope.objects.splice(idx, 1);
+      }
+    }
+
+
     if (rst.exit) {
       return rst;
     }
@@ -410,9 +435,11 @@ export class PktRuntime {
   ['stmt:100:/include'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
     const rpath = stmt['/include'];
     const _with = stmt['/with'] || {};
-    scope.child2({ objects: [] }, (cscope) => {
+    const objects: any[] = [];
+    scope.child2({ objects }, (cscope) => {
       vm.runtime.executeFile(vm, cscope, rpath, _with);
     })
+    scope.objects.push(...objects);
     return {};
   }
   ['stmt:100:/apply'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
@@ -471,7 +498,8 @@ export class PktRuntime {
     return {};
   }
   ['stmt:100:/routine'](vm: ILanguageVm<PktRuntime>, scope: IScope, stmt: any, next: NextStatement): IPkStatementResult {
-    scope.child2({ objects: [] }, scope => {
+    const objects: any[] = [];
+    scope.child2({ objects }, scope => {
       for (const cstmt of stmt['/routine']) {
         const rst = vm.execute(scope, cstmt, 'stmt');
         if (rst.exit) {
@@ -479,6 +507,7 @@ export class PktRuntime {
         }
       }
     });
+    scope.objects.push(...objects);
 
     return {};
   }
